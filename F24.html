@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>US-24 Seguimiento del Cliente</title>
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    .stepper {
+      display: flex;
+      justify-content: space-between;
+      margin: 2rem 0;
+      position: relative;
+    }
+    .stepper::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: #dee2e6;
+      z-index: 0;
+    }
+    .step {
+      text-align: center;
+      z-index: 1;
+      flex: 1;
+    }
+    .step .circle {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 1.2rem;
+    }
+    .step.active .circle {
+      background: #dc3545;
+      color: white;
+    }
+    .step.done .circle {
+      background: #28a745;
+      color: white;
+    }
+  </style>
+</head>
+<body class="bg-light">
+
+  <div class="container mt-5">
+    <h3 class="mb-4">Seguimiento del Pedido</h3>
+    <p class="text-muted">El cliente puede visualizar el progreso de su pedido en tiempo real.</p>
+
+    <!-- ================= TIMELINE DE ESTADOS ================= -->
+    <div class="stepper">
+      <!-- Preparación -->
+      <div class="step done">
+        <div class="circle">👨‍🍳</div>
+        <p class="mt-2">Preparación</p>
+      </div>
+      <!-- En camino -->
+      <div class="step active">
+        <div class="circle">🚚</div>
+        <p class="mt-2">En camino</p>
+      </div>
+      <!-- Entregado -->
+      <div class="step">
+        <div class="circle">🎉</div>
+        <p class="mt-2">Entregado</p>
+      </div>
+    </div>
+
+    <!-- ================= DATOS DEL PEDIDO ================= -->
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <p><strong>N° Pedido:</strong> #12345</p>
+        <p><strong>Cliente:</strong> Juan Pérez</p>
+        <p><strong>Dirección:</strong> Av. Siempre Viva 123</p>
+        <p><strong>Estado actual:</strong> En camino</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

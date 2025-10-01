@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>US-09 Agregar al Carrito</title>
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+
+  <!-- ================= NAVBAR CON CARRITO ================= -->
+  <nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="#">Bocatto</a>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav me-auto">
+          <li class="nav-item"><a class="nav-link" href="#">Menú</a></li>
+          <li class="nav-item"><a class="nav-link" href="#">Promos</a></li>
+        </ul>
+        <!-- Carrito con contador -->
+        <button class="btn btn-outline-dark position-relative">
+          🛒 Carrito
+          <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+            1 <!-- aquí se incrementa con cada producto -->
+          </span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ================= ZONA DE PRODUCTOS ================= -->
+  <div class="container mt-4">
+    <div class="row g-4">
+
+      <!-- Card de producto -->
+      <div class="col-12 col-md-6 col-lg-4">
+        <div class="card h-100">
+          <img src="https://via.placeholder.com/300x200" class="card-img-top" alt="Producto">
+          <div class="card-body">
+            <h5 class="card-title">Sándwich Bocatto</h5>
+            <p class="card-text">Delicioso sándwich artesanal.</p>
+            <p class="fw-bold">$4.990</p>
+            <!-- Botón para agregar al carrito -->
+            <button class="btn btn-danger w-100">Agregar al Carrito</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

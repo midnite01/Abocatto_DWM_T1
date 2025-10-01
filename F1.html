@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>US-01 Registro de Cliente</title>
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-dark bg-opacity-50 d-flex justify-content-center align-items-center vh-100">
+
+  <!-- ================= US-01: REGISTRO DE CLIENTE ================= -->
+  <!-- Skeleton basado en el modal de login/registro -->
+
+<div class="modal-dialog bg-white rounded-3 shadow p-4" style="max-width: 600px; width: 100%;">
+
+
+    <!-- Header con botón cerrar -->
+    <div class="d-flex justify-content-end">
+      <button type="button" class="btn-close"></button>
+    </div>
+
+    <div class="row">
+      
+      <!-- ================= ZONA DE REGISTRO ================= -->
+      <div class="col-12 col-md-6 border-end p-3">
+        <h5>Crear una nueva cuenta</h5>
+        <form>
+          <div class="mb-3">
+            <label for="nombre" class="form-label">Nombre completo</label>
+            <input type="text" id="nombre" class="form-control" placeholder="Juan Pérez">
+          </div>
+          <div class="mb-3">
+            <label for="email" class="form-label">Correo electrónico</label>
+            <input type="email" id="email" class="form-control" placeholder="ejemplo@correo.com">
+          </div>
+          <div class="mb-3">
+            <label for="password" class="form-label">Contraseña</label>
+            <input type="password" id="password" class="form-control" placeholder="********">
+          </div>
+          <div class="d-grid">
+            <button type="submit" class="btn btn-danger">Registrar</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- ================= ZONA DE LOGIN  ================= -->
+      <!-- Esta parte existe en el modal, pero en US-01 no es el foco -->
+      <div class="col-12 col-md-6 p-3 bg-light">
+        <h6 class="text-muted">¿Ya tienes una cuenta?</h6>
+        <p class="small text-muted">Entonces puedes iniciar sesión</p>
+        <button class="btn btn-outline-dark w-100">Ir a Login</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

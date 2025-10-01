@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>US-06 Editar Producto</title>
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+
+  <div class="container mt-5">
+    <h3 class="mb-4">Editar Producto</h3>
+    <p class="text-muted">El administrador puede modificar la información de un producto ya existente.</p>
+
+    <!-- ================= ZONA: CARD DE PRODUCTO ================= -->
+    <div class="card mb-3">
+      <div class="row g-0">
+        <div class="col-md-4">
+          <img src="https://via.placeholder.com/300x200" class="img-fluid rounded-start" alt="Producto">
+        </div>
+        <div class="col-md-8">
+          <div class="card-body">
+            <h5 class="card-title">Sándwich Bocatto</h5>
+            <p class="card-text">Descripción breve del producto.</p>
+            <p class="fw-bold">$4.990</p>
+            <!-- Botón para editar -->
+            <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalEditar">
+              ✏️ Editar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= ZONA: MODAL DE EDICIÓN ================= -->
+    <div class="modal fade" id="modalEditar" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Editar Producto</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <form>
+              <!-- Campos precargados -->
+              <div class="mb-3">
+                <label class="form-label">Nombre</label>
+                <input type="text" class="form-control" value="Sándwich Bocatto">
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Descripción</label>
+                <textarea class="form-control">Descripción breve del producto.</textarea>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Precio</label>
+                <input type="number" class="form-control" value="4990">
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Categoría</label>
+                <select class="form-select">
+                  <option selected>Sandwiches</option>
+                  <option>Paninis</option>
+                  <option>Acompañamientos</option>
+                  <option>Bebidas</option>
+                </select>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Imagen</label>
+                <input type="file" class="form-control">
+                <small class="text-muted">Imagen actual: producto.jpg</small>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="button" class="btn btn-primary">Guardar Cambios</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

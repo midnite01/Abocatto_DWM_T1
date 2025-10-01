@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bocatto | Menú</title>
+
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      background-color: #111;
+      color: #f7f7f7;
+    }
+    h2 {
+      font-family: 'Oswald', sans-serif;
+      color: #e6b800;
+    }
+  </style>
+</head>
+<body>
+
+<!-- =================== NAVBAR SUPERIOR =================== -->
+
+<nav class="navbar navbar-expand-lg navbar-light bg-warning px-3">
+  <div class="container-fluid">
+
+    <!-- Logo + Nombre -->
+    <a class="navbar-brand d-flex align-items-center" href="Web_principal.html">
+      <img src="Recursos_Esteticos/img/logo.png" alt="Bocatto" width="40" height="40" class="me-2">
+      <span class="fw-bold">Bocatto</span>
+    </a>
+
+
+    <!-- Botón para menú hamburguesa en móviles -->
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <!-- Contenido colapsable -->
+    <div class="collapse navbar-collapse justify-content-center" id="navbarContent">
+      <ul class="navbar-nav mb-2 mb-lg-0 gap-3">
+        <li class="nav-item">
+          <a class="nav-link" href="Menu.html"> <!--Link al menu-->
+        <i class="bi bi-pizza"></i> Menú
+        </a>
+
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#promos">
+            <i class="bi bi-fire"></i> Promos <!-- 🔥 icono de promos -->
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#locales">
+            <i class="bi bi-geo-alt"></i> Locales y horarios <!-- 📍 icono de ubicación -->
+          </a>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Botones a la derecha -->
+    <div class="d-flex gap-2">
+      <button class="btn btn-outline-dark" data-bs-toggle="modal" data-bs-target="#loginModal">
+        <i class="bi bi-box-arrow-in-right"></i> Iniciar sesión
+      </button>
+      <button class="btn btn-dark" id="btn-pedidos" hidden>
+        <i class="bi bi-bag"></i> Tus pedidos
+      </button>
+    </div>
+
+  </div>
+</nav>
+
+<!-- =================== SECCIÓN MENÚ =================== -->
+<section id="menu" class="container my-5">
+
+  <!-- Botones de categorías arriba (scroll interno con anchor links) -->
+  <div class="d-flex flex-wrap gap-2 mb-4 justify-content-center">
+    <a href="#sandwiches" class="btn btn-outline-warning">Sandwiches Abocatto</a>
+    <a href="#paninis" class="btn btn-outline-warning">Paninis</a>
+    <a href="#acompanamientos" class="btn btn-outline-warning">Acompañamientos</a>
+    <a href="#bebibles" class="btn btn-outline-warning">Bebibles</a>
+    <a href="#experimentos" class="btn btn-outline-warning">Experimentos Abocatto</a>
+  </div>
+
+  <!-- Categoría 1: Sandwiches -->
+  <h2 id="sandwiches">Sandwiches Abocatto</h2>
+  <div class="row row-cols-1 row-cols-md-3 row-cols-lg-5 g-4 mb-5">
+    <div class="col">
+      <div class="card h-100 rounded-4">
+        <div class="card-img-top bg-dark rounded-top-4" style="height:180px;"></div>
+        <div class="card-body text-center" style="background-color:#e6b800; border-radius:0 0 1rem 1rem;">
+          <h5 class="card-title fw-bold text-dark">Sandwich 1</h5>
+          <p class="card-text text-dark">Descripción breve</p>
+          <p class="fw-bold text-dark">$5.990</p>
+          <button class="btn btn-light text-dark fw-bold">Agregar al carrito</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<!-- Categoría 2: Paninis -->
+  <h2 id="paninis">Paninis</h2>
+  <div class="row row-cols-1 row-cols-md-3 row-cols-lg-5 g-4 mb-5">
+    <div class="col">
+      <div class="card h-100 rounded-4">
+        <div class="card-img-top bg-dark rounded-top-4" style="height:180px;"></div>
+        <div class="card-body text-center" style="background-color:#e6b800; border-radius:0 0 1rem 1rem;">
+          <h5 class="card-title fw-bold text-dark">Panini 1</h5>
+          <p class="card-text text-dark">Descripción breve</p>
+          <p class="fw-bold text-dark">$4.990</p>
+          <button class="btn btn-light text-dark fw-bold">Agregar al carrito</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Categoría 3: Acompañamientos -->
+  <h2 id="acompanamientos">Acompañamientos</h2>
+  <div class="row row-cols-1 row-cols-md-3 row-cols-lg-5 g-4 mb-5">
+    <div class="col">
+      <div class="card h-100 rounded-4">
+        <div class="card-img-top bg-dark rounded-top-4" style="height:180px;"></div>
+        <div class="card-body text-center" style="background-color:#e6b800; border-radius:0 0 1rem 1rem;">
+          <h5 class="card-title fw-bold text-dark">Acompañamiento 1</h5>
+          <p class="card-text text-dark">Descripción breve</p>
+          <p class="fw-bold text-dark">$3.990</p>
+          <button class="btn btn-light text-dark fw-bold">Agregar al carrito</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Categoría 4: Bebibles -->
+  <h2 id="bebibles">Bebibles</h2>
+  <div class="row row-cols-1 row-cols-md-3 row-cols-lg-5 g-4 mb-5">
+    <div class="col">
+      <div class="card h-100 rounded-4">
+        <div class="card-img-top bg-dark rounded-top-4" style="height:180px;"></div>
+        <div class="card-body text-center" style="background-color:#e6b800; border-radius:0 0 1rem 1rem;">
+          <h5 class="card-title fw-bold text-dark">Bebida 1</h5>
+          <p class="card-text text-dark">Descripción breve</p>
+          <p class="fw-bold text-dark">$1.990</p>
+          <button class="btn btn-light text-dark fw-bold">Agregar al carrito</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Categoría 5: Experimentos Abocatto -->
+  <h2 id="experimentos">Experimentos Abocatto</h2>
+  <div class="row row-cols-1 row-cols-md-3 row-cols-lg-5 g-4 mb-5">
+    <div class="col">
+      <div class="card h-100 rounded-4">
+        <div class="card-img-top bg-dark rounded-top-4" style="height:180px;"></div>
+        <div class="card-body text-center" style="background-color:#e6b800; border-radius:0 0 1rem 1rem;">
+          <h5 class="card-title fw-bold text-dark">Experimento 1</h5>
+          <p class="card-text text-dark">Descripción breve</p>
+          <p class="fw-bold text-dark">$7.990</p>
+          <button class="btn btn-light text-dark fw-bold">Agregar al carrito</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+</section>
+</section>
+  <!-- =================== MODALES DE PRODUCTOS =================== -->
+
+<!-- Modal Sandwiches Abocatto -->
+<div class="modal fade" id="sandwiches" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content bg-dark text-light rounded-4">
+      <div class="modal-header border-0">
+        <h5 class="modal-title">Sandwich Abocatto 1</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        <img src="Recursos_Esteticos/img/sandwich1.jpg" class="img-fluid rounded mb-3" alt="Sandwich Abocatto 1">
+        <p>Sandwich artesanal con palta, tomate, queso y pollo grillado. Una opción fresca y contundente.</p>
+        <p class="fw-bold fs-5">$5.990</p>
+        <button class="btn btn-warning fw-bold w-100">Agregar al carrito</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Paninis -->
+<div class="modal fade" id="modalPanini1" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content bg-dark text-light rounded-4">
+      <div class="modal-header border-0">
+        <h5 class="modal-title">Panini Caprese</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        <img src="Recursos_Esteticos/img/panini1.jpg" class="img-fluid rounded mb-3" alt="Panini Caprese">
+        <p>Panini con mozzarella fresca, albahaca y tomate, acompañado de pesto casero.</p>
+        <p class="fw-bold fs-5">$4.990</p>
+        <button class="btn btn-warning fw-bold w-100">Agregar al carrito</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Acompañamientos -->
+<div class="modal fade" id="modalAcomp1" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content bg-dark text-light rounded-4">
+      <div class="modal-header border-0">
+        <h5 class="modal-title">Palitos de Ajo</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        <img src="Recursos_Esteticos/img/acompanamiento1.jpg" class="img-fluid rounded mb-3" alt="Palitos de Ajo">
+        <p>10 mini palitos de masa casera con mantequilla de ajo y perejil, servidos con salsa de tomate.</p>
+        <p class="fw-bold fs-5">$3.990</p>
+        <button class="btn btn-warning fw-bold w-100">Agregar al carrito</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Bebibles -->
+<div class="modal fade" id="modalBebida1" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content bg-dark text-light rounded-4">
+      <div class="modal-header border-0">
+        <h5 class="modal-title">Bebida Cola 500ml</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        <img src="Recursos_Esteticos/img/bebida1.jpg" class="img-fluid rounded mb-3" alt="Bebida Cola">
+        <p>Bebida refrescante de 500ml, ideal para acompañar tu pedido.</p>
+        <p class="fw-bold fs-5">$1.500</p>
+        <button class="btn btn-warning fw-bold w-100">Agregar al carrito</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Experimentos Abocatto -->
+<div class="modal fade" id="modalExperimento1" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content bg-dark text-light rounded-4">
+      <div class="modal-header border-0">
+        <h5 class="modal-title">Pizza Experimental Abocatto</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        <img src="Recursos_Esteticos/img/experimento1.jpg" class="img-fluid rounded mb-3" alt="Pizza Experimental">
+        <p>Nuestra línea creativa: pizza con ingredientes fuera de lo común. ¡Atrévete a probarla!</p>
+        <p class="fw-bold fs-5">$8.990</p>
+        <button class="btn btn-warning fw-bold w-100">Agregar al carrito</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

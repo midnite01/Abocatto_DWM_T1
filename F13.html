@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>US-13 Selección de Método de Pago</title>
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+
+  <div class="container mt-5" style="max-width: 600px;">
+    <h3 class="mb-4">Selección de Método de Pago</h3>
+    <p class="text-muted">El cliente puede elegir cómo pagar su pedido.</p>
+
+    <!-- ================= ZONA: OPCIONES DE PAGO ================= -->
+    <form>
+      <div class="form-check mb-3">
+        <input class="form-check-input" type="radio" name="metodoPago" id="contraEntrega">
+        <label class="form-check-label" for="contraEntrega">
+          Pago contra entrega
+        </label>
+      </div>
+
+      <div class="form-check mb-3">
+        <input class="form-check-input" type="radio" name="metodoPago" id="tarjeta">
+        <label class="form-check-label" for="tarjeta">
+          Tarjeta de débito o crédito
+        </label>
+      </div>
+
+      <!-- ================= ZONA: FORMULARIO TARJETA (opcional) ================= -->
+      <div class="card p-3 mb-4">
+        <h5>Datos de la tarjeta</h5>
+        <div class="mb-3">
+          <label class="form-label">Número de tarjeta</label>
+          <input type="text" class="form-control" placeholder="0000 0000 0000 0000">
+        </div>
+        <div class="row">
+          <div class="col-6 mb-3">
+            <label class="form-label">Mes</label>
+            <input type="text" class="form-control" placeholder="MM">
+          </div>
+          <div class="col-6 mb-3">
+            <label class="form-label">Año</label>
+            <input type="text" class="form-control" placeholder="YYYY">
+          </div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">CVV</label>
+          <input type="text" class="form-control" placeholder="123">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Nombre en la tarjeta</label>
+          <input type="text" class="form-control" placeholder="Juan Pérez">
+        </div>
+      </div>
+
+      <!-- ================= ZONA: BOTÓN CONFIRMAR ================= -->
+      <div class="d-grid">
+        <button type="submit" class="btn btn-danger">Confirmar método de pago</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
