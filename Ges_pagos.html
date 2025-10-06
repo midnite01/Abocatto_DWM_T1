@@ -13,14 +13,14 @@
   <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500&display=swap" rel="stylesheet">
 
   <style>
-    body { background:#111; color:#ffffff; }
+    body { background:#111; color:#f7f7f7; }
     .navbar { font-family: 'Oswald', sans-serif; }
-    .card { background:#e6b800; border:1px solid #2a2a2a; }
-    .card .form-control, .card .form-select { background:#ffffff; color:#000000; border-color:#ffcc00; }
-    .text-muted { color:#ffffff !important; }
-    .price { color:#ffcc00; font-weight:700; }
+    .card { background:#1b1b1b; border:1px solid #2a2a2a; }
+    .card .form-control, .card .form-select { background:#121212; color:#eaeaea; border-color:#3a3a3a; }
+    .text-muted { color:#bdbdbd !important; }
+    .price { color:#ff3b3b; font-weight:700; }
     .chip { background:#202020; border:1px solid #2b2b2b; border-radius:999px; padding:.25rem .6rem; font-size:.85rem; }
-    .btn-danger { background:#e6b800; border-color:#e6b800; }
+    .btn-danger { background:#e53935; border-color:#e53935; }
     .btn-outline-light { border-color:#ccc; color:#eee; }
     .btn-outline-light:hover { background:#eee; color:#111; }
     .divider { height:1px; background:#2b2b2b; margin:.75rem 0; }
@@ -30,6 +30,81 @@
     #address-pickup, #address-delivery { display:none; }
     /* Scroll agrad. para listado */
     #resumen-items { max-height: 420px; overflow:auto; }
+
+    /* === Ajustes según tu pantallazo (A=amarillo, N=negro) === */
+
+/* Paleta */
+:root { --yellow:#ffcc00; --black:#111; }
+
+/* A) Las 2 cards de selección (Entrega y Pago) -> fondo amarillo + texto negro */
+.col-lg-8 > .card:nth-of-type(1),
+.col-lg-8 > .card:nth-of-type(2){
+  background: var(--yellow);
+  border-color: #f2c43b;
+  color: var(--black);
+}
+.col-lg-8 > .card:nth-of-type(1) h5,
+.col-lg-8 > .card:nth-of-type(2) h5,
+.col-lg-8 > .card:nth-of-type(1) label,
+.col-lg-8 > .card:nth-of-type(2) label,
+.col-lg-8 > .card:nth-of-type(1) .text-muted,
+.col-lg-8 > .card:nth-of-type(2) .text-muted{
+  color: var(--black) !important;
+}
+/* Radios visibles sobre amarillo */
+.col-lg-8 > .card:nth-of-type(1) .form-check-input,
+.col-lg-8 > .card:nth-of-type(2) .form-check-input{ border-color: var(--black); }
+.col-lg-8 > .card:nth-of-type(1) .form-check-input:checked,
+.col-lg-8 > .card:nth-of-type(2) .form-check-input:checked{ background-color: var(--black); border-color: var(--black); }
+
+/* A) Total del resumen en amarillo */
+.price, #txt-total{ color: var(--yellow) !important; }
+
+/* N) Botón “Confirmar pedido” en negro (cuando esté habilitado) */
+#btn-confirmar{
+  background: var(--black);
+  border-color: var(--black);
+  color:#fff;
+}
+#btn-confirmar:hover:not(:disabled){ opacity:.9; }
+#btn-confirmar:disabled{ background:#000000; border-color:#333; color:#bbb; }
+
+/* Inputs del bloque “Tarjeta”: blancos con texto negro (contraste) */
+#card-box .form-control,
+#card-box .form-select{ background:#fff; color:#111; border-color:#ccc; }
+#card-box .form-control::placeholder{ color:#666; }
+/* Por si el bloque tenía estilos inline oscuros */
+#card-box{ background:#fff !important; border:1px solid #ddd !important; color:#111; }
+#card-box h6{ color:#111; }
+
+/* (Opcional) Marca Bocatto del navbar en amarillo */
+.navbar-brand{ color: var(--yellow) !important; }
+
+/* === Resumen de compra: fondo amarillo + letras negras === */
+:root { --yellow:#ffcc00; --black:#111; }
+
+/* Card de la columna derecha */
+.col-lg-4 > .card{
+  background: var(--yellow);
+  border-color: #f2c43b;
+  color: var(--black);
+}
+
+/* Forzar textos negros dentro del resumen */
+.col-lg-4 > .card h5,
+.col-lg-4 > .card .text-muted,
+.col-lg-4 > .card span,
+.col-lg-4 > .card a{
+  color: var(--black) !important;
+}
+
+/* El total también en negro (por si antes lo dejaste amarillo/rojo) */
+.col-lg-4 > .card #txt-total,
+.col-lg-4 > .card .price{
+  color: var(--black) !important;
+}
+
+
   </style>
 </head>
 <body>
@@ -72,7 +147,7 @@
           </div>
 
           <!-- Bloque dinámico de dirección -->
-          <div class="mt-3 p-3 rounded-3" style="background:#ffcc00; border:1px solid #2a2a2a;">
+          <div class="mt-3 p-3 rounded-3" style="background:#151515; border:1px solid #2a2a2a;">
             <div id="address-pickup">
               <div class="d-flex align-items-center justify-content-between">
                 <div>
@@ -119,7 +194,7 @@
           </div>
 
           <!-- Formulario de tarjeta (mock) -->
-          <div id="card-box" class="mt-3 p-3 rounded-3" style="background:#ffcc00; border:1px solid #ffcc00;">
+          <div id="card-box" class="mt-3 p-3 rounded-3" style="background:#151515; border:1px solid #2a2a2a;">
             <h6 class="mb-3">Datos de la tarjeta</h6>
             <div class="row g-2">
               <div class="col-12">
