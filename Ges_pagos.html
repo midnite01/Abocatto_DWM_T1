@@ -13,16 +13,16 @@
   <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500&display=swap" rel="stylesheet">
 
   <style>
-    body { background:#111; color:#f7f7f7; }
+    body { background:#000000; color:#000000; }
     .navbar { font-family: 'Oswald', sans-serif; }
-    .card { background:#1b1b1b; border:1px solid #2a2a2a; }
-    .card .form-control, .card .form-select { background:#121212; color:#eaeaea; border-color:#3a3a3a; }
-    .text-muted { color:#bdbdbd !important; }
-    .price { color:#ff3b3b; font-weight:700; }
+    .card { background:#e6b800; border:1px solid #ffcc00; }
+    .card .form-control, .card .form-select { background:#ffffff; color:#000000; border-color:#3a3a3a; }
+    .text-muted { color:#000000 !important; }
+    .price { color:#000000; font-weight:700; }
     .chip { background:#202020; border:1px solid #2b2b2b; border-radius:999px; padding:.25rem .6rem; font-size:.85rem; }
-    .btn-danger { background:#e53935; border-color:#e53935; }
-    .btn-outline-light { border-color:#ccc; color:#eee; }
-    .btn-outline-light:hover { background:#eee; color:#111; }
+    .btn-danger { background:#000000; border-color:#000000; }
+    .btn-outline-light { border-color:#000000; color:#000000; }
+    .btn-outline-light:hover { background:#ffffff; color:#000000; }
     .divider { height:1px; background:#2b2b2b; margin:.75rem 0; }
     /* Tarjeta de pago visible solo cuando se selecciona "tarjeta" */
     #card-box { display:none; }
@@ -30,94 +30,21 @@
     #address-pickup, #address-delivery { display:none; }
     /* Scroll agrad. para listado */
     #resumen-items { max-height: 420px; overflow:auto; }
-
-    /* === Ajustes según tu pantallazo (A=amarillo, N=negro) === */
-
-/* Paleta */
-:root { --yellow:#ffcc00; --black:#111; }
-
-/* A) Las 2 cards de selección (Entrega y Pago) -> fondo amarillo + texto negro */
-.col-lg-8 > .card:nth-of-type(1),
-.col-lg-8 > .card:nth-of-type(2){
-  background: var(--yellow);
-  border-color: #f2c43b;
-  color: var(--black);
-}
-.col-lg-8 > .card:nth-of-type(1) h5,
-.col-lg-8 > .card:nth-of-type(2) h5,
-.col-lg-8 > .card:nth-of-type(1) label,
-.col-lg-8 > .card:nth-of-type(2) label,
-.col-lg-8 > .card:nth-of-type(1) .text-muted,
-.col-lg-8 > .card:nth-of-type(2) .text-muted{
-  color: var(--black) !important;
-}
-/* Radios visibles sobre amarillo */
-.col-lg-8 > .card:nth-of-type(1) .form-check-input,
-.col-lg-8 > .card:nth-of-type(2) .form-check-input{ border-color: var(--black); }
-.col-lg-8 > .card:nth-of-type(1) .form-check-input:checked,
-.col-lg-8 > .card:nth-of-type(2) .form-check-input:checked{ background-color: var(--black); border-color: var(--black); }
-
-/* A) Total del resumen en amarillo */
-.price, #txt-total{ color: var(--yellow) !important; }
-
-/* N) Botón “Confirmar pedido” en negro (cuando esté habilitado) */
-#btn-confirmar{
-  background: var(--black);
-  border-color: var(--black);
-  color:#fff;
-}
-#btn-confirmar:hover:not(:disabled){ opacity:.9; }
-#btn-confirmar:disabled{ background:#000000; border-color:#333; color:#bbb; }
-
-/* Inputs del bloque “Tarjeta”: blancos con texto negro (contraste) */
-#card-box .form-control,
-#card-box .form-select{ background:#fff; color:#111; border-color:#ccc; }
-#card-box .form-control::placeholder{ color:#666; }
-/* Por si el bloque tenía estilos inline oscuros */
-#card-box{ background:#fff !important; border:1px solid #ddd !important; color:#111; }
-#card-box h6{ color:#111; }
-
-/* (Opcional) Marca Bocatto del navbar en amarillo */
-.navbar-brand{ color: var(--yellow) !important; }
-
-/* === Resumen de compra: fondo amarillo + letras negras === */
-:root { --yellow:#ffcc00; --black:#111; }
-
-/* Card de la columna derecha */
-.col-lg-4 > .card{
-  background: var(--yellow);
-  border-color: #f2c43b;
-  color: var(--black);
-}
-
-/* Forzar textos negros dentro del resumen */
-.col-lg-4 > .card h5,
-.col-lg-4 > .card .text-muted,
-.col-lg-4 > .card span,
-.col-lg-4 > .card a{
-  color: var(--black) !important;
-}
-
-/* El total también en negro (por si antes lo dejaste amarillo/rojo) */
-.col-lg-4 > .card #txt-total,
-.col-lg-4 > .card .price{
-  color: var(--black) !important;
-}
-
-
   </style>
 </head>
 <body>
 
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark border-bottom border-secondary">
+
+      <!--NAVBAR-->
+<nav class="navbar navbar-expand-lg navbar-light bg-warning border-bottom border-secondary">
   <div class="container">
     <a class="navbar-brand" href="Web_principal.html">
       <i class="bi bi-bag"></i> Bocatto
     </a>
     <div class="ms-auto d-flex gap-2">
-      <a href="Web_principal.html" class="btn btn-outline-light">
-        <i class="bi bi-arrow-left"></i> Volver a la tienda
-      </a>
+    <a href="Web_principal.html" class="btn btn-outline-light navbar-btn">
+      <i class="bi bi-arrow-left"></i> Volver a la tienda
+    </a>
     </div>
   </div>
 </nav>
@@ -127,30 +54,32 @@
     <!-- Columna izquierda -->
     <div class="col-12 col-lg-8">
 
+    <!--CARD DE "TU TIPO DE ENTREGA"-->
       <!-- Tipo de entrega -->
       <div class="card shadow-sm rounded-4 mb-3">
         <div class="card-body">
           <h5 class="mb-3">Tu tipo de entrega</h5>
-
+    <!--Opcion de retiro en local-->
           <div class="form-check mb-2">
             <input class="form-check-input" type="radio" name="deliveryType" id="optRetiro" value="retiro">
             <label class="form-check-label" for="optRetiro">
               Retiro en local
             </label>
           </div>
-
+    <!--Opcion de delyvery-->
           <div class="form-check">
             <input class="form-check-input" type="radio" name="deliveryType" id="optDespacho" value="despacho">
             <label class="form-check-label" for="optDespacho">
               Despacho a domicilio
             </label>
           </div>
-
+          
           <!-- Bloque dinámico de dirección -->
-          <div class="mt-3 p-3 rounded-3" style="background:#151515; border:1px solid #2a2a2a;">
+          <div class="mt-3 p-3 rounded-3" style="background:#ffcc00; border:1px solid #ffcc00;">
             <div id="address-pickup">
               <div class="d-flex align-items-center justify-content-between">
                 <div>
+                  <!--Direccion si marca la opcion de retiro en local -->
                   <div class="fw-semibold">LOCAL MAIPÚ</div>
                   <small class="text-muted d-block">Av. Pajaritos 1234, Maipú, RM, Chile</small>
                   <small class="text-muted d-block">¿Cómo llegar? • Tiempo de entrega <span class="chip">15 - 25 mins</span></small>
@@ -158,7 +87,7 @@
                 <button class="btn btn-outline-light btn-sm" id="btnElegirOtro">Elegir otro</button>
               </div>
             </div>
-
+<!--Direccion si marca la opcion de despacho a domicilio -->
             <div id="address-delivery">
               <div class="d-flex align-items-center justify-content-between">
                 <div>
@@ -174,7 +103,7 @@
         </div>
       </div>
 
-      <!-- Método de pago -->
+      <!-- METODO DE PAGO -->
       <div class="card shadow-sm rounded-4 mb-3">
         <div class="card-body">
           <h5 class="mb-3">Método de pago</h5>
@@ -194,7 +123,7 @@
           </div>
 
           <!-- Formulario de tarjeta (mock) -->
-          <div id="card-box" class="mt-3 p-3 rounded-3" style="background:#151515; border:1px solid #2a2a2a;">
+          <div id="card-box" class="mt-3 p-3 rounded-3" style="background:#ffcc00; border:1px solid #ffcc00;">
             <h6 class="mb-3">Datos de la tarjeta</h6>
             <div class="row g-2">
               <div class="col-12">
@@ -222,7 +151,7 @@
       </div>
 
     </div>
-
+<!--CARD DE RESUMEN DE COMPRA-->
     <!-- Columna derecha -->
     <div class="col-12 col-lg-4">
       <div class="card shadow-sm rounded-4">
@@ -244,13 +173,13 @@
             <span class="fw-bold">Total Pedido</span>
             <span class="price" id="txt-total">$0</span>
           </div>
-
+          <!--Boton vovler al carrito-->
           <div class="mt-3 d-flex justify-content-between">
             <a href="Web_principal.html" class="link-light text-decoration-none">
               <i class="bi bi-chevron-left"></i> Volver al carrito
             </a>
           </div>
-
+          <!--Boton confirmar pedido-->
           <div class="d-grid mt-3">
             <button class="btn btn-danger btn-lg" id="btn-confirmar" disabled>Confirmar pedido</button>
           </div>
