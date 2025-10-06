@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bocatto | Tus pedidos / Boletas</title>
+
+  <!-- Bootstrap + Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg:#111; --card:#1b1b1b; --muted:#bdbdbd; --line:#2a2a2a;
+      --accent:#ffd54f; /* amarillo navbar */
+      --accent-text:#111;
+      --ok:#2ecc71; --warn:#f39c12; --info:#4fc3f7;
+    }
+    body{ background:var(--bg); color:#f7f7f7; }
+    .navbar { background:var(--accent)!important; }
+    .navbar .navbar-brand, .navbar .nav-link, .navbar .btn { color:var(--accent-text)!important; }
+    .card{ background:var(--card); border:1px solid var(--line); }
+    .muted{ color:var(--muted)!important; }
+    .chip{ background:#222; border:1px solid #333; border-radius:999px; padding:.25rem .6rem; cursor:pointer; user-select:none; }
+    .chip.active{ background:#333; border-color:#555; }
+    .order-card{ transition: transform .08s ease; }
+    .order-card:hover{ transform: translateY(-1px); }
+    .state-dot{ width:10px; height:10px; border-radius:50%; display:inline-block; margin-right:.35rem; }
+    .state-prep { background:var(--warn); }
+    .state-route{ background:var(--info); }
+    .state-done { background:var(--ok); }
+    .divider { height:1px; background:var(--line); }
+    .btn-outline-light{ border-color:#aaa; color:#eee; }
+    .btn-outline-light:hover{ background:#eee; color:#111; }
+    .table-dark td, .table-dark th { background:#141414!important; }
+  </style>
+</head>
+<body>
+
+<!-- NAVBAR cliente (amarillo) -->
+<nav class="navbar navbar-expand-lg border-bottom border-dark">
+  <div class="container">
+    <a class="navbar-brand fw-semibold" href="Web_principal.html"><i class="bi bi-bag"></i> Bocatto</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navClient">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navClient">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        <li class="nav-item"><a class="nav-link" href="Web_principal.html">Inicio</a></li>
+        <li class="nav-item"><a class="nav-link" href="Menu.html">Menú</a></li>
+        <li class="nav-item"><a class="nav-link active fw-semibold" href="Ges_boletas.html">Tus pedidos</a></li>
+      </ul>
+      <div class="d-flex align-items-center gap-2">
+        <!-- Badge del carrito (si lo usas en otras páginas) -->
+        <a href="#" class="btn btn-sm btn-outline-dark position-relative" data-bs-toggle="offcanvas" data-bs-target="#offcanvasCarrito">
+          <i class="bi bi-cart3"></i>
+          <span id="cart-count" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" hidden>0</span>
+        </a>
+        <button id="btn-logout" class="btn btn-dark btn-sm">Cerrar sesión</button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<main class="container my-4">
+  <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-3">
+    <div>
+      <h3 class="mb-0">Tus pedidos / Boletas</h3>
+      <div class="muted small">Revisa el detalle de tus pedidos y descarga tu boleta.</div>
+    </div>
+    <div class="d-flex gap-2">
+      <span class="chip active" data-filter="todos">Todos</span>
+      <span class="chip" data-filter="en_preparacion"><span class="state-dot state-prep"></span>En preparación</span>
+      <span class="chip" data-filter="en_camino"><span class="state-dot state-route"></span>En camino</span>
+      <span class="chip" data-filter="entregado"><span class="state-dot state-done"></span>Entregado</span>
+      <span class="chip" data-filter="cancelado">Cancelado</span>
+    </div>
+  </div>
+
+  <div class="input-group mb-3">
+    <span class="input-group-text bg-dark text-white border-secondary"><i class="bi bi-search"></i></span>
+    <input id="q" type="search" class="form-control bg-dark text-white border-secondary" placeholder="Buscar por número de pedido/boleta o dirección…">
+  </div>
+
+  <div id="lista" class="vstack gap-3"></div>
+
+  <div id="sin-datos" class="text-center muted mt-4" style="display:none;">
+    No hay pedidos que coincidan con el filtro.
+  </div>
+</main>
+
+<!-- Modal Boleta -->
+<div class="modal fade" id="modalBoleta" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content bg-dark text-white border-secondary">
+      <div class="modal-header">
+        <h5 class="modal-title">Boleta <span id="mb-num"></span></h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="small muted">Fecha</div>
+            <div id="mb-fecha" class="fw-semibold"></div>
+          </div>
+          <div class="col-md-6">
+            <div class="small muted">Cliente</div>
+            <div id="mb-cliente" class="fw-semibold">Cliente Bocatto</div>
+          </div>
+          <div class="col-12">
+            <div class="divider my-1"></div>
+          </div>
+          <div class="col-12">
+            <table class="table table-dark table-sm align-middle">
+              <thead>
+                <tr><th>Producto</th><th class="text-end">Cant.</th><th class="text-end">Precio</th><th class="text-end">Subtotal</th></tr>
+              </thead>
+              <tbody id="mb-items"></tbody>
+              <tfoot>
+                <tr><th colspan="3" class="text-end">Subtotal</th><th class="text-end" id="mb-sub"></th></tr>
+                <tr><th colspan="3" class="text-end">Impuestos (0%)</th><th class="text-end" id="mb-imp">$0</th></tr>
+                <tr><th colspan="3" class="text-end">Total</th><th class="text-end" id="mb-tot"></th></tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline-light" data-bs-dismiss="modal">Cerrar</button>
+        <button class="btn btn-danger" id="btn-descargar">Descargar (mock)</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Bootstrap -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Tu lógica general (roles / navbar / carrito) -->
+<script src="app.js"></script>
+
+<script>
+(() => {
+  // Bloqueo suave: solo clientes
+  try {
+    const role = localStorage.getItem('userRole') || 'visitante';
+    if (role !== 'cliente') {
+      // Si quieres redirigir duro, descomenta la siguiente línea:
+      // window.location.href = 'Web_principal.html';
+    }
+  } catch (_) {}
+
+  // Helpers
+  const CLP = n => '$' + Number(n||0).toLocaleString('es-CL');
+  const $ = sel => document.querySelector(sel);
+  const $$ = sel => document.querySelectorAll(sel);
+
+  // Leer pedidos guardados o sembrar mock
+  const KEY = 'pedidos_bocatto';
+  let pedidos = [];
+  try { pedidos = JSON.parse(localStorage.getItem(KEY)) || []; } catch(_) { pedidos = []; }
+
+  if (!pedidos.length) {
+    // Semilla de ejemplo para ver la interfaz
+    pedidos = [
+      {
+        id: genId(), boleta: genBoleta(), fecha: isoNow(-90),
+        estado: 'en_preparacion', entrega: { tipo:'despacho', direccion:'Calle Falsa 123, Maipú' },
+        pago: { metodo:'tarjeta', last4:'4242' },
+        items: [
+          { nombre:'Pesto Margarita', cantidad:1, precio:16290 },
+          { nombre:'Full Veggie', cantidad:2, precio:12990 },
+        ]
+      },
+      {
+        id: genId(), boleta: genBoleta(), fecha: isoNow(-45),
+        estado: 'en_camino', entrega: { tipo:'despacho', direccion:'Vecinal 456, Maipú' },
+        pago: { metodo:'contraentrega' },
+        items: [
+          { nombre:'Chicken Honey Mustard', cantidad:1, precio:16990 }
+        ]
+      },
+      {
+        id: genId(), boleta: genBoleta(), fecha: isoNow(-5),
+        estado: 'entregado', entrega: { tipo:'retiro', direccion:'Local Maipú' },
+        pago: { metodo:'tarjeta', last4:'9999' },
+        items: [
+          { nombre:'Bocatto Clásico', cantidad:3, precio:4990 }
+        ]
+      }
+    ];
+  }
+
+  // Guardar (por si la página siembra)
+  try { localStorage.setItem(KEY, JSON.stringify(pedidos)); } catch(_) {}
+
+  // Render
+  const lista = $('#lista');
+  const sin = $('#sin-datos');
+  const search = $('#q');
+
+  let filtro = 'todos';
+
+  function render() {
+    lista.innerHTML = '';
+
+    const q = (search.value || '').toLowerCase().trim();
+    const view = pedidos
+      .filter(p => filtro === 'todos' ? true : p.estado === filtro)
+      .filter(p => {
+        if (!q) return true;
+        const hay = [
+          p.id, p.boleta, p.entrega?.direccion, p.entrega?.tipo,
+          ...(p.items||[]).map(i=>i.nombre)
+        ].join(' ').toLowerCase();
+        return hay.includes(q);
+      });
+
+    sin.style.display = view.length ? 'none' : 'block';
+
+    view.forEach(p => {
+      const total = (p.items||[]).reduce((a,i)=>a + (i.precio||0)*(i.cantidad||0), 0);
+      const resumen = (p.items||[]).map(i => `${i.nombre} x${i.cantidad}`).join(' • ');
+
+      const card = document.createElement('div');
+      card.className = 'card order-card rounded-4';
+      card.innerHTML = `
+        <div class="card-body">
+          <div class="row g-3 align-items-center">
+            <div class="col-12 col-lg">
+              <div class="d-flex align-items-center gap-2 flex-wrap">
+                ${badgeEstado(p.estado)}
+                <span class="muted small">Pedido</span>
+                <span class="fw-semibold">#${p.id}</span>
+                <span class="muted small">•</span>
+                <span class="muted small">Boleta</span>
+                <span class="fw-semibold">#${p.boleta}</span>
+              </div>
+              <div class="muted small">${fmtFecha(p.fecha)} • ${txtEntrega(p.entrega)}</div>
+              <div class="mt-1 small">${resumen || '—'}</div>
+            </div>
+            <div class="col-6 col-lg-2 text-lg-end">
+              <div class="muted small">Total</div>
+              <div class="fs-5 fw-bold">${CLP(total)}</div>
+            </div>
+            <div class="col-6 col-lg-3 d-flex justify-content-end gap-2">
+              <button class="btn btn-outline-light btn-sm ver-boleta" data-id="${p.id}">
+                <i class="bi bi-receipt"></i> Ver boleta
+              </button>
+              <a href="Est_pedido.html" class="btn btn-danger btn-sm">
+                <i class="bi bi-geo-alt"></i> Seguimiento
+              </a>
+            </div>
+          </div>
+        </div>
+      `;
+      lista.appendChild(card);
+    });
+  }
+
+  function badgeEstado(est) {
+    const map = {
+      'en_preparacion': ['state-prep','En preparación'],
+      'en_camino': ['state-route','En camino'],
+      'entregado': ['state-done','Entregado'],
+      'cancelado': ['','Cancelado'],
+    };
+    const m = map[est] || ['','—'];
+    return `<span class="state-dot ${m[0]}"></span><span class="small fw-semibold">${m[1]}</span>`;
+  }
+
+  function txtEntrega(e) {
+    if (!e) return '';
+    return (e.tipo === 'retiro') ? 'Retiro en local' : `Despacho a ${e.direccion || '—'}`;
+    }
+
+  function fmtFecha(iso) {
+    try {
+      const d = new Date(iso);
+      return d.toLocaleString('es-CL', { dateStyle:'medium', timeStyle:'short' });
+    } catch(_) { return iso || '—'; }
+  }
+
+  function isoNow(minsAgo=0) {
+    const d = new Date(Date.now() + minsAgo*60000);
+    return d.toISOString();
+  }
+  function genId(){ return Math.floor(100000 + Math.random()*900000); }
+  function genBoleta(){ return Math.floor(1000000 + Math.random()*9000000); }
+
+  // Filtros
+  $$('.chip').forEach(ch => ch.addEventListener('click', () => {
+    $$('.chip').forEach(c=>c.classList.remove('active'));
+    ch.classList.add('active');
+    filtro = ch.dataset.filter;
+    render();
+  }));
+  search.addEventListener('input', render);
+
+  // Modal boleta
+  document.addEventListener('click', e => {
+    const btn = e.target.closest('.ver-boleta');
+    if (!btn) return;
+    const id = Number(btn.dataset.id);
+    const p = pedidos.find(x=>x.id===id);
+    if (!p) return;
+
+    const sub = (p.items||[]).reduce((a,i)=>a + (i.precio||0)*(i.cantidad||0), 0);
+
+    $('#mb-num').textContent = '#' + (p.boleta || '—');
+    $('#mb-fecha').textContent = fmtFecha(p.fecha);
+    const tbody = $('#mb-items'); tbody.innerHTML = '';
+    (p.items||[]).forEach(i => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${i.nombre}</td>
+        <td class="text-end">${i.cantidad}</td>
+        <td class="text-end">${CLP(i.precio)}</td>
+        <td class="text-end">${CLP((i.precio||0)*(i.cantidad||0))}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+    $('#mb-sub').textContent = CLP(sub);
+    $('#mb-tot').textContent = CLP(sub); // sin impuestos por ahora
+    new bootstrap.Modal(document.getElementById('modalBoleta')).show();
+  });
+
+  // "Descargar (mock)"
+  document.getElementById('btn-descargar').addEventListener('click', () => {
+    alert('Descarga de boleta simulada. (Implementaremos PDF cuando lo necesites.)');
+  });
+
+  // Primer render
+  render();
+})();
+</script>
+
+</body>
+</html>
