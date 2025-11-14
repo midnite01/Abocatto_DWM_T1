@@ -1966,6 +1966,17 @@ registrarListenersProductos() {
             });
         }
 
+        // --- NUEVO: Listener para botón Locales del Navbar ---
+        // Lo enlazamos al enlace del navbar principal que tiene el href="#locales"
+        document.querySelectorAll('a[href="#locales"]').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault(); // Prevenimos el scroll
+                console.log('📍 Yendo a la página de locales...');
+                window.location.href = 'Locales.html';
+            });
+        });
+        // ----------------------------------------------------
+
         console.log('🌐 Listeners globales registrados');
     }
 
