@@ -3,242 +3,123 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Bocatto | Estado del pedido</title>
+  <title>Bocatto | Estado del Pedido</title>
 
-  <!-- Bootstrap + Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500&display=swap" rel="stylesheet">
 
   <style>
-    :root{
-      --bg:#111; --card:#e6b800; --muted:#111; --line:#2a2a2a;
-      --accent:#ffe066; /* amarillo estilo rappi */
-      --accent-ghost: rgba(247,198,0,.25);
-      --ok:#2ecc71;
-    }
-    body{ background:var(--bg); color:#f7f7f7; }
-    .card{ background:var(--card); border:1px solid var(--line); }
-    .muted{ color:var(--muted)!important; }
+    /* Estilos Base */
+    body { background-color: #111; color: #f7f7f7; }
+    .navbar { font-family: 'Oswald', sans-serif; font-size: 1.1rem; }
+    .card { background-color: #212529; border: 1px solid #373b3e; color: #fff; }
 
-    /* Tracker 3 pasos */
-    .tracker{
-      display:flex; align-items:center; gap:12px;
+    /* Tracker Visual */
+    .tracker-container { display: flex; justify-content: space-between; position: relative; margin: 2rem 0; }
+    .tracker-line {
+        position: absolute; top: 50%; left: 0; width: 100%; height: 4px;
+        background-color: #495057; z-index: 0; transform: translateY(-50%);
     }
-    .trk-step{
-      position:relative; width:28px; height:28px; border-radius:50%;
-      border:3px solid var(--accent); background:transparent; flex:0 0 28px;
-      display:grid; place-items:center; color:#111; font-weight:700;
+    .tracker-step {
+        position: relative; z-index: 1; background-color: #212529;
+        width: 40px; height: 40px; border-radius: 50%; border: 2px solid #495057;
+        display: flex; align-items: center; justify-content: center;
+        transition: all 0.3s;
     }
-    .trk-step.done{ background:var(--accent); }
-    .trk-step.done i{ color:#111; }
-    .trk-step.active{
-      box-shadow:0 0 0 6px var(--accent-ghost);
-      animation:pulse 1.5s ease-in-out infinite;
+    .tracker-step.active { border-color: #ffc107; background-color: #ffc107; color: #000; box-shadow: 0 0 10px rgba(255, 193, 7, 0.5); }
+    .tracker-step.done { border-color: #ffc107; background-color: #212529; color: #ffc107; }
+    
+    .step-label {
+        position: absolute; top: 50px; left: 50%; transform: translateX(-50%);
+        font-size: 0.75rem; color: #ccc; white-space: nowrap;
     }
-    @keyframes pulse {
-      0%{ box-shadow:0 0 0 0 var(--accent-ghost); }
-      100%{ box-shadow:0 0 0 12px rgba(247,198,0,0); }
-    }
-    .trk-bar{
-      height:4px; background:var(--line); flex:1; border-radius:999px;
-      position:relative; overflow:hidden;
-    }
-    .trk-fill{
-      position:absolute; left:0; top:0; height:100%; width:0%;
-      background:var(--accent); transition:width .3s linear;
-    }
-
-    /* Vista retiro: un solo círculo grande */
-    .single-wrapper{
-      display:grid; place-items:center; min-height:40vh;
-    }
-    .single-circle{
-      width:110px; height:110px; border-radius:50%;
-      border:8px solid var(--accent); position:relative;
-    }
-    .single-fill{
-      position:absolute; inset:0; border-radius:50%;
-      clip-path: inset(0 100% 0 0); background:var(--accent);
-      transition:clip-path linear;
-    }
-    .single-circle.done .single-fill{ clip-path: inset(0 0 0 0); }
-    .single-circle.done::after{
-      content:""; position:absolute; inset:-12px;
-      border-radius:50%; box-shadow:0 0 0 10px var(--accent-ghost);
-    }
+    .tracker-step.active .step-label { color: #ffc107; font-weight: bold; }
   </style>
 </head>
 <body>
 
-<nav class="navbar navbar-light bg-warning border-bottom border-secondary">
-  <div class="container">
-    <a class="navbar-brand" href="Web_principal.html"><i class="bi bi-bag"></i> Bocatto</a>
-    <div class="ms-auto d-flex gap-2">
-      <a href="Web_principal.html" class="btn btn-outline-light">
-        <i class="bi bi-house-door"></i> Volver a la tienda
-      </a>
+<nav id="navbarPrincipal" class="navbar navbar-expand-lg navbar-light bg-warning px-3">
+  <div class="container-fluid">
+    <a id="logoAbocatto" class="navbar-brand d-flex align-items-center" href="Web_principal.html">
+      <img src="Recursos_Esteticos/img/logo.png" alt="Bocatto" width="40" height="40" class="me-2">
+      <span class="fw-bold">Bocatto</span>
+    </a>
+    <button id="btn-resp-mov" class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse justify-content-center" id="navbarContent">
+      <ul class="navbar-nav mb-2 mb-lg-0 gap-3">
+        <li class="nav-item"><a class="nav-link" href="Menu.html"><i class="bi bi-pizza"></i> Menú</a></li>
+        <li class="nav-item"><a class="nav-link" href="Web_principal.html#promos"><i class="bi bi-fire"></i> Promos</a></li>
+        <li class="nav-item"><a class="nav-link" href="#locales"><i class="bi bi-geo-alt"></i> Locales</a></li>
+      </ul>
     </div>
-  </div>
+    <div class="d-flex gap-3">
+      <button class="btn btn-outline-dark" id="btn-login" data-bs-toggle="modal" data-bs-target="#loginModal"><i class="bi bi-box-arrow-in-right"></i> Iniciar sesión</button>
+      <button class="btn btn-dark" id="btn-pedidos" hidden><i class="bi bi-bag"></i> Tus pedidos</button>
+      <button class="btn btn-warning position-relative" id="btn-carrito" hidden data-bs-toggle="offcanvas" data-bs-target="#offcanvasCarrito">
+        <i class="bi bi-cart"></i><span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="carr-cont" hidden>0</span>
+      </button>
+      <button class="btn btn-danger" id="btn-admin" hidden><i class="bi bi-gear-fill"></i> Panel Admin</button>
+      <button class="btn btn-secondary" id="btn-logout" hidden><i class="bi bi-box-arrow-right"></i> Cerrar sesión</button>
+    </div>
+  </div> 
 </nav>
 
-<main class="container my-4">
+<div class="modal fade" id="loginModal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-lg modal-dialog-centered"><div class="modal-content bg-dark text-light rounded-4"><div class="modal-header border-0"><h5 class="modal-title">Acceso a Bocatto</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="row"><div class="col-md-6 border-end"><h6 class="fw-bold mb-3">¿Nuevo aquí?</h6><button type="button" class="btn btn-outline-warning w-100" id="btn-registrarse">Crear cuenta</button></div><div class="col-md-6"><h6 class="fw-bold mb-3">¿Ya tienes cuenta?</h6><form id="form-logearse"><div class="mb-3"><label>Email</label><input type="email" class="form-control" id="login-Email" required></div><div class="mb-3"><label>Contraseña</label><input type="password" class="form-control" id="login-contraseña" required></div><button type="submit" class="btn btn-warning w-100">Iniciar sesión</button></form></div></div></div></div></div></div>
+<div class="offcanvas offcanvas-end bg-dark text-light" tabindex="-1" id="offcanvasCarrito"><div class="offcanvas-header border-bottom"><h5 class="offcanvas-title fw-bold" style="color:#e6b800;">Tu carrito</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button></div><div class="offcanvas-body d-flex flex-column"><div id="carrito-items" class="flex-grow-1"><p class="text-center text-muted mt-5" id="carrito-vacio">Vacío</p></div><div class="border-top pt-3"><div class="d-flex justify-content-between mb-3"><h5 class="fw-bold">Subtotal</h5><h5 id="carrito-total">$0</h5></div><div class="d-grid gap-2"><button class="btn btn-outline-light" id="btn-vaciar">Vaciar</button><a id="btn-hacer-pedido" class="btn btn-danger fw-bold">Hacer pedido</a></div></div></div></div>
+
+<main class="container my-5">
   <div class="row justify-content-center">
-    <div class="col-12 col-lg-9">
-      <div class="card rounded-4 shadow-sm">
-        <div class="card-body p-4">
-
-          <!-- Encabezado -->
-          <div class="d-flex justify-content-between align-items-start flex-wrap">
-            <div>
-              <h4 class="mb-1">Estado de tu pedido</h4>
-              <div class="muted small">
-                <span id="modo-envio">Despacho a domicilio</span> •
-                <span id="pedido-id">Pedido #<span id="pid">—</span></span>
-              </div>
+    <div class="col-lg-8">
+      
+      <div class="card rounded-4 shadow-lg mb-4">
+        <div class="card-body p-4 text-center">
+          <h2 class="text-warning fw-bold" style="font-family:'Oswald', sans-serif;">ESTADO DEL PEDIDO</h2>
+          <p class="text-muted">Pedido #<span id="track-id">8058</span> • <span id="track-fecha">Hoy</span></p>
+          
+          <div class="tracker-container px-4">
+            <div class="tracker-line"></div>
+            
+            <div class="tracker-step done">
+              <i class="bi bi-receipt"></i>
+              <span class="step-label">Confirmado</span>
             </div>
-            <span class="badge text-bg-dark border border-secondary">Bocatto</span>
-          </div>
-
-          <hr class="border-secondary opacity-25">
-
-          <!-- Tracker despacho (3 pasos) -->
-          <div id="view-despacho">
-            <div class="tracker mb-2">
-              <div id="s1" class="trk-step active"><i class="bi bi-fire"></i></div>
-              <div class="trk-bar"><div id="bar1" class="trk-fill"></div></div>
-              <div id="s2" class="trk-step"><i class="bi bi-bicycle"></i></div>
-              <div class="trk-bar"><div id="bar2" class="trk-fill"></div></div>
-              <div id="s3" class="trk-step"><i class="bi bi-house-door"></i></div>
+            <div class="tracker-step active">
+              <i class="bi bi-fire"></i>
+              <span class="step-label">Preparando</span>
             </div>
-            <div class="muted">Progreso</div>
-            <h5 id="msg" class="mt-1">La cocina está preparando tu comida…</h5>
-            <div class="muted small" id="eta">Tiempo estimado restante: <span id="rem">00:50</span></div>
-          </div>
-
-          <!-- Vista retiro (1 círculo rellenable) -->
-          <div id="view-retiro" class="d-none">
-            <div class="single-wrapper my-3">
-              <div id="r1" class="single-circle">
-                <div class="single-fill" id="rf"></div>
-              </div>
+            <div class="tracker-step">
+              <i class="bi bi-bicycle"></i>
+              <span class="step-label">En Camino</span>
             </div>
-            <div class="text-center">
-              <h5 id="msg-r">La cocina está preparando tu comida…</h5>
-              <div class="muted small">Tiempo estimado: <span id="rem-r">00:20</span></div>
+            <div class="tracker-step">
+              <i class="bi bi-house-door"></i>
+              <span class="step-label">Entregado</span>
             </div>
           </div>
 
-          <hr class="border-secondary opacity-25 mt-4">
-
-          <div class="d-flex justify-content-end gap-2">
-            <a href="Web_principal.html" class="btn btn-outline-light"><i class="bi bi-cart"></i> Seguir comprando</a>
+          <div class="mt-5">
+            <h4 class="fw-bold text-white">Tu pedido está en la cocina 🔥</h4>
+            <p class="text-muted">Nuestros chefs están preparando tus Bocattos con amor.</p>
+            <div class="spinner-grow text-warning mt-2" role="status">
+              <span class="visually-hidden">Cargando...</span>
+            </div>
           </div>
-
         </div>
       </div>
+
+      <div class="text-center">
+        <a href="Ges_boletas.html" class="btn btn-outline-light"><i class="bi bi-arrow-left"></i> Volver a Mis Pedidos</a>
+      </div>
+
     </div>
   </div>
 </main>
 
-<script>
-(() => {
-  // ===== Config tiempos =====
-  const T_PREP = 20;   // seg: cocina
-  const T_ENV  = 30;   // seg: en reparto
-
-  // ===== Determinar modo (despacho o retiro) =====
-  // Lee lo que guardamos en Ges_pagos (si no existe, asume despacho):
-  const tipo = (localStorage.getItem('entrega_tipo') || 'despacho').toLowerCase();
-
-  // Id "pedido" sencillo para mostrar (si no hay uno, invento):
-  const pid = localStorage.getItem('pedido_id') || Math.floor(100000 + Math.random()*900000).toString();
-  localStorage.setItem('pedido_id', pid);
-  document.getElementById('pid').textContent = pid;
-
-  // Pintar modo en header
-  document.getElementById('modo-envio').textContent =
-    tipo === 'retiro' ? 'Retiro en local' : 'Despacho a domicilio';
-
-  // Utilidades
-  const fmt = s => {
-    s = Math.max(0, s|0);
-    const m = String(Math.floor(s/60)).padStart(2,'0');
-    const r = String(s%60).padStart(2,'0');
-    return `${m}:${r}`;
-  };
-
-  if (tipo === 'retiro') {
-    // Mostrar vista retiro
-    document.getElementById('view-despacho').classList.add('d-none');
-    document.getElementById('view-retiro').classList.remove('d-none');
-
-    let left = T_PREP;
-    document.getElementById('rem-r').textContent = fmt(left);
-
-    const bar = document.getElementById('rf');
-    const circle = document.getElementById('r1');
-    const tick = setInterval(() => {
-      left--;
-      document.getElementById('rem-r').textContent = fmt(left);
-      // animación: ir descubriendo el relleno de izquierda a derecha
-      const p = (1 - left / T_PREP) * 100;
-      bar.style.clipPath = `inset(0 ${Math.max(0, 100 - p)}% 0 0)`;
-      if (left <= 0) {
-        clearInterval(tick);
-        circle.classList.add('done');
-        document.getElementById('msg-r').textContent = 'Tu orden está lista, ¡ven a retirarla!';
-      }
-    }, 1000);
-
-  } else {
-    // Vista despacho con 3 pasos
-    const s1 = document.getElementById('s1');
-    const s2 = document.getElementById('s2');
-    const s3 = document.getElementById('s3');
-    const b1 = document.getElementById('bar1');
-    const b2 = document.getElementById('bar2');
-    const msg = document.getElementById('msg');
-    const rem = document.getElementById('rem');
-
-    let stage = 1;
-    let left  = T_PREP + T_ENV; // total visible
-
-    function stepTimer(totalSeg, onEnd, onTick){
-      let t = totalSeg;
-      const id = setInterval(()=>{
-        t--; left--;
-        rem.textContent = fmt(left);
-        if (onTick) onTick((totalSeg - t) / totalSeg);
-        if (t <= 0) { clearInterval(id); onEnd && onEnd(); }
-      },1000);
-    }
-
-    // Paso 1: cocina (20s)
-    msg.textContent = 'La cocina está preparando tu comida…';
-    rem.textContent = fmt(left);
-    stepTimer(T_PREP, paso2, p => b1.style.width = `${p*100}%`);
-
-    function paso2(){
-      // Termina paso 1
-      s1.classList.remove('active'); s1.classList.add('done');
-      s2.classList.add('active');
-      // Mensaje paso 2
-      stage = 2;
-      msg.textContent = 'Nuestro repartidor te lleva tu orden…';
-      // Paso 2: reparto (30s)
-      stepTimer(T_ENV, paso3, p => b2.style.width = `${p*100}%`);
-    }
-
-    function paso3(){
-      s2.classList.remove('active'); s2.classList.add('done');
-      // Paso final: completar
-      s3.classList.add('done');
-      rem.textContent = fmt(0);
-      msg.textContent = '¡Tu orden llegó a tu casa!';
-    }
-  }
-})();
-</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="js/app.js?v=4" defer></script>
 
 </body>
 </html>
