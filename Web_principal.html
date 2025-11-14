@@ -39,274 +39,96 @@
 
 <!-- =================== NAVBAR SUPERIOR =================== -->
 
-<nav class="navbar navbar-expand-lg navbar-light bg-warning px-3">
+<nav id="navbarPrincipal" class="navbar navbar-expand-lg navbar-light bg-warning px-3">
   <div class="container-fluid">
 
-    <!-- Logo + Nombre -->
-    <a class="navbar-brand d-flex align-items-center" href="Web_principal.html">
+<!-- Logo de la paguina -->
+    <a id="logoAbocatto" class="navbar-brand d-flex align-items-center" href="Web_principal.html">
       <img src="Recursos_Esteticos/img/logo.png" alt="Bocatto" width="40" height="40" class="me-2">
       <span class="fw-bold">Bocatto</span>
     </a>
-    <!-- Botón para menú hamburguesa en móviles -->
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
+
+<!--Estructura/Boton que vuelve respnsivo al resto de botones del nav-->
+    <button id="btn-resp-mov" class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
       <span class="navbar-toggler-icon"></span>
     </button>
 
-    <!-- Contenido colapsable -->
+<!-- Botones centrales del nav o campos colapsables en movil-->
     <div class="collapse navbar-collapse justify-content-center" id="navbarContent">
       <ul class="navbar-nav mb-2 mb-lg-0 gap-3">
-        <li class="nav-item">
-          <a class="nav-link" href="Menu.html"> <!--Link al menu-->
-        <i class="bi bi-pizza"></i> Menú
-        </a>
 
-        </li>
         <li class="nav-item">
-          <a class="nav-link" href="#promos">
+          <a id="btn-menu" class="nav-link" href="Menu.html"> <!--Link al menu-->
+            <i class="bi bi-pizza"></i> Menú
+          </a>
+        </li>
+
+        <li class="nav-item">
+          <a id="btn-promos" class="nav-link" href="#promos">
             <i class="bi bi-fire"></i> Promos <!-- 🔥 icono de promos -->
           </a>
         </li>
+
         <li class="nav-item">
-          <a class="nav-link" href="#locales">
+          <a id="btn-conocenos" class="nav-link" href="#locales">
             <i class="bi bi-geo-alt"></i> Locales y horarios <!-- 📍 icono de ubicación -->
           </a>
         </li>
+
       </ul>
     </div>
 
-    <!-- Botones a la derecha -->
-    <div class="d-flex gap-2">
-      <!-- Botón login -->
-      <button class="btn btn-outline-dark" id="btn-login" data-bs-toggle="modal" data-bs-target="#loginModal">
-        <i class="bi bi-box-arrow-in-right"></i> Iniciar sesión
-      </button>
+<!-- Botones a la derecha -->
+  <div class="d-flex gap-3">
 
-      <!-- Botón pedidos (solo clientes) -->
-      <button class="btn btn-dark" id="btn-pedidos" hidden>
-        <i class="bi bi-bag"></i> Tus pedidos
-      </button>
+    <button class="btn btn-outline-dark" id="btn-login" data-bs-toggle="modal" data-bs-target="#loginModal">
+      <i class="bi bi-box-arrow-in-right"></i> Iniciar sesión
+    </button>
 
-      <!-- Botón carrito (solo clientes) -->
-      <button class="btn btn-warning position-relative" id="btn-carrito" hidden 
-              data-bs-toggle="offcanvas" data-bs-target="#offcanvasCarrito" aria-controls="offcanvasCarrito">
-        <i class="bi bi-cart"></i>
-        <!-- Contador rojo (oculto por defecto) -->
+    <button class="btn btn-dark" id="btn-pedidos" hidden>
+      <i class="bi bi-bag"></i> Tus pedidos
+    </button>
+
+    <button class="btn btn-warning position-relative" id="btn-carrito" hidden 
+      data-bs-toggle="offcanvas" data-bs-target="#offcanvasCarrito" aria-controls="offcanvasCarrito">
+      <i class="bi bi-cart"></i>
         <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" 
-              id="cart-count" hidden>
+          id="carr-cont" hidden>
           0
         </span>
-      </button>
+    </button>
 
-      <!-- Botón panel admin -->
       <button class="btn btn-danger" id="btn-admin" hidden>
         <i class="bi bi-gear-fill"></i> Panel Admin
       </button>
 
-      <!-- Botón logout -->
       <button class="btn btn-secondary" id="btn-logout" hidden>
         <i class="bi bi-box-arrow-right"></i> Cerrar sesión
       </button>
     </div>
-        </div> <!-- cierre d-flex gap-2 -->
-  </div> <!-- cierre container-fluid -->
-</nav> <!-- cierre navbar -->
+  </div> 
+  </div> 
+</nav> 
 
-
-
-<!-- =================== CARRUSEL HERO =================== -->
-
-<div id="heroCarousel" class="carousel slide mb-4" data-bs-ride="carousel">
-
-  <!-- Indicadores (puntitos abajo) -->
-  <div class="carousel-indicators">
-    <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="0" class="active"></button>
-    <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="1"></button>
-    <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="2"></button>
-  </div>
-
-  <!-- Slides -->
-  <div class="carousel-inner">
-
-    <!-- Slide 1 -->
-    <div class="carousel-item active">
-      <img src="Recursos_Esteticos/img/hero1.jpg" class="d-block w-100" alt="Promo 1">
-      <div class="carousel-caption d-none d-md-block bg-dark bg-opacity-50 rounded p-2">
-        <h5>¡Pepperoni a precio vecino!</h5>
-        <p>Solo por hoy. Pide y retira en tienda.</p>
-        <a href="#promos" class="btn btn-danger">Ver promos</a>
-      </div>
-    </div>
-
-    <!-- Slide 2 -->
-    <div class="carousel-item">
-      <img src="Recursos_Esteticos/img/hero2.jpg" class="d-block w-100" alt="Promo 2">
-      <div class="carousel-caption d-none d-md-block bg-dark bg-opacity-50 rounded p-2">
-        <h5>Nuevo Panini Caprese</h5>
-        <p>Mozzarella, tomate, pesto y albahaca.</p>
-        <a href="#menu" class="btn btn-danger">Ir al menú</a>
-      </div>
-    </div>
-
-    <!-- Slide 3 -->
-    <div class="carousel-item">
-      <img src="Recursos_Esteticos/img/hero3.jpg" class="d-block w-100" alt="Promo 3">
-      <div class="carousel-caption d-none d-md-block bg-dark bg-opacity-50 rounded p-2">
-        <h5>Combo Baguette + Bebida</h5>
-        <p>Para llevar y compartir.</p>
-        <a href="#promos" class="btn btn-danger">Aprovechar</a>
-      </div>
-    </div>
-
-  </div>
-
-  <!-- Controles (flechas) -->
-  <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev">
-    <span class="carousel-control-prev-icon"></span>
-  </button>
-  <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next">
-    <span class="carousel-control-next-icon"></span>
-  </button>
-</div>
-
-<!-- =================== SECCIÓN PROMOCIONES =================== -->
-
-<section id="promos" class="container-fluid my-5"> 
-  <!-- 
-  <section>: agrupa contenido relacionado, en este caso toda la sección de promociones
-  id="promos": Le da un identificador general a esta seccion
-  class="container-fluid my-5": usa clases de Bootstrap para un contenedor que ocupa todo el ancho y tiene margen vertical
-  -->
-
-  <!-- TITULO DE LA SECCION -->
-  <!-- "text-start": usa bootstrap para alinear texto a la izquierda
-        "fw-bold": texto en negrita
-        "style": estilos CSS directos para color y fuente
-  -->
-  <h2 class="text-start fw-bold" style="color:#e6b800; font-family:'Oswald', sans-serif;">
-    PROMOCIONES
-  </h2>
-
-<!-- Grid para dividir la pantala segun el disositivo en 5 columnas-->
-  <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-5 g-4 mt-3">
-
-  <!-- Botón agregar producto (solo visible para admin) -->
-  <!--"hidden" deja este boton invisible de entrada, despues en el bloque de JS definimos que lo muestre solo si el rol es de admin-->
-  <div class="text-center my-3" id="btn-add-promo" hidden>
-    <button class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#modalAddProduct" data-category="promo"><!--Un boton rojo que abre un modal con id=modalAddProduct y que es de la categoria de "promos"-->
-      <i class="bi bi-plus-circle"></i> Agregar producto
-    </button>
-  </div>
-        <!-- Card de la promo 1 -->
-        <div class="col">
-          <div class="card h-100 rounded-4">
-            <!-- Imagen -->
-            <div class="card-img-top bg-dark rounded-top-4" style="height:180px; background:url('Recursos_Esteticos/img/producto1.jpg') center/cover;">
-            </div>
-
-            <!-- Cuerpo de la card -->
-            <div class="card-body text-center" style="background-color:#e6b800; border-radius:0 0 1rem 1rem;">
-              <h5 class="card-title fw-bold text-dark">Producto1</h5>
-              <p class="card-text text-dark">Descripción del producto</p>
-              <p class="fw-bold text-dark">$4.990</p>
-
-              <!-- Botón cliente -->
-              <button class="btn btn-light text-dark fw-bold"
-                      onclick="agregarAlCarrito('Producto1', 4990, 'Recursos_Esteticos/img/producto1.jpg')">
-                Agregar al carrito
-              </button>
-
-      <!-- Botones admin -->
-      <div class="mt-2 justify-content-center gap-2 admin-actions" hidden>
-        <button class="btn btn-sm btn-outline-light btn-edit" data-category="promo">Editar</button>
-        <button class="btn btn-sm btn-outline-danger btn-delete" data-category="promo">Eliminar</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-
-        <!-- Botones solo para admin -->
-        <div class="mt-2 justify-content-center gap-2 admin-actions" hidden>
-          <button class="btn btn-sm btn-outline-light btn-edit" data-category="promo">Editar</button>
-          <button class="btn btn-sm btn-outline-danger btn-delete" data-category="promo">Eliminar</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-
-
-<!-- Modal genérico para agregar/editar productos -->
-<div class="modal fade" id="modalAddProduct" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content bg-dark text-light rounded-4">
-      <div class="modal-header border-0">
-        <h5 class="modal-title" id="modalProductTitle">Agregar producto</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-      </div>
-      <div class="modal-body">
-        <form id="productForm">
-          <input type="hidden" id="productCategory">
-          <input type="hidden" id="editIndex">
-
-          <div class="mb-3">
-            <label class="form-label">Nombre del producto</label>
-            <input type="text" class="form-control" id="productName" required>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Descripción</label>
-            <textarea class="form-control" id="productDesc" rows="2" required></textarea>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Precio</label>
-            <input type="number" class="form-control" id="productPrice" required>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Foto (URL por ahora)</label>
-            <input type="text" class="form-control" id="productImg" placeholder="Recursos_Esteticos/img/producto.jpg">
-          </div>
-
-          <button type="submit" class="btn btn-warning fw-bold w-100">Guardar</button>
-        </form>
-      </div>
-    </div>
-  </div>
-</div>
-
-</div>
-
-<!-- =================== CARRITO =================== -->
-<div class="offcanvas offcanvas-end bg-dark text-light" tabindex="-1" id="offcanvasCarrito" aria-labelledby="offcanvasCarritoLabel">
-  <div class="offcanvas-header border-bottom">
-    <h5 class="offcanvas-title fw-bold" id="offcanvasCarritoLabel" style="color:#e6b800;">
-      Carrito de Compras
-    </h5>
-    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Cerrar"></button>
-  </div>
-  
-  <div class="offcanvas-body d-flex flex-column">
-    <!-- Lista de productos -->
-    <div id="carrito-items" class="flex-grow-1">
-      <!-- Aquí se insertan los productos dinámicamente con JS -->
-      <p class="text-center text-muted mt-5" id="carrito-vacio">Tu carrito está vacío</p>
-    </div>
-
-    <!-- Subtotal y botones -->
-    <div class="border-top pt-3">
-      <div class="d-flex justify-content-between align-items-center mb-3">
-        <h5 class="fw-bold" style="color:#e6b800;">Subtotal</h5>
-        <h5 id="carrito-total" class="fw-bold">$0</h5>
-      </div>
-      <div class="d-grid gap-2">
-        <button class="btn btn-outline-light fw-bold" id="btn-vaciar">Vaciar carrito</button>
-        <button class="btn btn-danger fw-bold">Hacer pedido</button>
-      </div>
-    </div>
-  </div>
-</div>
-
+<!--
+1.-id [navbarPrincipal] = Contenedor principal del navbar
+2.-id [logoAbocatto] = Logo y nombre de la página
+3.-id [btn-resp-mov] = Botón para colapsar/expandir el menú en móviles
+4.-id [navbarContent] = Contenedor de los enlaces del navbar/menú/promos/conocenos/botones centrales
+5.-id [btn-menu] = Botón para ir al menú
+6.-id [btn-promos] = Botón para ir a las promociones
+7.-id [btn-conocenos] = Botón para ir a locales y horarios
+8.-id [btn-login] = Botón para abrir el modal de login
+9.-id [btn-pedidos] = Botón para ver los pedidos del usuario
+10.-id [btn-carrito] = Botón para abrir el carrito de compras
+11.-id [carr-cont] = Contador de items en el carrito
+12.-id [btn-admin] = Botón para abrir el panel de administración
+13.-id [btn-logout] = Botón para cerrar sesión
+--> 
 
 <!-- =================== MODAL LOGIN =================== -->
+
+<!--Head del modal, caracteristicas generaes/ titulo/ boton de cierre-->
 <div class="modal fade" id="loginModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered"> <!-- modal más ancho -->
     <div class="modal-content bg-dark text-light rounded-4">
@@ -314,29 +136,31 @@
         <h5 class="modal-title">Acceso a Bocatto</h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
       </div>
+
+<!--Body del modal-->
       <div class="modal-body">
         <div class="row">
           
-          <!-- Columna Crear cuenta -->
+<!-- Columna para crear una cuenta  -->
           <div class="col-md-6 border-end">
             <h6 class="fw-bold mb-3">¿Nuevo aquí?</h6>
             <p class="small">Crea una cuenta para acceder a promociones y seguimiento de pedidos.</p>
-            <form id="registerForm">
-              <button type="submit" class="btn btn-outline-warning w-100">Crear cuenta</button>
-            </form>
+              <button type="button" class="btn btn-outline-warning w-100" id="btn-registrarse">
+                Crear cuenta
+              </button>
           </div>
 
-          <!-- Columna Iniciar sesión -->
+<!-- Columna para Iniciar sesión -->
           <div class="col-md-6">
             <h6 class="fw-bold mb-3">¿Ya tienes cuenta?</h6>
-            <form id="loginForm">
+            <form id="form-logearse"> <!-- Form = formulario -->
               <div class="mb-3">
-                <label for="loginEmail" class="form-label">Correo electrónico</label>
-                <input type="email" class="form-control" id="loginEmail" required>
+                <label for="login-Email" class="form-label">Correo electrónico</label>
+                <input type="email" class="form-control" id="login-Email" required>
               </div>
               <div class="mb-3">
-                <label for="loginPass" class="form-label">Contraseña</label>
-                <input type="password" class="form-control" id="loginPass" required>
+                <label for="login-contraseña" class="form-label">Contraseña</label>
+                <input type="password" class="form-control" id="login-contraseña" required>
               </div>
               <button type="submit" class="btn btn-warning w-100">Iniciar sesión</button>
             </form>
@@ -348,31 +172,241 @@
   </div>
 </div>
 
+<!--
+1.-id [loginModal] = contenedor principal del modal de login
+2.-id [btn-registrarse] =  boton para crear una cuenta 
+3.-id [form-logearse] = bloque formulario para iniciar sesión
+4.-id [login-Email] = boton de ingreso de email
+5.-id [login-contraseña] = boton de ingreso de contraseña
+-->
 
-<!-- =================== OFFCANVAS CARRITO DE COMPRAS =================== -->
+<!-- =================== CARRITO DE COMPRAS - OFFCANVAS  =================== -->
 
 <div class="offcanvas offcanvas-end bg-dark text-light" tabindex="-1" id="offcanvasCarrito" aria-labelledby="offcanvasCarritoLabel">
+<!--El header del carrito-->
   <div class="offcanvas-header border-bottom">
-    <h5 class="offcanvas-title fw-bold" id="offcanvasCarritoLabel" style="color:#e6b800;">Carrito de Compras</h5>
+    <h5 class="offcanvas-title fw-bold" id="offcanvasCarritoLabel" style="color:#e6b800;">Tu carrito</h5>
     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Cerrar"></button>
   </div>
-  <div class="offcanvas-body d-flex flex-column">
-    <div id="carrito-items" class="flex-grow-1">
-      <p class="text-center text-muted mt-5" id="carrito-vacio">Tu carrito está vacío</p>
+<!--El body del carrito-->
+    <div class="offcanvas-body d-flex flex-column">
+      <div id="carrito-items" class="flex-grow-1">
+        <p class="text-center text-muted mt-5" id="carrito-vacio">Tu carrito está vacío</p>
     </div>
+<!--footer del carrito-->
     <div class="border-top pt-3">
       <div class="d-flex justify-content-between align-items-center mb-3">
         <h5 class="fw-bold" style="color:#e6b800;">Subtotal</h5>
         <h5 id="carrito-total" class="fw-bold">$0</h5>
+    </div>
+
+    <div class="d-grid gap-2">
+      <button class="btn btn-outline-light fw-bold" id="btn-vaciar">Vaciar carrito</button>
+      <a id="btn-hacer-pedido" class="btn btn-danger fw-bold">Hacer pedido</a>
+    </div>
+
       </div>
-      <div class="d-grid gap-2">
-        <button class="btn btn-outline-light fw-bold" id="btn-vaciar">Vaciar carrito</button>
-       <!--<button class="btn btn-danger fw-bold">Hacer pedido</button>-->
-       <a id="btn-hacer-pedido" class="btn btn-danger fw-bold">Hacer pedido</a>
+      </div>
+</div>
+
+<!-- 
+
+1.- id [offcanvasCarrito] - Contenedor principal del carrito 
+2.- id [offcanvasCarritoLabel] - Título del carrito
+3.- id [carrito-items] - Contenedor de los productos en el carrito
+4.- id [carrito-vacio] - Mensaje cuando el carrito está vacío
+5.- id [carrito-total] - Muestra el total del carrito
+6.- id [btn-vaciar] - Botón para vaciar el carrito
+7.- id [btn-hacer-pedido] - Botón para proceder con el pedido
+
+-->
+
+
+<!-- =================== CARRUSEL HERO =================== -->
+
+<div id="heroCarousel" class="carousel slide mb-4" data-bs-ride="carousel">
+
+<!-- Indicadores (puntitos de abajo) -->
+  <div class="carousel-indicators">
+    <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="0" class="active"></button>
+    <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="1"></button>
+    <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="2"></button>
+  </div>
+
+<!-- Las imagenes del carrusel -->
+  <div class="carousel-inner">
+
+<!-- imagen 1-->
+    <div class="carousel-item active">
+      <img src="Recursos_Esteticos/img/hero1.jpg" class="d-block w-100" alt="Promo 1">
+      <div class="carousel-caption d-none d-md-block bg-dark bg-opacity-50 rounded p-2">
+        <h5>¡Pepperoni a precio vecino!</h5>
+        <p>Solo por hoy. Pide y retira en tienda.</p>
+        <a href="#promos" class="btn btn-danger">Ver promos</a>
+      </div>
+    </div>
+
+<!-- imagen 2 -->
+    <div class="carousel-item">
+      <img src="Recursos_Esteticos/img/hero2.jpg" class="d-block w-100" alt="Promo 2">
+      <div class="carousel-caption d-none d-md-block bg-dark bg-opacity-50 rounded p-2">
+        <h5>Nuevo Panini Caprese</h5>
+        <p>Mozzarella, tomate, pesto y albahaca.</p>
+        <a href="#menu" class="btn btn-danger">Ir al menú</a>
+      </div>
+    </div>
+
+<!-- imagen 3 -->
+    <div class="carousel-item">
+      <img src="Recursos_Esteticos/img/hero3.jpg" class="d-block w-100" alt="Promo 3">
+      <div class="carousel-caption d-none d-md-block bg-dark bg-opacity-50 rounded p-2">
+        <h5>Combo Baguette + Bebida</h5>
+        <p>Para llevar y compartir.</p>
+        <a href="#promos" class="btn btn-danger">Aprovechar</a>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Controles de las flechas -->
+  <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev">
+    <span class="carousel-control-prev-icon"></span>
+  </button>
+  <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next">
+    <span class="carousel-control-next-icon"></span>
+  </button>
+</div>
+
+<!-- =================== SECCIÓN PROMOCIONES =================== -->
+<section id="promos" class="container-fluid my-5">
+
+  <!-- Título de la sección -->
+  <h2 class="text-start fw-bold" style="color:#e6b800; font-family:'Oswald', sans-serif;">
+    PROMOCIONES
+  </h2>
+
+  <!-- Grid para cards - SE LLENARÁ DINÁMICAMENTE -->
+  <div id="contenedor-promos" class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-5 g-4 mt-3">
+    
+    <!-- EJEMPLO: Card de la promo 1 (esto será generado por JavaScript) -->
+    <div class="col" data-producto-id="1" data-categoria="promos">
+      <div class="card h-100 rounded-4">
+        
+        <!-- Imagen de la card -->
+        <div class="card-img-top bg-dark rounded-top-4" 
+             style="height:180px; background:url('Recursos_Esteticos/img/producto1.jpg') center/cover;">
+        </div>
+
+        <!-- Cuerpo de la card -->
+        <div class="card-body text-center" style="background-color:#e6b800; border-radius:0 0 1rem 1rem;">
+          <h5 class="card-title fw-bold text-dark">Producto 1</h5>
+          <p class="card-text text-dark">Descripción del producto</p>
+          <p class="fw-bold text-dark">$4.990</p>
+          
+          <!-- Botón AGREGAR AL CARRITO -->
+          <button class="btn btn-light text-dark fw-bold btn-agregar-carrito"
+                  data-producto-id="1"
+                  data-nombre="Producto 1"
+                  data-precio="4990"
+                  data-imagen="Recursos_Esteticos/img/producto1.jpg">
+            Agregar al carrito
+          </button>
+
+          <!-- Botones ADMIN (ocultos por defecto) -->
+          <div class="admin-actions mt-2 justify-content-center gap-2" data-visible-role="admin" style="display: none;">
+            <button class="btn btn-sm btn-outline-light btn-editar-producto"
+                    data-producto-id="1">
+              Editar
+            </button>
+            <button class="btn btn-sm btn-outline-danger btn-eliminar-producto"
+                    data-producto-id="1">
+              Eliminar
+            </button>
+          </div>
+        </div> <!-- cierra card-body -->
+      </div> <!-- cierra card -->
+    </div> <!-- cierra col -->
+    
+    <!-- MÁS CARDS SE AGREGARÁN AQUÍ DINÁMICAMENTE -->
+    
+  </div> <!-- cierra row -->
+
+  <!-- Botón para agregar productos (solo para admin) - FUERA del grid -->
+  <div class="text-center my-4" id="btn-agre-prod" style="display: none;">
+    <button class="btn btn-outline-danger" 
+            id="btn-mostrar-modal-agregar"
+            data-bs-toggle="modal" 
+            data-bs-target="#modalAddProduct" 
+            data-category="promos">
+      <i class="bi bi-plus-circle"></i> Agregar producto promocional
+    </button>
+  </div>
+
+</section> <!-- cierra section -->
+
+
+
+<!-- ============= MODAL GENERICO PARA AGREGAR/EDITAR PRODUCTOS =========================-->
+<div class="modal fade" id="modalAddProduct" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content bg-dark text-light rounded-4">
+      
+      <!-- Header del modal -->
+      <div class="modal-header border-0">
+        <h5 class="modal-title" id="modalProductTitle">Agregar producto</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      
+      <!-- Body del modal -->
+      <div class="modal-body">
+        <form id="productForm">
+          
+          <!-- Campos ocultos para estado del modal -->
+          <input type="hidden" id="productCategory" value="">
+          <input type="hidden" id="productId" value="">
+          <!-- NOTA: editIndex fue eliminado - ahora usamos productId -->
+          
+          <!-- Campo: Nombre del producto -->
+          <div class="mb-3">
+            <label for="productName" class="form-label">Nombre del producto</label>
+            <input type="text" class="form-control" id="productName" required>
+          </div>
+          
+          <!-- Campo: Descripción -->
+          <div class="mb-3">
+            <label for="productDesc" class="form-label">Descripción</label>
+            <textarea class="form-control" id="productDesc" rows="2" required></textarea>
+          </div>
+          
+          <!-- Campo: Precio -->
+          <div class="mb-3">
+            <label for="productPrice" class="form-label">Precio</label>
+            <input type="number" class="form-control" id="productPrice" min="0" step="100" required>
+          </div>
+          
+          <!-- Campo: Imagen -->
+          <div class="mb-3">
+            <label for="productImg" class="form-label">Foto (URL por ahora)</label>
+            <input type="text" class="form-control" id="productImg" placeholder="Recursos_Esteticos/img/producto.jpg">
+          </div>
+          
+          <!-- Botón Guardar con estados de loading -->
+          <button type="submit" class="btn btn-warning fw-bold w-100" id="btn-guardar-producto">
+            <span id="texto-btn-guardar">Guardar</span>
+            <div id="spinner-guardar" class="spinner-border spinner-border-sm" style="display: none;"></div>
+          </button>
+          
+        </form>
       </div>
     </div>
   </div>
 </div>
+
+
+
+
+
+
   <!-- Bootstrap JS (para que funcione el carrusel y el navbar en móviles) -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 

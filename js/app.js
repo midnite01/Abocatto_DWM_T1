@@ -1,456 +1,1647 @@
-// ------------------------------ SIMULACION DE LOGIN/LOGOUT ------------------------------
-let userRole = localStorage.getItem('userRole') || 'visitante';
- // "visitante" | "cliente" | "admin"
+// =================== ESTRUCTURA BASE APP.JS ===================
+// Versión: API-Ready (simulación mejorada)
 
-// Engancha login si existe en la página (persiste el rol y sincroniza UI)
-const loginForm = document.getElementById('loginForm');
-if (loginForm) {
-  loginForm.addEventListener('submit', function (e) {
-    e.preventDefault();
-
-    const email = document.getElementById('loginEmail').value.trim().toLowerCase();
-    const pass  = document.getElementById('loginPass').value;
-
-    // Determina rol
-    userRole = (email === 'admin@bocatto.cl' && pass === 'admin123') ? 'admin' : 'cliente';
-
-    // Persiste rol
-    localStorage.setItem('userRole', userRole);
-
-    // Mensaje
-    if (userRole === 'admin') {
-      console.log('DEBUG: userRole seteado como:', userRole);
-      alert('Bienvenido ADMIN');
-    } else {
-      console.log('DEBUG: userRole seteado como:', userRole);
-      alert('Bienvenido cliente ' + email);
+// 1. CONSTANTES GLOBALES Y CONFIGURACIÓN
+const CONFIG = {
+    API_BASE_URL: '/graphql', // Preparado para futuro
+    CAR_KEY: 'carrito_bocatto',
+    USER_KEY: 'usuario_bocatto',
+    ROLES: {
+        VISITANTE: 'visitante',
+        CLIENTE: 'cliente', 
+        ADMIN: 'admin'
     }
+};
 
-    // Sincroniza UI
-    actualizarNavbar();
-    renderCarrito(); // opcional, por si cambia visibilidad del carrito
-
-    // Cierra modal si existe
-    const modalEl = document.getElementById('loginModal');
-    if (modalEl && window.bootstrap?.Modal) {
-      const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
-      modal.hide();
+// 2. ESTADO GLOBAL DE LA APLICACIÓN
+const EstadoApp = {
+    // Autenticación
+    usuario: {
+        id: null,
+        email: null,
+        rol: CONFIG.ROLES.VISITANTE,
+        token: null
+    },
+    
+    // Carrito
+    carrito: [],
+    
+    // Productos (cache local)
+    productos: {
+        promos: [],
+        menu: [],
+        bebidas: []
+    },
+    
+    // Estado de UI
+    ui: {
+        cargando: false,
+        modalAbierto: null
     }
-  });
-}
-
-
-// Logout si existe en la página (persiste rol y sincroniza UI)
-const btnLogout = document.getElementById('btn-logout');
-if (btnLogout) {
-  btnLogout.addEventListener('click', () => {
-    userRole = 'visitante';
-    localStorage.setItem('userRole', userRole); // ✅ persistir estado
-
-    alert('Sesión cerrada');
-    actualizarNavbar();
-    renderCarrito(); // opcional: por si cambia visibilidad del carrito
-
-    // opcional: si el offcanvas del carrito está abierto, lo cerramos
-    const oc = document.getElementById('offcanvasCarrito');
-    if (oc && window.bootstrap?.Offcanvas) {
-      const off = bootstrap.Offcanvas.getInstance(oc);
-      off?.hide();
-    }
-  });
-}
-
-// Registro (opcional)
-const registerForm = document.getElementById('registerForm');
-if (registerForm) {
-  registerForm.addEventListener('submit', function(e) {
-    e.preventDefault();
-    alert("Cuenta creada con éxito 🎉. Ahora puedes iniciar sesión.");
-  });
-}
-
-// --- Actualiza navbar según el rol actual ---
-function actualizarNavbar() {
-  const btnLogin   = document.getElementById('btn-login');
-  const btnPedidos = document.getElementById('btn-pedidos');
-  const btnCarrito = document.getElementById('btn-carrito');
-  const btnAdmin   = document.getElementById('btn-admin');
-  const btnLogout  = document.getElementById('btn-logout');
-
-  // ocultar todo por defecto, si existen
-  [btnLogin, btnPedidos, btnCarrito, btnAdmin, btnLogout].forEach(el => { if (el) el.hidden = true; });
-
-  if (userRole === "visitante") {
-    if (btnLogin) btnLogin.hidden = false;
-  } else if (userRole === "cliente") {
-    if (btnPedidos) btnPedidos.hidden = false;
-    if (btnCarrito) btnCarrito.hidden = false;
-    if (btnLogout)  btnLogout.hidden  = false;
-  } else if (userRole === "admin") {
-    if (btnAdmin)  btnAdmin.hidden  = false;
-    if (btnLogout) btnLogout.hidden = false;
-  }
-
-  // Mostrar/ocultar controles admin en cards
-  document.querySelectorAll('.admin-actions').forEach(el => {
-    if (userRole === "admin") { el.classList.add("d-flex"); el.hidden = false; }
-    else { el.classList.remove("d-flex"); el.hidden = true; }
-  });
-
-  // Botón "Agregar producto" (promos)
-  const btnAddPromo = document.getElementById('btn-add-promo');
-  if (btnAddPromo) btnAddPromo.hidden = (userRole !== "admin");
-}
-/*
-// ================== CARRITO ==================
-let carrito = [];
-
-// Agregar al carrito
-window.agregarAlCarrito = function(nombre, precio, img) {
-  try {
-    if (typeof userRole !== 'undefined' && userRole !== 'cliente') {
-      alert('Debes iniciar sesión como cliente para agregar productos al carrito.');
-      const modalEl = document.getElementById('loginModal');
-      if (modalEl && window.bootstrap?.Modal) new bootstrap.Modal(modalEl).show();
-      return;
-    }
-  } catch (_) {}
-
-  const existe = carrito.find(i => i.nombre === nombre);
-  if (existe) existe.cantidad++;
-  else carrito.push({ nombre, precio: Number(precio)||0, cantidad: 1, img });
-
-  renderCarrito();
 };
 
-// Actualizar cantidad
-window.actualizarCantidad = function(index, operacion) {
-  const i = Number(index);
-  if (!Number.isInteger(i) || !carrito[i]) return;
-  if (operacion === 'sumar') carrito[i].cantidad++;
-  if (operacion === 'restar') {
-    carrito[i].cantidad--;
-    if (carrito[i].cantidad <= 0) carrito.splice(i, 1);
-  }
-  renderCarrito();
+// 3. REFERENCIAS A ELEMENTOS DEL DOM (todos los IDs que identificamos)
+const ElementosDOM = {
+    // NAVBAR (13 elementos)
+    navbarPrincipal: document.getElementById('navbarPrincipal'),
+    logoBocatto: document.getElementById('logoBocatto'),
+    btnRespMov: document.getElementById('btn-resp-mov'),
+    navbarContent: document.getElementById('navbarContent'),
+    btnMenu: document.getElementById('btn-menu'),
+    btnPromos: document.getElementById('btn-promos'),
+    btnConocenos: document.getElementById('btn-conocenos'),
+    btnLogin: document.getElementById('btn-login'),
+    btnPedidos: document.getElementById('btn-pedidos'),
+    btnCarrito: document.getElementById('btn-carrito'),
+    carrCont: document.getElementById('carr-cont'),
+    btnAdmin: document.getElementById('btn-admin'),
+    btnLogout: document.getElementById('btn-logout'),
+    
+    // MODAL LOGIN (5 elementos)
+    loginModal: document.getElementById('loginModal'),
+    registerForm: document.getElementById('registerForm'),
+    btnRegistrarse: document.getElementById('btn-registrarse'),
+    formLogearse: document.getElementById('form-logearse'),
+    loginEmail: document.getElementById('login-Email'),
+    loginContraseña: document.getElementById('login-contraseña'),
+    
+    // SECCIÓN PROMOCIONES (4 elementos)
+    promos: document.getElementById('promos'),
+    contenedorPromos: document.getElementById('contenedor-promos'),
+    btnAgreProd: document.getElementById('btn-agre-prod'),
+    btnMostrarModalAgregar: document.getElementById('btn-mostrar-modal-agregar'),
+    
+    // MODAL PRODUCTOS (12 elementos)
+    modalAddProduct: document.getElementById('modalAddProduct'),
+    modalProductTitle: document.getElementById('modalProductTitle'),
+    productForm: document.getElementById('productForm'),
+    productCategory: document.getElementById('productCategory'),
+    productId: document.getElementById('productId'),
+    productName: document.getElementById('productName'),
+    productDesc: document.getElementById('productDesc'),
+    productPrice: document.getElementById('productPrice'),
+    productImg: document.getElementById('productImg'),
+    btnGuardarProducto: document.getElementById('btn-guardar-producto'),
+    textoBtnGuardar: document.getElementById('texto-btn-guardar'),
+    spinnerGuardar: document.getElementById('spinner-guardar'),
+    
+    // CARRITO (7 elementos)
+    offcanvasCarrito: document.getElementById('offcanvasCarrito'),
+    offcanvasCarritoLabel: document.getElementById('offcanvasCarritoLabel'),
+    carritoItems: document.getElementById('carrito-items'),
+    carritoVacio: document.getElementById('carrito-vacio'),
+    carritoTotal: document.getElementById('carrito-total'),
+    btnVaciar: document.getElementById('btn-vaciar'),
+    btnHacerPedido: document.getElementById('btn-hacer-pedido')
 };
 
-// Eliminar línea
-window.eliminarDelCarrito = function(index) {
-  const i = Number(index);
-  if (Number.isInteger(i) && carrito[i]) carrito.splice(i, 1);
-  renderCarrito();
-};
-
-// Render del offcanvas
-window.renderCarrito = function() {
-  const items  = document.getElementById('carrito-items');
-  const vacio  = document.getElementById('carrito-vacio');
-  const total  = document.getElementById('carrito-total');
-  const badge  = document.getElementById('cart-count');  // opcional
-  const vaciar = document.getElementById('btn-vaciar');  // opcional
-
-  // Si esta página no tiene offcanvas, no rompemos
-  if (!items || !vacio || !total) return;
-
-  items.innerHTML = '';
-  const totalItems = carrito.reduce((a,i)=>a+i.cantidad,0);
-  const total$     = carrito.reduce((a,i)=>a+i.precio*i.cantidad,0);
-
-  vacio.style.display = carrito.length ? 'none' : 'block';
-  total.textContent   = '$' + total$.toLocaleString();
-
-  if (badge) {
-    badge.hidden = totalItems === 0;
-    if (!badge.hidden) badge.textContent = totalItems;
-  }
-  if (vaciar) vaciar.disabled = carrito.length === 0;
-
-  carrito.forEach((item, idx) => {
-    const row = document.createElement('div');
-    row.className = 'd-flex align-items-center border-bottom py-2 gap-2';
-    row.innerHTML = `
-      <img src="${item.img}" alt="${item.nombre}" class="me-2 rounded" style="width:60px;height:60px;object-fit:cover;">
-      <div class="flex-grow-1">
-        <h6 class="mb-0 small">${item.nombre}</h6>
-        <small class="text-muted">$${item.precio.toLocaleString()}</small>
-      </div>
-      <div class="d-flex align-items-center">
-        <button class="btn btn-sm btn-outline-light btn-restar" data-index="${idx}">-</button>
-        <span class="mx-2">${item.cantidad}</span>
-        <button class="btn btn-sm btn-outline-light btn-sumar" data-index="${idx}">+</button>
-      </div>
-      <strong class="text-nowrap">$${(item.precio*item.cantidad).toLocaleString()}</strong>
-      <button class="btn btn-sm btn-outline-danger btn-eliminar" data-index="${idx}">&times;</button>
-    `;
-    items.appendChild(row);
-  });
-};
-
-// Delegación de eventos (carrito)
-document.addEventListener('DOMContentLoaded', () => {
-  actualizarNavbar();
-  renderCarrito();
-
-  const items = document.getElementById('carrito-items');
-  if (items) {
-    items.addEventListener('click', e => {
-      const index = e.target.dataset.index;
-      if (typeof index === 'undefined') return;
-      if (e.target.classList.contains('btn-sumar'))    actualizarCantidad(index, 'sumar');
-      if (e.target.classList.contains('btn-restar'))   actualizarCantidad(index, 'restar');
-      if (e.target.classList.contains('btn-eliminar')) eliminarDelCarrito(index);
-    });
-  }
-
-  const vaciar = document.getElementById('btn-vaciar');
-  if (vaciar) {
-    vaciar.addEventListener('click', () => {
-      if (confirm('¿Vaciar carrito?')) { carrito = []; renderCarrito(); }
-    });
-  }
-
-  // Re-render al abrir offcanvas (por si vienes de otra página)
-  const oc = document.getElementById('offcanvasCarrito');
-  if (oc) oc.addEventListener('show.bs.offcanvas', renderCarrito);
-});
-*/
-// ================== CARRITO ==================
-
-// Clave de persistencia
-const CAR_KEY = 'carrito_bocatto';
-
-// Cargar carrito guardado (si existe)
-let carrito = [];
-try {
-  const raw = localStorage.getItem(CAR_KEY);
-  carrito = raw ? JSON.parse(raw) : [];
-  if (!Array.isArray(carrito)) carrito = [];
-} catch (_) {
-  carrito = [];
-}
-
-// Guardar cambios del carrito
-function persistCarrito() {
-  try { localStorage.setItem(CAR_KEY, JSON.stringify(carrito)); } catch (_) {}
-}
-
-// Formateo simple CLP
-const CLP = n => '$' + Number(n || 0).toLocaleString('es-CL');
-
-// Agregar al carrito
-window.agregarAlCarrito = function (nombre, precio, img) {
-  try {
-    if (typeof userRole !== 'undefined' && userRole !== 'cliente') {
-      alert('Debes iniciar sesión como cliente para agregar productos al carrito.');
-      const modalEl = document.getElementById('loginModal');
-      if (modalEl && window.bootstrap?.Modal) new bootstrap.Modal(modalEl).show();
-      return;
-    }
-  } catch (_) {}
-
-  const existe = carrito.find(i => i.nombre === nombre);
-  if (existe) {
-    existe.cantidad++;
-  } else {
-    carrito.push({ nombre, precio: Number(precio) || 0, cantidad: 1, img });
-  }
-
-  persistCarrito();
-  renderCarrito();
-};
-
-// Actualizar cantidad (+ / -)
-window.actualizarCantidad = function (index, operacion) {
-  const i = Number(index);
-  if (!Number.isInteger(i) || !carrito[i]) return;
-
-  if (operacion === 'sumar') carrito[i].cantidad++;
-  if (operacion === 'restar') {
-    carrito[i].cantidad--;
-    if (carrito[i].cantidad <= 0) carrito.splice(i, 1);
-  }
-
-  persistCarrito();
-  renderCarrito();
-};
-
-// Eliminar línea
-window.eliminarDelCarrito = function (index) {
-  const i = Number(index);
-  if (Number.isInteger(i) && carrito[i]) carrito.splice(i, 1);
-  persistCarrito();
-  renderCarrito();
-};
-
-// Render del offcanvas (y badge)
-window.renderCarrito = function () {
-  const items  = document.getElementById('carrito-items');
-  const vacio  = document.getElementById('carrito-vacio');
-  const total  = document.getElementById('carrito-total');
-  const badge  = document.getElementById('cart-count');     // opcional (navbar)
-  const vaciar = document.getElementById('btn-vaciar');     // opcional (offcanvas)
-
-  const totalItems = carrito.reduce((a, i) => a + (i.cantidad || 0), 0);
-  const total$     = carrito.reduce((a, i) => a + (Number(i.precio) || 0) * (i.cantidad || 0), 0);
-
-  // Actualiza badge y estado del botón "Vaciar" aunque no exista offcanvas
-  if (badge) {
-    badge.hidden = totalItems === 0;
-    if (!badge.hidden) badge.textContent = totalItems;
-  }
-  if (vaciar) vaciar.disabled = carrito.length === 0;
-
-  // Si esta página no tiene offcanvas, no seguimos (pero badge ya quedó correcto)
-  if (!items || !vacio || !total) return;
-
-  items.innerHTML = '';
-  vacio.style.display = carrito.length ? 'none' : 'block';
-  total.textContent   = CLP(total$);
-
-  carrito.forEach((item, idx) => {
-    const row = document.createElement('div');
-    row.className = 'd-flex align-items-center border-bottom py-2 gap-2';
-    row.innerHTML = `
-      <img src="${item.img || 'Recursos_Esteticos/img/default.jpg'}" alt="${item.nombre}" class="me-2 rounded" style="width:60px;height:60px;object-fit:cover;">
-      <div class="flex-grow-1">
-        <h6 class="mb-0 small">${item.nombre}</h6>
-        <small class="text-muted">${CLP(item.precio)}</small>
-      </div>
-      <div class="d-flex align-items-center">
-        <button class="btn btn-sm btn-outline-light btn-restar" data-index="${idx}">-</button>
-        <span class="mx-2">${item.cantidad}</span>
-        <button class="btn btn-sm btn-outline-light btn-sumar" data-index="${idx}">+</button>
-      </div>
-      <strong class="text-nowrap">${CLP((item.precio || 0) * (item.cantidad || 0))}</strong>
-      <button class="btn btn-sm btn-outline-danger btn-eliminar" data-index="${idx}">&times;</button>
-    `;
-    items.appendChild(row);
-  });
-};
-
-// Delegación de eventos (carrito) + “Hacer pedido”
-document.addEventListener('DOMContentLoaded', () => {
-  // Si existe en esta página, actualiza navbar (compat.)
-  try { if (typeof actualizarNavbar === 'function') actualizarNavbar(); } catch (_) {}
-
-  renderCarrito();
-
-  // Delegación de botones dentro del offcanvas
-  const items = document.getElementById('carrito-items');
-  if (items) {
-    items.addEventListener('click', e => {
-      const index = e.target.dataset.index;
-      if (typeof index === 'undefined') return;
-      if (e.target.classList.contains('btn-sumar'))    actualizarCantidad(index, 'sumar');
-      if (e.target.classList.contains('btn-restar'))   actualizarCantidad(index, 'restar');
-      if (e.target.classList.contains('btn-eliminar')) eliminarDelCarrito(index);
-    });
-  }
-
-  // Botón "Vaciar carrito"
-  const vaciar = document.getElementById('btn-vaciar');
-  if (vaciar) {
-    vaciar.addEventListener('click', () => {
-      if (confirm('¿Vaciar carrito?')) { carrito = []; persistCarrito(); renderCarrito(); }
-    });
-  }
-
-  // Re-render al abrir offcanvas (por si vienes de otra página)
-  const oc = document.getElementById('offcanvasCarrito');
-  if (oc) oc.addEventListener('show.bs.offcanvas', renderCarrito);
-
-  // Botón/Enlace "Hacer pedido" (debe tener id="btn-hacer-pedido")
-  const btnPedido = document.getElementById('btn-hacer-pedido');
-  if (btnPedido) {
-    btnPedido.addEventListener('click', (e) => {
-      // Rol requerido: cliente
-      try {
-        if (typeof userRole !== 'undefined' && userRole !== 'cliente') {
-          e.preventDefault();
-          alert('Debes iniciar sesión como cliente para continuar.');
-          const modalEl = document.getElementById('loginModal');
-          if (modalEl && window.bootstrap?.Modal) new bootstrap.Modal(modalEl).show();
-          return;
+// 4. UTILIDADES GLOBALES
+const Utilidades = {
+    // Formateo de precios CLP
+    formatearPrecio: (precio) => {
+        return '$' + Number(precio || 0).toLocaleString('es-CL');
+    },
+    
+    // Verificar si elemento existe (JavaScript defensivo)
+    elementoExiste: (elemento) => {
+        return elemento !== null && elemento !== undefined;
+    },
+    
+    // Mostrar/ocultar elemento
+    toggleElemento: (elemento, mostrar) => {
+        if (Utilidades.elementoExiste(elemento)) {
+            elemento.style.display = mostrar ? 'block' : 'none';
         }
-      } catch (_) {}
-
-      if (carrito.length === 0) {
-        e.preventDefault();
-        alert('No hay artículos en tu carrito.');
-        return;
-      }
-      // Ir al checkout
-      window.location.href = 'Ges_pagos.html';
-    });
-  }
-});
-
-// ================== ADMIN PRODUCTOS (solo ajuste en botón) ==================
-const productForm = document.getElementById('productForm');
-if (productForm) {
-  productForm.addEventListener('submit', function(e) {
-    e.preventDefault();
-
-    const category = document.getElementById('productCategory').value;
-    const name = document.getElementById('productName').value;
-    const desc = document.getElementById('productDesc').value;
-    const price = Number(document.getElementById('productPrice').value);
-    const img = document.getElementById('productImg').value || "Recursos_Esteticos/img/default.jpg";
-    const editIndex = document.getElementById('editIndex').value;
-    const row = document.querySelector(`#${category} .row`);
-
-    if (editIndex === "") {
-      const col = document.createElement('div');
-      col.classList.add('col');
-      col.innerHTML = `
-        <div class="card h-100 rounded-4">
-          <div class="card-img-top bg-dark rounded-top-4" style="height:180px; background:url('${img}') center/cover;"></div>
-          <div class="card-body text-center" style="background-color:#e6b800; border-radius:0 0 1rem 1rem;">
-            <h5 class="card-title fw-bold text-dark">${name}</h5>
-            <p class="card-text text-dark">${desc}</p>
-            <p class="fw-bold text-dark">$${price.toLocaleString()}</p>
-            <button class="btn btn-light text-dark fw-bold"
-                    onclick="agregarAlCarrito('${name.replace(/'/g,"\\'")}', ${price}, '${img.replace(/'/g,"\\'")}')">
-              Agregar al carrito
-            </button>
-            <div class="mt-2 justify-content-center gap-2 admin-actions" hidden>
-              <button class="btn btn-sm btn-outline-light btn-edit" data-category="${category}">Editar</button>
-              <button class="btn btn-sm btn-outline-danger btn-delete" data-category="${category}">Eliminar</button>
-            </div>
-          </div>
-        </div>`;
-      row.appendChild(col);
-    } else {
-      const card = row.children[editIndex].querySelector('.card-body');
-      card.querySelector('.card-title').innerText = name;
-      card.querySelector('.card-text').innerText = desc;
-      card.querySelector('.fw-bold.text-dark').innerText = `$${price.toLocaleString()}`;
-      row.children[editIndex].querySelector('.card-img-top').style.background = `url('${img}') center/cover`;
+    },
+    
+    // Cargar desde localStorage
+    cargarDesdeStorage: (clave, valorPorDefecto = null) => {
+        try {
+            const item = localStorage.getItem(clave);
+            return item ? JSON.parse(item) : valorPorDefecto;
+        } catch (error) {
+            console.error(`Error cargando ${clave}:`, error);
+            return valorPorDefecto;
+        }
+    },
+    
+    // Guardar en localStorage
+    guardarEnStorage: (clave, valor) => {
+        try {
+            localStorage.setItem(clave, JSON.stringify(valor));
+            return true;
+        } catch (error) {
+            console.error(`Error guardando ${clave}:`, error);
+            return false;
+        }
     }
+};
 
-    productForm.reset();
-    document.getElementById('editIndex').value = "";
-    const modalEl = document.getElementById('modalAddProduct');
-    if (modalEl && window.bootstrap?.Modal) bootstrap.Modal.getInstance(modalEl)?.hide();
-  });
+// 5. INICIALIZACIÓN BASE
+function inicializarBase() {
+    console.log('🚀 Inicializando Bocatto App...');
+    
+    // Cargar estado persistente
+    EstadoApp.carrito = Utilidades.cargarDesdeStorage(CONFIG.CAR_KEY, []);
+    EstadoApp.usuario = Utilidades.cargarDesdeStorage(CONFIG.USER_KEY, {
+        id: null,
+        email: null,
+        rol: CONFIG.ROLES.VISITANTE,
+        token: null
+    });
+    
+    // Verificar que elementos críticos existan
+    if (!Utilidades.elementoExiste(ElementosDOM.navbarPrincipal)) {
+        console.warn('⚠️ Navbar no encontrado - ¿Estás en la página correcta?');
+    }
+    
+    console.log('✅ Base inicializada correctamente');
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  actualizarNavbar();
-  renderCarrito();
-  const oc = document.getElementById('offcanvasCarrito');
-  if (oc) oc.addEventListener('show.bs.offcanvas', renderCarrito);
-});
+// Inicializar inmediatamente
+inicializarBase();
 
-// Delegación global para todos los botones "Agregar al carrito" basados en data-*
-document.addEventListener('click', (e) => {
-  const btn = e.target.closest('.btn-add-cart');
-  if (!btn) return;
+// =================== AUTH SERVICE - AUTENTICACIÓN ===================
 
-  const name  = btn.dataset.name;
-  const price = Number(btn.dataset.price) || 0;
-  const img   = btn.dataset.img || "Recursos_Esteticos/img/default.jpg";
+class AuthService {
+    constructor() {
+        this.usuariosSimulados = this.inicializarUsuariosSimulados();
+    }
 
-  agregarAlCarrito(name, price, img);
-});
+    // 1. DATOS SIMULADOS (temporal - será reemplazado por API)
+    inicializarUsuariosSimulados() {
+        return [
+            {
+                id: 1,
+                email: 'admin@bocatto.cl',
+                password: 'admin123', // En realidad debería estar hasheado
+                nombre: 'Administrador',
+                rol: CONFIG.ROLES.ADMIN
+            },
+            {
+                id: 2,
+                email: 'cliente@bocatto.cl', 
+                password: 'cliente123',
+                nombre: 'Cliente Demo',
+                rol: CONFIG.ROLES.CLIENTE
+            },
+            {
+                id: 3,
+                email: 'juan@cliente.cl',
+                password: '123456',
+                nombre: 'Juan Pérez',
+                rol: CONFIG.ROLES.CLIENTE
+            }
+        ];
+    }
+
+    // 2. LOGIN (simulado - preparado para API)
+    async login(email, password) {
+        try {
+            EstadoApp.ui.cargando = true;
+            this.mostrarLoadingLogin(true);
+
+            // Simular delay de red
+            await new Promise(resolve => setTimeout(resolve, 1000));
+
+            // Buscar usuario en "base de datos" simulada
+            const usuario = this.usuariosSimulados.find(u => 
+                u.email === email.toLowerCase() && u.password === password
+            );
+
+            if (!usuario) {
+                throw new Error('Credenciales incorrectas');
+            }
+
+            // Crear sesión
+            const sesionUsuario = {
+                id: usuario.id,
+                email: usuario.email,
+                nombre: usuario.nombre,
+                rol: usuario.rol,
+                token: this.generarTokenSimulado(usuario.id)
+            };
+
+            // Actualizar estado global
+            EstadoApp.usuario = sesionUsuario;
+            
+            // Persistir en localStorage
+            Utilidades.guardarEnStorage(CONFIG.USER_KEY, sesionUsuario);
+
+            // Actualizar interfaz
+            this.actualizarUIpostLogin();
+
+            console.log(`✅ Login exitoso: ${usuario.nombre} (${usuario.rol})`);
+            return { exito: true, usuario: sesionUsuario };
+
+        } catch (error) {
+            console.error('❌ Error en login:', error.message);
+            this.mostrarErrorLogin(error.message);
+            return { exito: false, error: error.message };
+        } finally {
+            EstadoApp.ui.cargando = false;
+            this.mostrarLoadingLogin(false);
+        }
+    }
+
+    // 3. LOGOUT
+    async logout() {
+        try {
+            const usuarioAnterior = { ...EstadoApp.usuario };
+            
+            // Limpiar estado
+            EstadoApp.usuario = {
+                id: null,
+                email: null,
+                rol: CONFIG.ROLES.VISITANTE,
+                token: null
+            };
+
+            // Limpiar localStorage
+            localStorage.removeItem(CONFIG.USER_KEY);
+
+            // Actualizar interfaz
+            this.actualizarUIpostLogout();
+
+            // Cerrar modales/offcanvas abiertos
+            this.cerrarModalesAbiertos();
+
+            console.log(`✅ Logout exitoso: ${usuarioAnterior.email}`);
+            return { exito: true };
+
+        } catch (error) {
+            console.error('❌ Error en logout:', error);
+            return { exito: false, error: error.message };
+        }
+    }
+
+    // 4. VERIFICAR SESIÓN EXISTENTE
+    verificarSesionActiva() {
+        const usuarioStorage = Utilidades.cargarDesdeStorage(CONFIG.USER_KEY);
+        
+        if (usuarioStorage && usuarioStorage.token) {
+            EstadoApp.usuario = usuarioStorage;
+            this.actualizarUIpostLogin();
+            console.log(`✅ Sesión recuperada: ${usuarioStorage.email}`);
+            return true;
+        }
+        
+        return false;
+    }
+
+    // 5. ACTUALIZACIÓN DE INTERFAZ
+    actualizarUIpostLogin() {
+        // Actualizar navbar según rol
+        this.actualizarNavbar();
+        
+        // Mostrar/ocultar elementos admin en productos
+        this.toggleElementosAdmin();
+        
+        // Cerrar modal de login si está abierto
+        this.cerrarModalLogin();
+        
+        // Actualizar carrito (por si cambia visibilidad)
+        if (typeof carritoService !== 'undefined') {
+            carritoService.renderCarrito();
+        }
+    }
+
+    actualizarUIpostLogout() {
+        // Actualizar navbar a estado visitante
+        this.actualizarNavbar();
+        
+        // Ocultar elementos admin
+        this.toggleElementosAdmin();
+        
+        // Actualizar carrito
+        if (typeof carritoService !== 'undefined') {
+            carritoService.renderCarrito();
+        }
+    }
+
+    actualizarNavbar() {
+        const { usuario } = EstadoApp;
+        
+        // Ocultar todos los botones primero
+        this.toggleElementosNavbar(false);
+
+        // Mostrar según rol
+        switch (usuario.rol) {
+            case CONFIG.ROLES.VISITANTE:
+                if (Utilidades.elementoExiste(ElementosDOM.btnLogin)) {
+                    ElementosDOM.btnLogin.hidden = false;
+                }
+                break;
+
+            case CONFIG.ROLES.CLIENTE:
+                if (Utilidades.elementoExiste(ElementosDOM.btnPedidos)) {
+                    ElementosDOM.btnPedidos.hidden = false;
+                }
+                if (Utilidades.elementoExiste(ElementosDOM.btnCarrito)) {
+                    ElementosDOM.btnCarrito.hidden = false;
+                }
+                if (Utilidades.elementoExiste(ElementosDOM.btnLogout)) {
+                    ElementosDOM.btnLogout.hidden = false;
+                }
+                break;
+
+            case CONFIG.ROLES.ADMIN:
+                if (Utilidades.elementoExiste(ElementosDOM.btnAdmin)) {
+                    ElementosDOM.btnAdmin.hidden = false;
+                }
+                if (Utilidades.elementoExiste(ElementosDOM.btnLogout)) {
+                    ElementosDOM.btnLogout.hidden = false;
+                }
+                break;
+        }
+
+        console.log(`🔄 Navbar actualizado para rol: ${usuario.rol}`);
+    }
+
+    toggleElementosNavbar(mostrar = false) {
+        const elementos = [
+            ElementosDOM.btnLogin,
+            ElementosDOM.btnPedidos,
+            ElementosDOM.btnCarrito,
+            ElementosDOM.btnAdmin,
+            ElementosDOM.btnLogout
+        ];
+
+        elementos.forEach(elemento => {
+            if (Utilidades.elementoExiste(elemento)) {
+                elemento.hidden = !mostrar;
+            }
+        });
+    }
+
+// En AuthService (app.js)
+toggleElementosAdmin() {
+    const esAdmin = EstadoApp.usuario.rol === CONFIG.ROLES.ADMIN;
+    
+    // 1. Buscar TODOS los elementos marcados para admin (botones agregar, botones editar, etc.)
+    const elementosAdmin = document.querySelectorAll('[data-visible-role="admin"]');
+
+    // 2. Mostrar u ocultar cada uno
+    elementosAdmin.forEach(elemento => {
+        // Usamos 'inherit' o una clase vacía para que recupere su display original (block, flex, etc.)
+        // O forzamos 'block' si son botones de bloque.
+        if (elemento.classList.contains('admin-actions')) {
+             elemento.style.display = esAdmin ? 'flex' : 'none'; // Para los botones dentro de las cards
+        } else {
+             elemento.style.display = esAdmin ? 'block' : 'none'; // Para los botones de "Agregar Producto"
+        }
+    });
+
+    console.log(`👑 Elementos admin: ${esAdmin ? 'VISIBLES' : 'OCULTOS'} (${elementosAdmin.length} elementos)`);
+}
+
+    // 6. MANEJO DE MODALES
+    cerrarModalLogin() {
+        if (Utilidades.elementoExiste(ElementosDOM.loginModal) && window.bootstrap) {
+            const modal = bootstrap.Modal.getInstance(ElementosDOM.loginModal);
+            if (modal) {
+                modal.hide();
+                
+                // Limpiar formulario
+                if (Utilidades.elementoExiste(ElementosDOM.formLogearse)) {
+                    ElementosDOM.formLogearse.reset();
+                }
+            }
+        }
+    }
+
+    cerrarModalesAbiertos() {
+        // Cerrar offcanvas carrito si está abierto
+        if (Utilidades.elementoExiste(ElementosDOM.offcanvasCarrito) && window.bootstrap) {
+            const offcanvas = bootstrap.Offcanvas.getInstance(ElementosDOM.offcanvasCarrito);
+            if (offcanvas) {
+                offcanvas.hide();
+            }
+        }
+    }
+
+    // 7. FEEDBACK VISUAL
+    mostrarLoadingLogin(mostrar) {
+        // Podríamos implementar spinners en el modal de login
+        if (Utilidades.elementoExiste(ElementosDOM.btnLogin)) {
+            ElementosDOM.btnLogin.disabled = mostrar;
+        }
+    }
+
+    mostrarErrorLogin(mensaje) {
+        // Podríamos mostrar el error en el modal de login
+        alert(`Error de login: ${mensaje}`); // Temporal - mejorar con UI propia
+    }
+
+    // 8. UTILIDADES
+    generarTokenSimulado(usuarioId) {
+        // En realidad sería un JWT del backend
+        return `simulated_token_${usuarioId}_${Date.now()}`;
+    }
+
+    // 9. GETTERS
+    getUsuarioActual() {
+        return { ...EstadoApp.usuario };
+    }
+
+    estaAutenticado() {
+        return EstadoApp.usuario.rol !== CONFIG.ROLES.VISITANTE;
+    }
+
+    esAdmin() {
+        return EstadoApp.usuario.rol === CONFIG.ROLES.ADMIN;
+    }
+
+    esCliente() {
+        return EstadoApp.usuario.rol === CONFIG.ROLES.CLIENTE;
+    }
+}
+
+// Instancia global del servicio
+const authService = new AuthService();
+
+// =================== CARRITO SERVICE - CARRITO DE COMPRAS ===================
+
+class CarritoService {
+    constructor() {
+        this.cargarCarritoInicial();
+    }
+
+    // 1. INICIALIZACIÓN
+    cargarCarritoInicial() {
+        EstadoApp.carrito = Utilidades.cargarDesdeStorage(CONFIG.CAR_KEY, []);
+        console.log(`🛒 Carrito cargado: ${EstadoApp.carrito.length} items`);
+    }
+
+    persistirCarrito() {
+        Utilidades.guardarEnStorage(CONFIG.CAR_KEY, EstadoApp.carrito);
+    }
+
+    // 2. AGREGAR PRODUCTOS AL CARRITO
+    async agregarAlCarrito(nombre, precio, imagen, productoId = null) {
+        try {
+            // Verificar autenticación para clientes
+            if (!authService.estaAutenticado() || !authService.esCliente()) {
+                this.mostrarErrorAutenticacion();
+                return { exito: false, error: 'Autenticación requerida' };
+            }
+
+            const producto = {
+                id: productoId || this.generarIdTemporal(),
+                nombre: nombre,
+                precio: Number(precio) || 0,
+                imagen: imagen || 'Recursos_Esteticos/img/default.jpg',
+                cantidad: 1,
+                agregadoEn: new Date().toISOString()
+            };
+
+            // Verificar si ya existe en el carrito
+            const existeIndex = EstadoApp.carrito.findIndex(item => 
+                item.nombre === producto.nombre
+            );
+
+            if (existeIndex !== -1) {
+                // Incrementar cantidad si ya existe
+                EstadoApp.carrito[existeIndex].cantidad++;
+                console.log(`➕ Cantidad aumentada: ${producto.nombre}`);
+            } else {
+                // Agregar nuevo producto
+                EstadoApp.carrito.push(producto);
+                console.log(`🛒 Producto agregado: ${producto.nombre}`);
+            }
+
+            // Persistir y actualizar UI
+            this.persistirCarrito();
+            this.renderCarrito();
+            this.mostrarFeedbackAgregado(producto.nombre);
+
+            return { exito: true, producto: producto };
+
+        } catch (error) {
+            console.error('❌ Error agregando al carrito:', error);
+            return { exito: false, error: error.message };
+        }
+    }
+
+    // 3. ACTUALIZAR CANTIDADES
+    async actualizarCantidad(productoId, operacion) {
+        try {
+            const itemIndex = EstadoApp.carrito.findIndex(item => item.id === productoId);
+            
+            if (itemIndex === -1) {
+                throw new Error('Producto no encontrado en carrito');
+            }
+
+            const item = EstadoApp.carrito[itemIndex];
+
+            switch (operacion) {
+                case 'incrementar':
+                    item.cantidad++;
+                    console.log(`➕ Incrementado: ${item.nombre} (${item.cantidad})`);
+                    break;
+
+                case 'decrementar':
+                    item.cantidad--;
+                    if (item.cantidad <= 0) {
+                        EstadoApp.carrito.splice(itemIndex, 1);
+                        console.log(`🗑️ Eliminado: ${item.nombre}`);
+                    } else {
+                        console.log(`➖ Decrementado: ${item.nombre} (${item.cantidad})`);
+                    }
+                    break;
+
+                default:
+                    throw new Error('Operación no válida');
+            }
+
+            this.persistirCarrito();
+            this.renderCarrito();
+
+            return { exito: true };
+
+        } catch (error) {
+            console.error('❌ Error actualizando cantidad:', error);
+            return { exito: false, error: error.message };
+        }
+    }
+
+    // 4. ELIMINAR PRODUCTO DEL CARRITO
+    async eliminarDelCarrito(productoId) {
+        try {
+            const itemIndex = EstadoApp.carrito.findIndex(item => item.id === productoId);
+            
+            if (itemIndex === -1) {
+                throw new Error('Producto no encontrado en carrito');
+            }
+
+            const productoEliminado = EstadoApp.carrito[itemIndex];
+            EstadoApp.carrito.splice(itemIndex, 1);
+
+            this.persistirCarrito();
+            this.renderCarrito();
+
+            console.log(`🗑️ Producto eliminado: ${productoEliminado.nombre}`);
+            return { exito: true, producto: productoEliminado };
+
+        } catch (error) {
+            console.error('❌ Error eliminando del carrito:', error);
+            return { exito: false, error: error.message };
+        }
+    }
+
+    // 5. VACIAR CARRITO
+    async vaciarCarrito() {
+        try {
+            const cantidadItems = EstadoApp.carrito.length;
+            EstadoApp.carrito = [];
+
+            this.persistirCarrito();
+            this.renderCarrito();
+
+            console.log(`🧹 Carrito vaciado: ${cantidadItems} items eliminados`);
+            return { exito: true, itemsEliminados: cantidadItems };
+
+        } catch (error) {
+            console.error('❌ Error vaciando carrito:', error);
+            return { exito: false, error: error.message };
+        }
+    }
+
+    // 6. RENDERIZADO DEL CARRITO
+    renderCarrito() {
+        this.actualizarBadgeCarrito();
+        
+        // Si no existe el offcanvas del carrito en esta página, salir
+        if (!Utilidades.elementoExiste(ElementosDOM.carritoItems)) {
+            return;
+        }
+
+        this.renderOffcanvasCarrito();
+    }
+
+    actualizarBadgeCarrito() {
+        if (!Utilidades.elementoExiste(ElementosDOM.carrCont)) {
+            return;
+        }
+
+        const totalItems = this.obtenerTotalItems();
+        
+        if (totalItems === 0) {
+            ElementosDOM.carrCont.hidden = true;
+        } else {
+            ElementosDOM.carrCont.hidden = false;
+            ElementosDOM.carrCont.textContent = totalItems;
+        }
+
+        // Actualizar visibilidad del botón carrito según autenticación
+        if (Utilidades.elementoExiste(ElementosDOM.btnCarrito)) {
+            ElementosDOM.btnCarrito.hidden = !authService.esCliente();
+        }
+    }
+
+    renderOffcanvasCarrito() {
+        const { carritoItems, carritoVacio, carritoTotal, btnVaciar } = ElementosDOM;
+        const total = this.obtenerTotalPrecio();
+
+        // Limpiar contenedor
+        carritoItems.innerHTML = '';
+
+        // Mostrar mensaje de carrito vacío o items
+        if (EstadoApp.carrito.length === 0) {
+            carritoVacio.style.display = 'block';
+            if (btnVaciar) btnVaciar.disabled = true;
+        } else {
+            carritoVacio.style.display = 'none';
+            if (btnVaciar) btnVaciar.disabled = false;
+            
+            // Renderizar cada item del carrito
+            EstadoApp.carrito.forEach((item, index) => {
+                const itemElement = this.crearElementoItemCarrito(item, index);
+                carritoItems.appendChild(itemElement);
+            });
+        }
+
+        // Actualizar total
+        carritoTotal.textContent = Utilidades.formatearPrecio(total);
+    }
+
+    crearElementoItemCarrito(item, index) {
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'd-flex align-items-center border-bottom py-2 gap-2';
+        itemDiv.innerHTML = `
+            <img src="${item.imagen}" alt="${item.nombre}" 
+                 class="me-2 rounded" style="width:60px;height:60px;object-fit:cover;">
+            <div class="flex-grow-1">
+                <h6 class="mb-0 small">${item.nombre}</h6>
+                <small class="text-muted">${Utilidades.formatearPrecio(item.precio)} c/u</small>
+            </div>
+            <div class="d-flex align-items-center">
+                <button class="btn btn-sm btn-outline-light btn-restar" 
+                        data-producto-id="${item.id}">-</button>
+                <span class="mx-2">${item.cantidad}</span>
+                <button class="btn btn-sm btn-outline-light btn-sumar" 
+                        data-producto-id="${item.id}">+</button>
+            </div>
+            <strong class="text-nowrap">${Utilidades.formatearPrecio(item.precio * item.cantidad)}</strong>
+            <button class="btn btn-sm btn-outline-danger btn-eliminar" 
+                    data-producto-id="${item.id}">&times;</button>
+        `;
+        return itemDiv;
+    }
+
+    // 7. CÁLCULOS
+    obtenerTotalItems() {
+        return EstadoApp.carrito.reduce((total, item) => total + (item.cantidad || 0), 0);
+    }
+
+    obtenerTotalPrecio() {
+        return EstadoApp.carrito.reduce((total, item) => {
+            return total + (Number(item.precio) || 0) * (item.cantidad || 0);
+        }, 0);
+    }
+
+    obtenerResumenCarrito() {
+        return {
+            totalItems: this.obtenerTotalItems(),
+            totalPrecio: this.obtenerTotalPrecio(),
+            items: [...EstadoApp.carrito]
+        };
+    }
+
+    // 8. MANEJO DE PEDIDOS
+   // En CarritoService (dentro de app.js)
+
+    async procesarPedido() {
+        try {
+            // 1. Verificar autenticación (El "Guardia" del que hablamos)
+            if (!authService.estaAutenticado() || !authService.esCliente()) {
+                this.mostrarErrorAutenticacion();
+                return { exito: false, error: 'Autenticación requerida' };
+            }
+
+            // 2. Verificar que el carrito no esté vacío
+            if (this.estaVacio()) {
+                alert('Tu carrito está vacío. ¡Agrega algo rico primero!');
+                return { exito: false, error: 'Carrito vacío' };
+            }
+
+            // 3. ¡REDIRECCIÓN AL CHECKOUT!
+            // Aquí es donde ocurre la magia del link
+            console.log('🛒 Redirigiendo al checkout...');
+            window.location.href = 'Ges_pagos.html';
+            
+            return { exito: true };
+
+        } catch (error) {
+            console.error('❌ Error procesando pedido:', error);
+            return { exito: false, error: error.message };
+        }
+    }
+
+    // 9. FEEDBACK VISUAL
+    mostrarFeedbackAgregado(nombreProducto) {
+        // Podríamos implementar un toast o notificación
+        console.log(`✅ ${nombreProducto} agregado al carrito`);
+        
+        // Feedback visual temporal
+        if (Utilidades.elementoExiste(ElementosDOM.btnCarrito)) {
+            ElementosDOM.btnCarrito.classList.add('btn-success');
+            setTimeout(() => {
+                ElementosDOM.btnCarrito.classList.remove('btn-success');
+            }, 500);
+        }
+    }
+
+    mostrarErrorAutenticacion() {
+        alert('Debes iniciar sesión como cliente para agregar productos al carrito');
+        
+        // Abrir modal de login si existe
+        if (Utilidades.elementoExiste(ElementosDOM.loginModal) && window.bootstrap) {
+            const modal = new bootstrap.Modal(ElementosDOM.loginModal);
+            modal.show();
+        }
+    }
+
+    // 10. UTILIDADES
+    generarIdTemporal() {
+        return `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    }
+
+    // 11. GETTERS
+    estaVacio() {
+        return EstadoApp.carrito.length === 0;
+    }
+
+    obtenerCantidadProductos() {
+        return EstadoApp.carrito.length;
+    }
+}
+
+// Instancia global del servicio
+const carritoService = new CarritoService();
+
+// Funciones globales para compatibilidad con HTML existente
+window.agregarAlCarrito = function(nombre, precio, imagen) {
+    return carritoService.agregarAlCarrito(nombre, precio, imagen);
+};
+
+window.actualizarCantidad = function(productoId, operacion) {
+    return carritoService.actualizarCantidad(productoId, operacion);
+};
+
+window.eliminarDelCarrito = function(productoId) {
+    return carritoService.eliminarDelCarrito(productoId);
+};
+
+window.renderCarrito = function() {
+    return carritoService.renderCarrito();
+};
+
+// =================== PRODUCT SERVICE - GESTIÓN DE PRODUCTOS ===================
+
+class ProductService {
+    constructor() {
+        this.productosSimulados = this.inicializarProductosSimulados();
+        this.cargarProductosIniciales();
+    }
+
+    // 1. DATOS SIMULADOS (temporal - será reemplazado por API)
+    inicializarProductosSimulados() {
+        return [
+            {
+                id: 1,
+                nombre: "Pizza Pepperoni",
+                descripcion: "Deliciosa pizza con pepperoni y queso mozzarella",
+                precio: 7990,
+                imagen: "Recursos_Esteticos/img/hero1.jpg",
+                categoria: "promos",
+                activo: true,
+                stock: 50,
+                creadoEn: new Date().toISOString()
+            },
+            {
+                id: 2,
+                nombre: "Panini Caprese",
+                descripcion: "Mozzarella, tomate, pesto y albahaca fresca",
+                precio: 5990,
+                imagen: "Recursos_Esteticos/img/hero2.jpg", 
+                categoria: "promos",
+                activo: true,
+                stock: 30,
+                creadoEn: new Date().toISOString()
+            },
+            {
+                id: 3,
+                nombre: "Combo Baguette + Bebida",
+                descripcion: "Para llevar y compartir con amigos",
+                precio: 8990,
+                imagen: "Recursos_Esteticos/img/hero3.jpg",
+                categoria: "promos",
+                activo: true,
+                stock: 20,
+                creadoEn: new Date().toISOString()
+            }
+        ];
+    }
+
+    cargarProductosIniciales() {
+        // Agrupar productos por categoría
+        EstadoApp.productos = {
+            promos: this.productosSimulados.filter(p => p.categoria === 'promos'),
+            menu: this.productosSimulados.filter(p => p.categoria === 'menu'),
+            bebidas: this.productosSimulados.filter(p => p.categoria === 'bebidas')
+        };
+        console.log('📦 Productos simulados cargados');
+    }
+
+    // 2. OBTENER PRODUCTOS
+    async obtenerProductos(categoria = null) {
+        try {
+            // Simular delay de red
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            if (categoria && EstadoApp.productos[categoria]) {
+                return EstadoApp.productos[categoria].filter(p => p.activo);
+            } else if (categoria) {
+                return [];
+            }
+
+            // Todos los productos activos
+            const todosProductos = [
+                ...EstadoApp.productos.promos,
+                ...EstadoApp.productos.menu,
+                ...EstadoApp.productos.bebidas
+            ].filter(p => p.activo);
+
+            return todosProductos;
+
+        } catch (error) {
+            console.error('❌ Error obteniendo productos:', error);
+            return [];
+        }
+    }
+
+    async obtenerProductoPorId(id) {
+        try {
+            const todosProductos = await this.obtenerProductos();
+            return todosProductos.find(p => p.id === parseInt(id)) || null;
+        } catch (error) {
+            console.error('❌ Error obteniendo producto por ID:', error);
+            return null;
+        }
+    }
+
+    // 3. CREAR PRODUCTO
+    async crearProducto(datosProducto) {
+        try {
+            // Verificar permisos de admin
+            if (!authService.esAdmin()) {
+                throw new Error('Se requieren permisos de administrador');
+            }
+
+            // Validar datos requeridos
+            if (!datosProducto.nombre || !datosProducto.precio || !datosProducto.categoria) {
+                throw new Error('Nombre, precio y categoría son requeridos');
+            }
+
+            // Generar nuevo ID
+            const nuevoId = this.generarNuevoId();
+
+            const producto = {
+                id: nuevoId,
+                nombre: datosProducto.nombre.trim(),
+                descripcion: datosProducto.descripcion?.trim() || '',
+                precio: Number(datosProducto.precio),
+                imagen: datosProducto.imagen?.trim() || 'Recursos_Esteticos/img/default.jpg',
+                categoria: datosProducto.categoria,
+                activo: true,
+                stock: datosProducto.stock || 0,
+                creadoEn: new Date().toISOString(),
+                actualizadoEn: new Date().toISOString()
+            };
+
+            // Agregar a la categoría correspondiente
+            if (!EstadoApp.productos[producto.categoria]) {
+                EstadoApp.productos[producto.categoria] = [];
+            }
+            EstadoApp.productos[producto.categoria].push(producto);
+
+            // Actualizar interfaz
+            await this.renderProductosCategoria(producto.categoria);
+
+            console.log(`✅ Producto creado: ${producto.nombre} (ID: ${producto.id})`);
+            return { exito: true, producto: producto };
+
+        } catch (error) {
+            console.error('❌ Error creando producto:', error);
+            return { exito: false, error: error.message };
+        }
+    }
+
+    // 4. ACTUALIZAR PRODUCTO
+    async actualizarProducto(id, datosActualizados) {
+        try {
+            // Verificar permisos de admin
+            if (!authService.esAdmin()) {
+                throw new Error('Se requieren permisos de administrador');
+            }
+
+            // Buscar producto en todas las categorías
+            let productoEncontrado = null;
+            let categoriaProducto = null;
+
+            for (const [categoria, productos] of Object.entries(EstadoApp.productos)) {
+                const index = productos.findIndex(p => p.id === parseInt(id));
+                if (index !== -1) {
+                    productoEncontrado = productos[index];
+                    categoriaProducto = categoria;
+                    break;
+                }
+            }
+
+            if (!productoEncontrado) {
+                throw new Error('Producto no encontrado');
+            }
+
+            // Actualizar campos
+            const productoActualizado = {
+                ...productoEncontrado,
+                ...datosActualizados,
+                actualizadoEn: new Date().toISOString()
+            };
+
+            // Reemplazar en el array
+            const categoriaArray = EstadoApp.productos[categoriaProducto];
+            const index = categoriaArray.findIndex(p => p.id === parseInt(id));
+            categoriaArray[index] = productoActualizado;
+
+            // Si cambió la categoría, mover el producto
+            if (datosActualizados.categoria && datosActualizados.categoria !== categoriaProducto) {
+                // Remover de categoría anterior
+                EstadoApp.productos[categoriaProducto] = categoriaArray.filter(p => p.id !== parseInt(id));
+                
+                // Agregar a nueva categoría
+                if (!EstadoApp.productos[datosActualizados.categoria]) {
+                    EstadoApp.productos[datosActualizados.categoria] = [];
+                }
+                EstadoApp.productos[datosActualizados.categoria].push(productoActualizado);
+                
+                // Renderizar ambas categorías
+                await this.renderProductosCategoria(categoriaProducto);
+                await this.renderProductosCategoria(datosActualizados.categoria);
+            } else {
+                // Solo renderizar la categoría actual
+                await this.renderProductosCategoria(categoriaProducto);
+            }
+
+            console.log(`✏️ Producto actualizado: ${productoActualizado.nombre}`);
+            return { exito: true, producto: productoActualizado };
+
+        } catch (error) {
+            console.error('❌ Error actualizando producto:', error);
+            return { exito: false, error: error.message };
+        }
+    }
+
+    // 5. ELIMINAR PRODUCTO
+    async eliminarProducto(id) {
+        try {
+            // Verificar permisos de admin
+            if (!authService.esAdmin()) {
+                throw new Error('Se requieren permisos de administrador');
+            }
+
+            // Buscar producto en todas las categorías
+            let productoEliminado = null;
+            let categoriaProducto = null;
+
+            for (const [categoria, productos] of Object.entries(EstadoApp.productos)) {
+                const index = productos.findIndex(p => p.id === parseInt(id));
+                if (index !== -1) {
+                    productoEliminado = productos[index];
+                    categoriaProducto = categoria;
+                    EstadoApp.productos[categoria] = productos.filter(p => p.id !== parseInt(id));
+                    break;
+                }
+            }
+
+            if (!productoEliminado) {
+                throw new Error('Producto no encontrado');
+            }
+
+            // Actualizar interfaz
+            await this.renderProductosCategoria(categoriaProducto);
+
+            console.log(`🗑️ Producto eliminado: ${productoEliminado.nombre}`);
+            return { exito: true, producto: productoEliminado };
+
+        } catch (error) {
+            console.error('❌ Error eliminando producto:', error);
+            return { exito: false, error: error.message };
+        }
+    }
+
+    // 6. RENDERIZADO DE PRODUCTOS
+    async renderProductosCategoria(categoria) {
+        const contenedorId = `contenedor-${categoria}`;
+        const contenedor = document.getElementById(contenedorId);
+        
+        if (!contenedor) {
+            console.log(`⚠️ Contenedor no encontrado para categoría: ${categoria}`);
+            return;
+        }
+
+        try {
+            const productos = await this.obtenerProductos(categoria);
+            contenedor.innerHTML = '';
+
+            if (productos.length === 0) {
+                contenedor.innerHTML = `
+                    <div class="col-12 text-center py-5">
+                        <p class="text-muted">No hay productos en esta categoría</p>
+                    </div>
+                `;
+                return;
+            }
+
+            productos.forEach(producto => {
+                const cardHTML = this.crearCardProducto(producto);
+                contenedor.innerHTML += cardHTML;
+            });
+
+            console.log(`🔄 Renderizados ${productos.length} productos en ${categoria}`);
+
+        } catch (error) {
+            console.error(`❌ Error renderizando productos de ${categoria}:`, error);
+            contenedor.innerHTML = `
+                <div class="col-12 text-center py-5">
+                    <p class="text-danger">Error cargando productos</p>
+                </div>
+            `;
+        }
+    }
+
+    crearCardProducto(producto) {
+        return `
+            <div class="col" data-producto-id="${producto.id}" data-categoria="${producto.categoria}">
+                <div class="card h-100 rounded-4">
+                    <div class="card-img-top bg-dark rounded-top-4" 
+                         style="height:180px; background:url('${producto.imagen}') center/cover;">
+                    </div>
+                    <div class="card-body text-center" style="background-color:#e6b800; border-radius:0 0 1rem 1rem;">
+                        <h5 class="card-title fw-bold text-dark">${producto.nombre}</h5>
+                        <p class="card-text text-dark">${producto.descripcion}</p>
+                        <p class="fw-bold text-dark">${Utilidades.formatearPrecio(producto.precio)}</p>
+                        
+                        <button class="btn btn-light text-dark fw-bold btn-agregar-carrito"
+                                data-producto-id="${producto.id}"
+                                data-nombre="${producto.nombre}"
+                                data-precio="${producto.precio}"
+                                data-imagen="${producto.imagen}">
+                            Agregar al carrito
+                        </button>
+
+                        <div class="admin-actions mt-2 justify-content-center gap-2" 
+                             data-visible-role="admin" 
+                             style="display: ${authService.esAdmin() ? 'flex' : 'none'};">
+                            <button class="btn btn-sm btn-outline-light btn-editar-producto"
+                                    data-producto-id="${producto.id}">
+                                Editar
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger btn-eliminar-producto"
+                                    data-producto-id="${producto.id}">
+                                Eliminar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // 7. MANEJO DEL MODAL DE PRODUCTOS
+    abrirModalAgregarProducto(categoria) {
+        if (!Utilidades.elementoExiste(ElementosDOM.modalAddProduct)) return;
+
+        // Configurar modal para agregar
+        ElementosDOM.modalProductTitle.textContent = 'Agregar producto';
+        ElementosDOM.productCategory.value = categoria;
+        ElementosDOM.productId.value = '';
+        ElementosDOM.productForm.reset();
+
+        // Mostrar modal
+        const modal = new bootstrap.Modal(ElementosDOM.modalAddProduct);
+        modal.show();
+    }
+
+    abrirModalEditarProducto(productoId) {
+        if (!Utilidades.elementoExiste(ElementosDOM.modalAddProduct)) return;
+
+        this.obtenerProductoPorId(productoId).then(producto => {
+            if (!producto) {
+                alert('Producto no encontrado');
+                return;
+            }
+
+            // Configurar modal para editar
+            ElementosDOM.modalProductTitle.textContent = 'Editar producto';
+            ElementosDOM.productId.value = producto.id;
+            ElementosDOM.productCategory.value = producto.categoria;
+            ElementosDOM.productName.value = producto.nombre;
+            ElementosDOM.productDesc.value = producto.descripcion;
+            ElementosDOM.productPrice.value = producto.precio;
+            ElementosDOM.productImg.value = producto.imagen;
+
+            // Mostrar modal
+            const modal = new bootstrap.Modal(ElementosDOM.modalAddProduct);
+            modal.show();
+        });
+    }
+
+    async manejarSubmitProducto(event) {
+        event.preventDefault();
+
+        const btnGuardar = ElementosDOM.btnGuardarProducto;
+        const textoBtn = ElementosDOM.textoBtnGuardar;
+        const spinner = ElementosDOM.spinnerGuardar;
+
+        try {
+            // Mostrar loading
+            textoBtn.style.display = 'none';
+            spinner.style.display = 'inline-block';
+            btnGuardar.disabled = true;
+
+            const datos = {
+                nombre: ElementosDOM.productName.value,
+                descripcion: ElementosDOM.productDesc.value,
+                precio: Number(ElementosDOM.productPrice.value),
+                imagen: ElementosDOM.productImg.value,
+                categoria: ElementosDOM.productCategory.value
+            };
+
+            const productoId = ElementosDOM.productId.value;
+            let resultado;
+
+            if (productoId) {
+                // Editar producto existente
+                resultado = await this.actualizarProducto(productoId, datos);
+            } else {
+                // Crear nuevo producto
+                resultado = await this.crearProducto(datos);
+            }
+            if (resultado.exito) {
+                // Intentar cerrar el modal usando la instancia existente
+                const modalElement = ElementosDOM.modalAddProduct;
+                const modalInstance = bootstrap.Modal.getInstance(modalElement);
+                if (modalInstance) {
+                    modalInstance.hide();
+                }
+
+                // Eliminamos manualmente la capa negra después de medio segundo
+                setTimeout(() => {
+                    const backdrops = document.querySelectorAll('.modal-backdrop');
+                    backdrops.forEach(el => el.remove());
+                    document.body.classList.remove('modal-open');
+                    document.body.style = '';
+                }, 500);
+
+                // Le decimos a la app que vuelva a pintar la categoría donde agregamos el producto
+                await this.renderProductosCategoria(datos.categoria);
+
+                // 4. Mensaje de éxito
+                alert(`✅ Producto ${productoId ? 'actualizado' : 'creado'} correctamente`);
+            } else {
+                throw new Error(resultado.error);
+            }
+
+        } catch (error) {
+            console.error('❌ Error guardando producto:', error);
+            alert(`Error: ${error.message}`);
+        } finally {
+            // Restaurar botón
+            textoBtn.textContent = 'Guardar';
+            textoBtn.style.display = 'inline-block';
+            spinner.style.display = 'none';
+            btnGuardar.disabled = false;
+        }
+    }
+
+    // 8. UTILIDADES
+    generarNuevoId() {
+        const todosProductos = [
+            ...EstadoApp.productos.promos,
+            ...EstadoApp.productos.menu,
+            ...EstadoApp.productos.bebidas
+        ];
+        const maxId = todosProductos.reduce((max, p) => Math.max(max, p.id), 0);
+        return maxId + 1;
+    }
+
+    // 9. GETTERS
+    obtenerCategorias() {
+        return Object.keys(EstadoApp.productos);
+    }
+
+    obtenerEstadisticas() {
+        const todosProductos = [
+            ...EstadoApp.productos.promos,
+            ...EstadoApp.productos.menu, 
+            ...EstadoApp.productos.bebidas
+        ];
+
+        return {
+            totalProductos: todosProductos.length,
+            productosActivos: todosProductos.filter(p => p.activo).length,
+            porCategoria: {
+                promos: EstadoApp.productos.promos.length,
+                menu: EstadoApp.productos.menu.length,
+                bebidas: EstadoApp.productos.bebidas.length
+            }
+        };
+    }
+}
+
+// Instancia global del servicio
+const productService = new ProductService();
+
+// =================== CHECKOUT SERVICE - GESTIÓN DE PAGOS ===================
+
+class CheckoutService {
+    constructor() {
+        // Solo inicializar si estamos en la página de pagos
+        if (document.getElementById('lista-resumen-checkout')) {
+            this.inicializarCheckout();
+        }
+    }
+
+    inicializarCheckout() {
+        console.log('💳 Inicializando Checkout...');
+        this.renderizarResumen();
+        this.registrarEventos();
+    }
+
+    registrarEventos() {
+        // 1. Lógica de Tipo de Entrega (Radio Buttons)
+        const radiosEntrega = document.querySelectorAll('input[name="tipoEntrega"]');
+        radiosEntrega.forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                const esDelivery = e.target.value === 'delivery';
+                
+                // Mostrar/Ocultar secciones
+                Utilidades.toggleElemento(document.getElementById('seccion-direccion-delivery'), esDelivery);
+                Utilidades.toggleElemento(document.getElementById('seccion-info-retiro'), !esDelivery);
+                
+                // Actualizar texto de envío en el resumen
+                const textoEnvio = document.getElementById('checkout-envio');
+                if (textoEnvio) textoEnvio.textContent = esDelivery ? 'Gratis' : 'N/A';
+            });
+        });
+
+        // 2. Lógica de Método de Pago (Radio Buttons)
+        const radiosPago = document.querySelectorAll('input[name="metodoPago"]');
+        radiosPago.forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                const esTarjeta = e.target.value === 'tarjeta';
+                
+                // Mostrar/Ocultar secciones
+                Utilidades.toggleElemento(document.getElementById('seccion-tarjeta'), esTarjeta);
+                Utilidades.toggleElemento(document.getElementById('seccion-info-contraentrega'), !esTarjeta);
+            });
+        });
+
+        // 3. Botón Confirmar Compra
+        const btnConfirmar = document.getElementById('btn-confirmar-compra');
+        if (btnConfirmar) {
+            btnConfirmar.addEventListener('click', (e) => {
+                e.preventDefault();
+                alert('🚧 ¡Aquí conectaremos la API de Pagos en la próxima etapa!');
+                // Aquí llamaremos a pagoService.procesarPago(...)
+            });
+        }
+    }
+
+    renderizarResumen() {
+        const contenedor = document.getElementById('lista-resumen-checkout');
+        if (!contenedor) return;
+
+        contenedor.innerHTML = '';
+        const carrito = EstadoApp.carrito;
+
+        if (carrito.length === 0) {
+            contenedor.innerHTML = '<div class="text-center text-muted">El carrito está vacío</div>';
+            return;
+        }
+
+        let subtotal = 0;
+
+        // Generar HTML de cada item
+        carrito.forEach(item => {
+            const totalItem = item.precio * item.cantidad;
+            subtotal += totalItem;
+
+            const div = document.createElement('div');
+            div.className = 'd-flex justify-content-between align-items-center mb-2 small';
+            div.innerHTML = `
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-secondary">${item.cantidad}</span>
+                    <span>${item.nombre}</span>
+                </div>
+                <span class="fw-semibold">${Utilidades.formatearPrecio(totalItem)}</span>
+            `;
+            contenedor.appendChild(div);
+        });
+
+        // Actualizar Totales
+        const elSubtotal = document.getElementById('checkout-subtotal');
+        const elTotal = document.getElementById('checkout-total');
+        
+        if (elSubtotal) elSubtotal.textContent = Utilidades.formatearPrecio(subtotal);
+        if (elTotal) elTotal.textContent = Utilidades.formatearPrecio(subtotal);
+    }
+}
+
+// Instancia global
+const checkoutService = new CheckoutService();
+
+// =================== EVENT LISTENERS E INICIALIZACIÓN ===================
+
+class AppInicializador {
+    constructor() {
+        this.eventListenersRegistrados = false;
+    }
+
+    // 1. INICIALIZACIÓN PRINCIPAL
+    async inicializarApp() {
+        console.log('🚀 Inicializando aplicación Bocatto...');
+        
+        try {
+            // Verificar sesión activa
+            authService.verificarSesionActiva();
+            
+            // Cargar productos iniciales
+            await this.cargarProductosIniciales();
+            
+            // Registrar event listeners
+            this.registrarEventListeners();
+            
+            // Renderizar estado inicial
+            this.renderizarEstadoInicial();
+            
+            console.log('✅ Aplicación inicializada correctamente');
+
+        } catch (error) {
+            console.error('❌ Error inicializando aplicación:', error);
+        }
+    }
+
+    // 2. CARGA DE PRODUCTOS INICIALES
+    async cargarProductosIniciales() {
+        try {
+            // Cargar promociones si la sección existe
+            if (Utilidades.elementoExiste(ElementosDOM.contenedorPromos)) {
+                await productService.renderProductosCategoria('promos');
+            }
+            
+            // Aquí podríamos cargar otras categorías según la página
+            // await productService.renderProductosCategoria('menu');
+            // await productService.renderProductosCategoria('bebidas');
+            
+        } catch (error) {
+            console.error('❌ Error cargando productos iniciales:', error);
+        }
+    }
+
+    // 3. REGISTRO DE EVENT LISTENERS
+    registrarEventListeners() {
+        if (this.eventListenersRegistrados) {
+            console.log('⚠️ Event listeners ya registrados');
+            return;
+        }
+
+        this.registrarListenersAutenticacion();
+        this.registrarListenersCarrito();
+        this.registrarListenersProductos();
+        this.registrarListenersGlobales();
+
+        this.eventListenersRegistrados = true;
+        console.log('✅ Todos los event listeners registrados');
+    }
+
+    // 4. LISTENERS DE AUTENTICACIÓN
+    registrarListenersAutenticacion() {
+        // Login form
+        if (Utilidades.elementoExiste(ElementosDOM.formLogearse)) {
+            ElementosDOM.formLogearse.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                const email = ElementosDOM.loginEmail.value;
+                const password = ElementosDOM.loginContraseña.value;
+                
+                await authService.login(email, password);
+            });
+        }
+
+        // Botón registrarse
+        if (Utilidades.elementoExiste(ElementosDOM.btnRegistrarse)) {
+            ElementosDOM.btnRegistrarse.addEventListener('click', (e) => {
+                e.preventDefault();
+                alert('🚧 Función de registro en desarrollo - Usa: cliente@bocatto.cl / cliente123');
+            });
+        }
+
+        // Botón logout
+        if (Utilidades.elementoExiste(ElementosDOM.btnLogout)) {
+            ElementosDOM.btnLogout.addEventListener('click', () => {
+                authService.logout();
+            });
+        }
+
+        console.log('🔐 Listeners de autenticación registrados');
+    }
+
+    // 5. LISTENERS DE CARRITO (DELEGACIÓN DE EVENTOS)
+    registrarListenersCarrito() {
+        // Delegación para botones "Agregar al carrito" en productos
+        document.addEventListener('click', async (e) => {
+            if (e.target.classList.contains('btn-agregar-carrito')) {
+                const nombre = e.target.dataset.nombre;
+                const precio = e.target.dataset.precio;
+                const imagen = e.target.dataset.imagen;
+                const productoId = e.target.dataset.productoId;
+                
+                await carritoService.agregarAlCarrito(nombre, precio, imagen, productoId);
+            }
+        });
+
+        // Delegación para botones dentro del carrito
+        if (Utilidades.elementoExiste(ElementosDOM.carritoItems)) {
+            ElementosDOM.carritoItems.addEventListener('click', async (e) => {
+                const productoId = e.target.dataset.productoId;
+                
+                if (!productoId) return;
+
+                if (e.target.classList.contains('btn-sumar')) {
+                    await carritoService.actualizarCantidad(productoId, 'incrementar');
+                } else if (e.target.classList.contains('btn-restar')) {
+                    await carritoService.actualizarCantidad(productoId, 'decrementar');
+                } else if (e.target.classList.contains('btn-eliminar')) {
+                    await carritoService.eliminarDelCarrito(productoId);
+                }
+            });
+        }
+
+        // Botón vaciar carrito
+        if (Utilidades.elementoExiste(ElementosDOM.btnVaciar)) {
+            ElementosDOM.btnVaciar.addEventListener('click', async () => {
+                if (confirm('¿Estás seguro de que quieres vaciar el carrito?')) {
+                    await carritoService.vaciarCarrito();
+                }
+            });
+        }
+
+        // Botón hacer pedido
+        if (Utilidades.elementoExiste(ElementosDOM.btnHacerPedido)) {
+            ElementosDOM.btnHacerPedido.addEventListener('click', async (e) => {
+                e.preventDefault();
+                await carritoService.procesarPedido();
+            });
+        }
+
+        // Re-renderizar carrito cuando se abre el offcanvas
+        if (Utilidades.elementoExiste(ElementosDOM.offcanvasCarrito)) {
+            ElementosDOM.offcanvasCarrito.addEventListener('show.bs.offcanvas', () => {
+                carritoService.renderCarrito();
+            });
+        }
+
+        console.log('🛒 Listeners de carrito registrados');
+    }
+
+    // 6. LISTENERS DE PRODUCTOS (ADMIN)
+// En AppInicializador (app.js)
+
+registrarListenersProductos() {
+    // 1. Listener para el formulario del modal (Guardar)
+    if (Utilidades.elementoExiste(ElementosDOM.productForm)) {
+        ElementosDOM.productForm.addEventListener('submit', async (e) => {
+            await productService.manejarSubmitProducto(e);
+        });
+    }
+
+    // 2. Listener GLOBAL para botones "Agregar Producto" (Delegación)
+    // Esto arregla el problema de tener múltiples botones en distintas categorías
+    document.addEventListener('click', (e) => {
+        // Buscamos si el clic fue en un botón (o en el ícono dentro del botón)
+        const btnAgregar = e.target.closest('button');
+
+        // Verificamos si es un botón que abre el modal de agregar productos
+        if (btnAgregar && btnAgregar.dataset.bsTarget === '#modalAddProduct') {
+            // Obtenemos la categoría del botón (ej: "sandwiches", "bebibles")
+            const categoria = btnAgregar.dataset.category || 'promos';
+            console.log(`➕ Abriendo modal para: ${categoria}`);
+            productService.abrirModalAgregarProducto(categoria);
+        }
+    });
+
+    // 3. Listener para botones Editar/Eliminar (Ya lo tenías con delegación, lo mantenemos)
+    document.addEventListener('click', async (e) => {
+        const productoId = e.target.dataset.productoId;
+        if (!productoId) return;
+
+        if (e.target.classList.contains('btn-editar-producto')) {
+            productService.abrirModalEditarProducto(productoId);
+        } else if (e.target.classList.contains('btn-eliminar-producto')) {
+            if (confirm('¿Estás seguro de que quieres eliminar este producto?')) {
+                await productService.eliminarProducto(productoId);
+            }
+        }
+    });
+
+    console.log('📦 Listeners de productos registrados (Modo Delegación)');
+}
+
+    // 7. LISTENERS GLOBALES
+    registrarListenersGlobales() {
+        // Prevenir envío de formularios vacíos
+        document.addEventListener('submit', (e) => {
+            const form = e.target;
+            if (form.checkValidity && !form.checkValidity()) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            form.classList.add('was-validated');
+        });
+
+        // Manejar clicks en enlaces internos (smooth scroll)
+        document.addEventListener('click', (e) => {
+            if (e.target.matches('a[href^="#"]')) {
+                e.preventDefault();
+                const target = document.querySelector(e.target.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth' });
+                }
+            }
+        });
+
+        // Actualizar interfaz cuando cambia el estado de autenticación
+        document.addEventListener('authStateChanged', () => {
+            authService.actualizarNavbar();
+            authService.toggleElementosAdmin();
+        });
+
+        console.log('🌐 Listeners globales registrados');
+    }
+
+    // 8. RENDERIZADO DEL ESTADO INICIAL
+    renderizarEstadoInicial() {
+        // Renderizar carrito (badge y estado)
+        carritoService.renderCarrito();
+        
+        // Actualizar navbar según autenticación
+        authService.actualizarNavbar();
+        authService.toggleElementosAdmin();
+        
+        console.log('🎨 Estado inicial renderizado');
+    }
+
+    // 9. DESTRUIR EVENT LISTENERS (para SPA)
+    destruirEventListeners() {
+        // Limpiar event listeners específicos si es necesario
+        this.eventListenersRegistrados = false;
+        console.log('🧹 Event listeners destruidos');
+    }
+}
+
+// =================== INICIALIZACIÓN AL CARGAR EL DOM ===================
+
+// Instancia global del inicializador
+const appInicializador = new AppInicializador();
+
+// Inicializar cuando el DOM esté listo
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        appInicializador.inicializarApp();
+    });
+} else {
+    appInicializador.inicializarApp();
+}
+
+// =================== COMPATIBILIDAD CON CÓDIGO EXISTENTE ===================
+
+// Mantener funciones globales para compatibilidad
+window.actualizarNavbar = function() {
+    authService.actualizarNavbar();
+    authService.toggleElementosAdmin();
+};
+
+// Exportar servicios para debugging (opcional)
+if (typeof window !== 'undefined') {
+    window.BocattoApp = {
+        auth: authService,
+        carrito: carritoService,
+        productos: productService,
+        estado: EstadoApp,
+        utilidades: Utilidades
+    };
+    console.log('🔧 BocattoApp disponible en consola para debugging');
+}
