@@ -1,17 +1,51 @@
 // =================== ESTRUCTURA BASE APP.JS ===================
-// Versión: API-Ready (simulación mejorada)
+// Versión: INTEGRACIÓN REAL (Backend: localhost:3000)
 
-// 1. CONSTANTES GLOBALES Y CONFIGURACIÓN
+// 1. CONFIGURACIÓN Y CLIENTE GRAPHQL (Nuestro "Mini-Apollo")
 const CONFIG = {
-    API_BASE_URL: '/graphql', // Preparado para futuro
+    API_URL: 'http://localhost:3000/graphql', // ¡La dirección de tu cocina!
     CAR_KEY: 'carrito_bocatto',
     USER_KEY: 'usuario_bocatto',
-    ROLES: {
-        VISITANTE: 'visitante',
-        CLIENTE: 'cliente', 
-        ADMIN: 'admin'
-    }
+    ROLES: { VISITANTE: 'visitante', CLIENTE: 'cliente', ADMIN: 'admin' }
 };
+
+// Clase para hablar con el Backend
+class GQL {
+    static async request(query, variables = {}) {
+        // Recuperar token si existe
+        const usuario = Utilidades.cargarDesdeStorage(CONFIG.USER_KEY);
+        const headers = { 
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+        };
+        
+        // Si hay token, lo pegamos en la frente del mensajero
+        if (usuario && usuario.token) {
+            headers['Authorization'] = usuario.token; // o `Bearer ${usuario.token}` según tu backend
+        }
+
+        try {
+            const response = await fetch(CONFIG.API_URL, {
+                method: 'POST',
+                headers: headers,
+                body: JSON.stringify({ query, variables })
+            });
+
+            const json = await response.json();
+
+            if (json.errors) {
+                console.error('🔥 Error de GraphQL:', json.errors);
+                throw new Error(json.errors[0].message);
+            }
+
+            return json.data;
+
+        } catch (error) {
+            console.error('❌ Error de Red/Servidor:', error);
+            throw error;
+        }
+    }
+}
 
 // 2. ESTADO GLOBAL DE LA APLICACIÓN
 const EstadoApp = {
@@ -196,51 +230,117 @@ class AuthService {
     }
 
     // 2. LOGIN (simulado - preparado para API)
+// 2. LOGIN REAL (Conectado al Backend)
     async login(email, password) {
         try {
             EstadoApp.ui.cargando = true;
             this.mostrarLoadingLogin(true);
 
-            // Simular delay de red
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            // A) Definimos la Mutation (La carta para la cocina)
+            const mutation = `
+                mutation Login($email: String!, $password: String!) {
+                    loginUsuario(email: $email, password: $password) {
+                        token
+                        usuario {
+                            id
+                            nombre
+                            email
+                            rol
+                        }
+                    }
+                }
+            `;
 
-            // Buscar usuario en "base de datos" simulada
-            const usuario = this.usuariosSimulados.find(u => 
-                u.email === email.toLowerCase() && u.password === password
-            );
+            // B) Enviamos al mensajero (GQL)
+            console.log('📡 Enviando intento de login al backend...');
+            const data = await GQL.request(mutation, { email, password });
+            
+            // C) Recibimos la respuesta real
+            const { token, usuario } = data.loginUsuario;
 
-            if (!usuario) {
-                throw new Error('Credenciales incorrectas');
-            }
-
-            // Crear sesión
+            // Crear sesión local
             const sesionUsuario = {
-                id: usuario.id,
-                email: usuario.email,
-                nombre: usuario.nombre,
-                rol: usuario.rol,
-                token: this.generarTokenSimulado(usuario.id)
+                ...usuario,
+                token: token
             };
 
-            // Actualizar estado global
+            // Guardar estado global y localStorage
             EstadoApp.usuario = sesionUsuario;
-            
-            // Persistir en localStorage
             Utilidades.guardarEnStorage(CONFIG.USER_KEY, sesionUsuario);
 
             // Actualizar interfaz
             this.actualizarUIpostLogin();
 
-            console.log(`✅ Login exitoso: ${usuario.nombre} (${usuario.rol})`);
+            console.log(`✅ Login REAL exitoso: ${usuario.nombre}`);
+            alert(`¡Bienvenido de nuevo, ${usuario.nombre}!`);
+            
             return { exito: true, usuario: sesionUsuario };
 
         } catch (error) {
             console.error('❌ Error en login:', error.message);
-            this.mostrarErrorLogin(error.message);
+            alert('Error al iniciar sesión: ' + error.message);
             return { exito: false, error: error.message };
         } finally {
             EstadoApp.ui.cargando = false;
             this.mostrarLoadingLogin(false);
+        }
+    }
+
+    // 3. REGISTRO REAL (COMPLETO)
+    async register(datos) {
+        try {
+            EstadoApp.ui.cargando = true;
+            
+            // La Mutation ahora pide TODOS los campos que definimos en el Backend
+            const mutation = `
+                mutation Registrar(
+                    $nombre: String!, $email: String!, $password: String!, 
+                    $telefono: String, $run: String, $sexo: String, $fechaNacimiento: String,
+                    $direccion: DireccionInput, $region: String, $provincia: String
+                ) {
+                    registrarUsuario(
+                        nombre: $nombre, email: $email, password: $password, 
+                        telefono: $telefono, run: $run, sexo: $sexo, fechaNacimiento: $fechaNacimiento,
+                        direccion: $direccion, region: $region, provincia: $provincia
+                    ) {
+                        token
+                        usuario { id nombre email rol }
+                    }
+                }
+            `;
+
+            console.log('📡 Enviando registro completo al backend...');
+            
+            // Enviamos el objeto 'datos' tal cual (ya debe venir con la estructura correcta)
+            const data = await GQL.request(mutation, datos);
+            const { token, usuario } = data.registrarUsuario;
+
+            // Crear sesión y guardar
+            const sesionUsuario = { ...usuario, token };
+            EstadoApp.usuario = sesionUsuario;
+            Utilidades.guardarEnStorage(CONFIG.USER_KEY, sesionUsuario);
+            
+            this.actualizarUIpostLogin();
+
+            alert(`¡Bienvenido a la familia Bocatto, ${usuario.nombre}!`);
+            
+            // Cerrar el modal de registro si está abierto
+            const modalReg = bootstrap.Modal.getInstance(document.getElementById('registroModal'));
+            if (modalReg) modalReg.hide();
+
+            // Limpiar backdrop por si acaso
+            document.body.classList.remove('modal-open');
+            const backdrops = document.querySelectorAll('.modal-backdrop');
+            backdrops.forEach(el => el.remove());
+
+            return { exito: true };
+
+        } catch (error) {
+            console.error('❌ Error registro:', error);
+            alert('Error: ' + error.message);
+            return { exito: false };
+        } finally {
+            EstadoApp.ui.cargando = false;
         }
     }
 
@@ -1789,35 +1889,77 @@ class AppInicializador {
     }
 
     // 4. LISTENERS DE AUTENTICACIÓN
-    registrarListenersAutenticacion() {
-        // Login form
+registrarListenersAutenticacion() {
+        // 1. FORMULARIO LOGIN
         if (Utilidades.elementoExiste(ElementosDOM.formLogearse)) {
             ElementosDOM.formLogearse.addEventListener('submit', async (e) => {
                 e.preventDefault();
-                
-                const email = ElementosDOM.loginEmail.value;
-                const password = ElementosDOM.loginContraseña.value;
-                
-                await authService.login(email, password);
+                const email = document.getElementById('login-Email').value;
+                const pass = document.getElementById('login-contraseña').value;
+                await authService.login(email, pass);
             });
         }
 
-        // Botón registrarse
+        // 2. BRIDGE: ABRIR MODAL REGISTRO (Botón "Crear Cuenta")
         if (Utilidades.elementoExiste(ElementosDOM.btnRegistrarse)) {
-            ElementosDOM.btnRegistrarse.addEventListener('click', (e) => {
+            ElementosDOM.btnRegistrarse.addEventListener('click', () => {
+                // Cerrar login primero
+                const modalLogin = bootstrap.Modal.getInstance(ElementosDOM.loginModal);
+                if (modalLogin) modalLogin.hide();
+
+                // Abrir registro
+                const modalReg = new bootstrap.Modal(document.getElementById('registroModal'));
+                modalReg.show();
+            });
+        }
+
+        // 3. BRIDGE: VOLVER AL LOGIN (Botón "Volver")
+        const btnVolver = document.getElementById('btn-volver-login');
+        if (btnVolver) {
+            btnVolver.addEventListener('click', () => {
+                const modalReg = bootstrap.Modal.getInstance(document.getElementById('registroModal'));
+                if (modalReg) modalReg.hide();
+
+                const modalLogin = new bootstrap.Modal(ElementosDOM.loginModal);
+                modalLogin.show();
+            });
+        }
+
+        // 4. SUBMIT REGISTRO (¡AQUÍ RECOLECTAMOS TODO!)
+        const formRegistro = document.getElementById('form-registro-completo'); // Ojo con el ID del form
+        if (formRegistro) {
+            formRegistro.addEventListener('submit', async (e) => {
                 e.preventDefault();
-                alert('🚧 Función de registro en desarrollo - Usa: cliente@bocatto.cl / cliente123');
+                
+                // Recolectar datos del formulario gigante
+                const datos = {
+                    nombre: document.getElementById('reg-nombre').value,
+                    run: document.getElementById('reg-run').value,
+                    fechaNacimiento: document.getElementById('reg-fecha').value,
+                    sexo: document.getElementById('reg-sexo').value,
+                    email: document.getElementById('reg-email').value,
+                    telefono: document.getElementById('reg-telefono').value,
+                    password: document.getElementById('reg-pass').value,
+                    region: document.getElementById('reg-region').value,
+                    provincia: document.getElementById('reg-provincia').value,
+                    direccion: {
+                        calle: document.getElementById('reg-direccion').value,
+                        comuna: document.getElementById('reg-comuna').value,
+                        ciudad: 'Santiago' // Valor por defecto, ya que no lo pedimos explícitamente
+                    }
+                };
+
+                // ¡Mandamos el paquete completo!
+                await authService.register(datos);
             });
         }
 
-        // Botón logout
+        // Logout
         if (Utilidades.elementoExiste(ElementosDOM.btnLogout)) {
-            ElementosDOM.btnLogout.addEventListener('click', () => {
-                authService.logout();
-            });
+            ElementosDOM.btnLogout.addEventListener('click', () => authService.logout());
         }
-
-        console.log('🔐 Listeners de autenticación registrados');
+        
+        console.log('🔐 Listeners de autenticación registrados (Completo)');
     }
 
     // 5. LISTENERS DE CARRITO (DELEGACIÓN DE EVENTOS)

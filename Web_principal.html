@@ -31,6 +31,24 @@
       height: 450px;         /* altura moderada */
       object-fit: cover;     /* ajusta la imagen sin deformarla */
     }
+
+    /* ... tus estilos anteriores ... */
+
+    /* FIX: Hacer que las etiquetas del formulario (Nombre, RUT, etc.) sean casi blancas */
+    .modal-body .text-muted {
+        color: #e0e0e0 !important; /* Gris muy claro, casi blanco */
+    }
+    
+    /* FIX: Asegurar que lo que escribes dentro de los inputs también sea blanco */
+    .form-control {
+        color: #ffffff !important; 
+    }
+    
+    /* FIX: Color del placeholder (el texto de ayuda dentro del input) */
+    .form-control::placeholder {
+        color: #999999 !important;
+        opacity: 1;
+    }
   </style>
 </head>
 
@@ -179,6 +197,106 @@
 4.-id [login-Email] = boton de ingreso de email
 5.-id [login-contraseña] = boton de ingreso de contraseña
 -->
+
+
+
+<!--=========================== MODAL DE REGISTRO DE USUARIO ================-->
+
+<div class="modal fade" id="registroModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content bg-dark text-light rounded-4 border-secondary">
+      
+      <div class="modal-header border-0">
+        <h5 class="modal-title fw-bold text-warning">Crear Cuenta Nueva</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+
+      <div class="modal-body">
+        <form id="form-registro-completo">
+          <div class="row g-3">
+            
+            <div class="col-md-6 border-end border-secondary pe-md-4">
+              <h6 class="text-warning mb-3"><i class="bi bi-person-vcard"></i> Datos Personales</h6>
+              
+              <div class="mb-2">
+                <label class="form-label small text-muted">Nombre Completo</label>
+                <input type="text" class="form-control bg-dark text-white border-secondary" id="reg-nombre" required>
+              </div>
+
+              <div class="row g-2 mb-2">
+                <div class="col-6">
+                  <label class="form-label small text-muted">RUT</label>
+                  <input type="text" class="form-control bg-dark text-white border-secondary" id="reg-run" placeholder="12.345.678-9" required>
+                </div>
+                <div class="col-6">
+                  <label class="form-label small text-muted">Sexo</label>
+                  <select class="form-select bg-dark text-white border-secondary" id="reg-sexo">
+                    <option value="prefiero_no_decir">Prefiero no decir</option>
+                    <option value="masculino">Masculino</option>
+                    <option value="femenino">Femenino</option>
+                    <option value="otro">Otro</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="mb-2">
+                <label class="form-label small text-muted">Fecha de Nacimiento</label>
+                <input type="date" class="form-control bg-dark text-white border-secondary" id="reg-fecha" required>
+              </div>
+            </div>
+
+            <div class="col-md-6 ps-md-4">
+              <h6 class="text-warning mb-3"><i class="bi bi-geo-alt"></i> Contacto y Ubicación</h6>
+
+              <div class="mb-2">
+                <label class="form-label small text-muted">Correo Electrónico</label>
+                <input type="email" class="form-control bg-dark text-white border-secondary" id="reg-email" required>
+              </div>
+
+              <div class="row g-2 mb-2">
+                <div class="col-6">
+                  <label class="form-label small text-muted">Teléfono</label>
+                  <input type="tel" class="form-control bg-dark text-white border-secondary" id="reg-telefono" placeholder="+569..." required>
+                </div>
+                <div class="col-6">
+                  <label class="form-label small text-muted">Contraseña</label>
+                  <input type="password" class="form-control bg-dark text-white border-secondary" id="reg-pass" required minlength="6">
+                </div>
+              </div>
+
+              <div class="mb-2">
+                <label class="form-label small text-muted">Dirección (Calle y Número)</label>
+                <input type="text" class="form-control bg-dark text-white border-secondary" id="reg-direccion" required>
+              </div>
+
+              <div class="row g-2">
+                <div class="col-4">
+                  <input type="text" class="form-control bg-dark text-white border-secondary" id="reg-comuna" placeholder="Comuna" required>
+                </div>
+                <div class="col-4">
+                  <input type="text" class="form-control bg-dark text-white border-secondary" id="reg-provincia" placeholder="Provincia" required>
+                </div>
+                <div class="col-4">
+                  <input type="text" class="form-control bg-dark text-white border-secondary" id="reg-region" placeholder="Región" required>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <div class="mt-4 d-flex justify-content-between align-items-center">
+            <button type="button" class="btn btn-outline-light" id="btn-volver-login">
+              <i class="bi bi-arrow-left"></i> Volver
+            </button>
+            <button type="submit" class="btn btn-warning fw-bold px-5">
+              Registrarme
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- =================== CARRITO DE COMPRAS - OFFCANVAS  =================== -->
 
