@@ -954,26 +954,45 @@ class ProductService {
         console.log('📦 Productos simulados cargados');
     }
 
-    // 2. OBTENER PRODUCTOS
+// 2. OBTENER PRODUCTOS REAL (Conectado al Backend)
     async obtenerProductos(categoria = null) {
         try {
-            // Simular delay de red
-            await new Promise(resolve => setTimeout(resolve, 500));
+            const query = `
+                query ObtenerProductos($categoria: String) {
+                    obtenerProductos(categoria: $categoria) {
+                        id
+                        nombre
+                        descripcion
+                        precio
+                        categoria
+                        imagen
+                        disponible
+                        stock
+                    }
+                }
+            `;
+            
+            const variables = categoria ? { categoria } : {};
 
-            if (categoria && EstadoApp.productos[categoria]) {
-                return EstadoApp.productos[categoria].filter(p => p.activo);
-            } else if (categoria) {
-                return [];
+            console.log(`📡 Solicitando productos ${categoria ? 'de ' + categoria : 'disponibles'} al backend...`);
+            const data = await GQL.request(query, variables);
+            
+            // Reemplazar la cache local (esto es opcional, pero bueno para performance)
+            if (categoria) {
+                EstadoApp.productos[categoria] = data.obtenerProductos;
+            } else {
+                // Si solicitamos todos, actualizamos todas las categorías
+                data.obtenerProductos.forEach(p => {
+                    if (!EstadoApp.productos[p.categoria]) {
+                        EstadoApp.productos[p.categoria] = [];
+                    }
+                    if (!EstadoApp.productos[p.categoria].some(ep => ep.id === p.id)) {
+                        EstadoApp.productos[p.categoria].push(p);
+                    }
+                });
             }
 
-            // Todos los productos activos
-            const todosProductos = [
-                ...EstadoApp.productos.promos,
-                ...EstadoApp.productos.menu,
-                ...EstadoApp.productos.bebidas
-            ].filter(p => p.activo);
-
-            return todosProductos;
+            return data.obtenerProductos;
 
         } catch (error) {
             console.error('❌ Error obteniendo productos:', error);
@@ -981,119 +1000,131 @@ class ProductService {
         }
     }
 
+// 2. OBTENER PRODUCTO POR ID REAL (Conectado al Backend)
     async obtenerProductoPorId(id) {
         try {
-            const todosProductos = await this.obtenerProductos();
-            return todosProductos.find(p => p.id === parseInt(id)) || null;
+            const query = `
+                query ObtenerProducto($id: ID!) {
+                    obtenerProducto(id: $id) {
+                        id nombre descripcion precio categoria imagen stock disponible
+                    }
+                }
+            `;
+            
+            console.log(`📡 Solicitando producto ID ${id} al backend...`);
+            const data = await GQL.request(query, { id });
+            
+            const producto = data.obtenerProducto;
+            
+            // Opcional: Actualizar la cache si el producto existe
+            if (producto && EstadoApp.productos[producto.categoria]) {
+                const index = EstadoApp.productos[producto.categoria].findIndex(p => p.id === producto.id);
+                if (index !== -1) {
+                    EstadoApp.productos[producto.categoria][index] = producto;
+                }
+            }
+            
+            return producto;
+
         } catch (error) {
             console.error('❌ Error obteniendo producto por ID:', error);
             return null;
         }
     }
 
-    // 3. CREAR PRODUCTO
+// 3. CREAR PRODUCTO REAL (Conectado al Backend)
     async crearProducto(datosProducto) {
         try {
-            // Verificar permisos de admin
+            // Revalidar permisos (doble check, aunque el backend también lo hará)
             if (!authService.esAdmin()) {
                 throw new Error('Se requieren permisos de administrador');
             }
-
-            // Validar datos requeridos
-            if (!datosProducto.nombre || !datosProducto.precio || !datosProducto.categoria) {
-                throw new Error('Nombre, precio y categoría son requeridos');
-            }
-
-            // Generar nuevo ID
-            const nuevoId = this.generarNuevoId();
-
-            const producto = {
-                id: nuevoId,
-                nombre: datosProducto.nombre.trim(),
-                descripcion: datosProducto.descripcion?.trim() || '',
+            
+            const mutation = `
+                mutation CrearProducto(
+                    $nombre: String!, $descripcion: String!, $precio: Float!, 
+                    $categoria: String!, $imagen: String, $stock: Int
+                ) {
+                    crearProducto(
+                        nombre: $nombre, descripcion: $descripcion, precio: $precio, 
+                        categoria: $categoria, imagen: $imagen, stock: $stock
+                    ) {
+                        producto { id nombre categoria }
+                        mensaje
+                    }
+                }
+            `;
+            
+            // Preparar variables con los tipos de datos correctos
+            const variables = {
+                ...datosProducto,
                 precio: Number(datosProducto.precio),
-                imagen: datosProducto.imagen?.trim() || 'Recursos_Esteticos/img/default.jpg',
-                categoria: datosProducto.categoria,
-                activo: true,
-                stock: datosProducto.stock || 0,
-                creadoEn: new Date().toISOString(),
-                actualizadoEn: new Date().toISOString()
+                stock: Number(datosProducto.stock) || 10,
+                imagen: datosProducto.imagen || 'Recursos_Esteticos/img/default.jpg' // Default en caso de vacío
             };
 
-            // Agregar a la categoría correspondiente
-            if (!EstadoApp.productos[producto.categoria]) {
-                EstadoApp.productos[producto.categoria] = [];
+            console.log('📡 Creando producto en el backend...');
+            const data = await GQL.request(mutation, variables);
+            
+            const nuevoProducto = data.crearProducto.producto;
+            
+            // Opcional: Agregar a la cache del EstadoApp para uso inmediato
+            if (EstadoApp.productos[nuevoProducto.categoria]) {
+                EstadoApp.productos[nuevoProducto.categoria].push(nuevoProducto);
             }
-            EstadoApp.productos[producto.categoria].push(producto);
-
-            // Actualizar interfaz
-            await this.renderProductosCategoria(producto.categoria);
-
-            console.log(`✅ Producto creado: ${producto.nombre} (ID: ${producto.id})`);
-            return { exito: true, producto: producto };
+            
+            console.log(`✅ Producto creado: ${nuevoProducto.nombre} (ID: ${nuevoProducto.id})`);
+            return { exito: true, producto: nuevoProducto };
 
         } catch (error) {
             console.error('❌ Error creando producto:', error);
+            // El error.message viene del throw en GQL.request (json.errors[0].message)
             return { exito: false, error: error.message };
         }
     }
 
-    // 4. ACTUALIZAR PRODUCTO
+// 4. ACTUALIZAR PRODUCTO REAL (Conectado al Backend)
     async actualizarProducto(id, datosActualizados) {
         try {
-            // Verificar permisos de admin
             if (!authService.esAdmin()) {
                 throw new Error('Se requieren permisos de administrador');
             }
 
-            // Buscar producto en todas las categorías
-            let productoEncontrado = null;
-            let categoriaProducto = null;
-
-            for (const [categoria, productos] of Object.entries(EstadoApp.productos)) {
-                const index = productos.findIndex(p => p.id === parseInt(id));
-                if (index !== -1) {
-                    productoEncontrado = productos[index];
-                    categoriaProducto = categoria;
-                    break;
+            const mutation = `
+                mutation ActualizarProducto(
+                    $id: ID!, $nombre: String, $descripcion: String, $precio: Float, 
+                    $categoria: String, $imagen: String, $stock: Int, $disponible: Boolean
+                ) {
+                    actualizarProducto(
+                        id: $id, nombre: $nombre, descripcion: $descripcion, precio: $precio, 
+                        categoria: $categoria, imagen: $imagen, stock: $stock, disponible: $disponible
+                    ) {
+                        producto { id nombre categoria }
+                        mensaje
+                    }
                 }
-            }
+            `;
 
-            if (!productoEncontrado) {
-                throw new Error('Producto no encontrado');
-            }
-
-            // Actualizar campos
-            const productoActualizado = {
-                ...productoEncontrado,
-                ...datosActualizados,
-                actualizadoEn: new Date().toISOString()
+            // Limpiar datos: solo enviar los definidos y convertir tipos
+            const variables = {
+                id,
+                ...(datosActualizados.nombre && { nombre: datosActualizados.nombre }),
+                ...(datosActualizados.descripcion && { descripcion: datosActualizados.descripcion }),
+                ...(datosActualizados.precio !== undefined && { precio: Number(datosActualizados.precio) }),
+                ...(datosActualizados.categoria && { categoria: datosActualizados.categoria }),
+                ...(datosActualizados.imagen !== undefined && { imagen: datosActualizados.imagen }),
+                ...(datosActualizados.stock !== undefined && { stock: Number(datosActualizados.stock) }),
+                ...(datosActualizados.disponible !== undefined && { disponible: datosActualizados.disponible }),
             };
 
-            // Reemplazar en el array
-            const categoriaArray = EstadoApp.productos[categoriaProducto];
-            const index = categoriaArray.findIndex(p => p.id === parseInt(id));
-            categoriaArray[index] = productoActualizado;
+            console.log(`📡 Actualizando producto ID ${id} en el backend...`);
+            const data = await GQL.request(mutation, variables);
+            
+            const productoActualizado = data.actualizarProducto.producto;
 
-            // Si cambió la categoría, mover el producto
-            if (datosActualizados.categoria && datosActualizados.categoria !== categoriaProducto) {
-                // Remover de categoría anterior
-                EstadoApp.productos[categoriaProducto] = categoriaArray.filter(p => p.id !== parseInt(id));
-                
-                // Agregar a nueva categoría
-                if (!EstadoApp.productos[datosActualizados.categoria]) {
-                    EstadoApp.productos[datosActualizados.categoria] = [];
-                }
-                EstadoApp.productos[datosActualizados.categoria].push(productoActualizado);
-                
-                // Renderizar ambas categorías
-                await this.renderProductosCategoria(categoriaProducto);
-                await this.renderProductosCategoria(datosActualizados.categoria);
-            } else {
-                // Solo renderizar la categoría actual
-                await this.renderProductosCategoria(categoriaProducto);
-            }
-
+            // Nota: El renderizado completo (y, por tanto, la actualización de la caché)
+            // ocurre en productService.manejarSubmitProducto, por lo que no lo repetimos aquí.
+            
             console.log(`✏️ Producto actualizado: ${productoActualizado.nombre}`);
             return { exito: true, producto: productoActualizado };
 
@@ -1103,37 +1134,49 @@ class ProductService {
         }
     }
 
-    // 5. ELIMINAR PRODUCTO
+// 5. ELIMINAR PRODUCTO REAL
     async eliminarProducto(id) {
         try {
-            // Verificar permisos de admin
             if (!authService.esAdmin()) {
                 throw new Error('Se requieren permisos de administrador');
             }
 
-            // Buscar producto en todas las categorías
-            let productoEliminado = null;
-            let categoriaProducto = null;
-
-            for (const [categoria, productos] of Object.entries(EstadoApp.productos)) {
-                const index = productos.findIndex(p => p.id === parseInt(id));
-                if (index !== -1) {
-                    productoEliminado = productos[index];
-                    categoriaProducto = categoria;
-                    EstadoApp.productos[categoria] = productos.filter(p => p.id !== parseInt(id));
-                    break;
+            // 1. Primero necesitamos saber la categoría para repintarla después
+            // Como ya no tenemos caché confiable, la adivinamos del DOM o pedimos el producto antes
+            // Truco rápido: buscamos el elemento en el HTML para ver su categoría
+            const cardElement = document.querySelector(`button[data-producto-id="${id}"]`);
+            let categoriaParaRefrescar = 'promos'; // Default por seguridad
+            
+            if (cardElement) {
+                // Intentamos subir hasta encontrar el contenedor o la card que tenga el dato
+                const colPadre = cardElement.closest('.col');
+                if (colPadre && colPadre.dataset.categoria) {
+                    categoriaParaRefrescar = colPadre.dataset.categoria;
                 }
             }
-
-            if (!productoEliminado) {
-                throw new Error('Producto no encontrado');
+            
+            const mutation = `
+                mutation EliminarProducto($id: ID!) {
+                    eliminarProducto(id: $id) {
+                        success
+                        message
+                    }
+                }
+            `;
+            
+            console.log(`📡 Eliminando producto ID ${id} en el backend...`);
+            const data = await GQL.request(mutation, { id });
+            
+            if (data.eliminarProducto.success) {
+                console.log(`🗑️ Producto eliminado. Refrescando categoría: ${categoriaParaRefrescar}`);
+                
+                // CLAVE: Aquí forzamos la actualización visual inmediata
+                await this.renderProductosCategoria(categoriaParaRefrescar);
+                
+                return { exito: true, mensaje: data.eliminarProducto.message };
+            } else {
+                throw new Error(data.eliminarProducto.message);
             }
-
-            // Actualizar interfaz
-            await this.renderProductosCategoria(categoriaProducto);
-
-            console.log(`🗑️ Producto eliminado: ${productoEliminado.nombre}`);
-            return { exito: true, producto: productoEliminado };
 
         } catch (error) {
             console.error('❌ Error eliminando producto:', error);
@@ -1141,19 +1184,27 @@ class ProductService {
         }
     }
 
-    // 6. RENDERIZADO DE PRODUCTOS
+// 6. RENDERIZADO DE PRODUCTOS
     async renderProductosCategoria(categoria) {
-        const contenedorId = `contenedor-${categoria}`;
+        // TRUCO INTELIGENTE: 
+        // Si la categoría viene de la BD como "acompañamientos", la traducimos al ID "acompanamientos"
+        let sufijoId = categoria;
+        if (categoria === 'acompañamientos') {
+            sufijoId = 'acompanamientos';
+        }
+
+        const contenedorId = `contenedor-${sufijoId}`;
         const contenedor = document.getElementById(contenedorId);
         
         if (!contenedor) {
-            console.log(`⚠️ Contenedor no encontrado para categoría: ${categoria}`);
-            return;
+            return; // Si no existe en esta página, no hacemos nada
         }
 
         try {
+            // Llamamos siempre a la API para tener datos frescos
             const productos = await this.obtenerProductos(categoria);
             contenedor.innerHTML = '';
+            // ... (el resto del código sigue igual)
 
             if (productos.length === 0) {
                 contenedor.innerHTML = `
@@ -1258,7 +1309,7 @@ class ProductService {
         });
     }
 
-    async manejarSubmitProducto(event) {
+async manejarSubmitProducto(event) {
         event.preventDefault();
 
         const btnGuardar = ElementosDOM.btnGuardarProducto;
@@ -1274,7 +1325,7 @@ class ProductService {
             const datos = {
                 nombre: ElementosDOM.productName.value,
                 descripcion: ElementosDOM.productDesc.value,
-                precio: Number(ElementosDOM.productPrice.value),
+                precio: ElementosDOM.productPrice.value,
                 imagen: ElementosDOM.productImg.value,
                 categoria: ElementosDOM.productCategory.value
             };
@@ -1289,26 +1340,10 @@ class ProductService {
                 // Crear nuevo producto
                 resultado = await this.crearProducto(datos);
             }
+
             if (resultado.exito) {
-                // Intentar cerrar el modal usando la instancia existente
-                const modalElement = ElementosDOM.modalAddProduct;
-                const modalInstance = bootstrap.Modal.getInstance(modalElement);
-                if (modalInstance) {
-                    modalInstance.hide();
-                }
-
-                // Eliminamos manualmente la capa negra después de medio segundo
-                setTimeout(() => {
-                    const backdrops = document.querySelectorAll('.modal-backdrop');
-                    backdrops.forEach(el => el.remove());
-                    document.body.classList.remove('modal-open');
-                    document.body.style = '';
-                }, 500);
-
-                // Le decimos a la app que vuelva a pintar la categoría donde agregamos el producto
+                // Éxito: Refrescamos la vista de la categoría
                 await this.renderProductosCategoria(datos.categoria);
-
-                // 4. Mensaje de éxito
                 alert(`✅ Producto ${productoId ? 'actualizado' : 'creado'} correctamente`);
             } else {
                 throw new Error(resultado.error);
@@ -1318,11 +1353,36 @@ class ProductService {
             console.error('❌ Error guardando producto:', error);
             alert(`Error: ${error.message}`);
         } finally {
-            // Restaurar botón
+            // === ZONA DE SEGURIDAD Y LIMPIEZA (LA SOLUCIÓN VIOLENTA) ===
+            // Esto se ejecuta SIEMPRE, haya éxito o error, para devolver el control.
+
+            // 1. Restaurar botón
             textoBtn.textContent = 'Guardar';
             textoBtn.style.display = 'inline-block';
             spinner.style.display = 'none';
             btnGuardar.disabled = false;
+
+            // 2. DESALOJO FORZOSO DEL MODAL
+            const modalElement = ElementosDOM.modalAddProduct;
+            
+            // Intento diplomático (Bootstrap)
+            const modalInstance = bootstrap.Modal.getInstance(modalElement);
+            if (modalInstance) modalInstance.hide();
+
+            // Fuerza Bruta (DOM)
+            modalElement.classList.remove('show');
+            modalElement.style.display = 'none';
+            modalElement.setAttribute('aria-hidden', 'true');
+            modalElement.removeAttribute('role');
+
+            // 3. ELIMINAR LA CAPA NEGRA (BACKDROP)
+            const backdrops = document.querySelectorAll('.modal-backdrop');
+            backdrops.forEach(el => el.remove());
+
+            // 4. DESBLOQUEAR EL SCROLL DEL BODY
+            document.body.classList.remove('modal-open');
+            document.body.style.overflow = 'auto';
+            document.body.style.paddingRight = '0';
         }
     }
 
@@ -1855,17 +1915,36 @@ class AppInicializador {
         }
     }
 
-    // 2. CARGA DE PRODUCTOS INICIALES
+// 2. CARGA DE PRODUCTOS INICIALES
     async cargarProductosIniciales() {
         try {
-            // Cargar promociones si la sección existe
-            if (Utilidades.elementoExiste(ElementosDOM.contenedorPromos)) {
-                await productService.renderProductosCategoria('promos');
-            }
+            console.log('🔄 Cargando catálogo completo...');
+
+            // Lista de todas las categorías que tu negocio maneja
+            const categoriasAContenedor = [
+                'promos', 
+                'sandwiches', 
+                'paninis', 
+                'acompanamientos', 
+                'bebibles', 
+                'experimentos'
+            ];
             
-            // Aquí podríamos cargar otras categorías según la página
-            // await productService.renderProductosCategoria('menu');
-            // await productService.renderProductosCategoria('bebidas');
+            // Recorremos todas las categorías
+            // Si el contenedor existe en la página actual, cargamos sus productos.
+            const promesasCarga = categoriasAContenedor.map(cat => {
+                const contenedorId = `contenedor-${cat}`;
+                const contenedor = document.getElementById(contenedorId);
+                
+                if (Utilidades.elementoExiste(contenedor)) {
+                    console.log(`📦 Cargando categoría: ${cat}`);
+                    return productService.renderProductosCategoria(cat);
+                }
+                return Promise.resolve(); // Si no está en esta página, no hacemos nada
+            });
+            
+            // Esperamos a que todas terminen
+            await Promise.all(promesasCarga);
             
         } catch (error) {
             console.error('❌ Error cargando productos iniciales:', error);
