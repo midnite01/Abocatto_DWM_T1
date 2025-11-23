@@ -1441,46 +1441,162 @@ class CheckoutService {
     }
 
     registrarEventos() {
-        // 1. Lógica de Tipo de Entrega (Radio Buttons)
+        // 1. Lógica de Tipo de Entrega
         const radiosEntrega = document.querySelectorAll('input[name="tipoEntrega"]');
         radiosEntrega.forEach(radio => {
             radio.addEventListener('change', (e) => {
                 const esDelivery = e.target.value === 'delivery';
-                
-                // Mostrar/Ocultar secciones
                 Utilidades.toggleElemento(document.getElementById('seccion-direccion-delivery'), esDelivery);
                 Utilidades.toggleElemento(document.getElementById('seccion-info-retiro'), !esDelivery);
                 
-                // Actualizar texto de envío en el resumen
                 const textoEnvio = document.getElementById('checkout-envio');
-                if (textoEnvio) textoEnvio.textContent = esDelivery ? 'Gratis' : 'N/A';
+                if (textoEnvio) textoEnvio.textContent = esDelivery ? 'Por calcular' : 'Gratis';
             });
         });
 
-        // 2. Lógica de Método de Pago (Radio Buttons)
+        // 2. Lógica de Método de Pago
         const radiosPago = document.querySelectorAll('input[name="metodoPago"]');
         radiosPago.forEach(radio => {
             radio.addEventListener('change', (e) => {
                 const esTarjeta = e.target.value === 'tarjeta';
-                
-                // Mostrar/Ocultar secciones
                 Utilidades.toggleElemento(document.getElementById('seccion-tarjeta'), esTarjeta);
                 Utilidades.toggleElemento(document.getElementById('seccion-info-contraentrega'), !esTarjeta);
             });
         });
 
-        // 3. Botón Confirmar Compra
+        // 3. Botón Confirmar Compra (INTEGRACIÓN REAL)
         const btnConfirmar = document.getElementById('btn-confirmar-compra');
         if (btnConfirmar) {
-            btnConfirmar.addEventListener('click', (e) => {
+            btnConfirmar.addEventListener('click', async (e) => {
                 e.preventDefault();
-                alert('🚧 ¡Aquí conectaremos la API de Pagos en la próxima etapa!');
-                // Aquí llamaremos a pagoService.procesarPago(...)
+                await this.procesarCompra();
             });
         }
     }
 
+    async procesarCompra() {
+        try {
+            // A) Validaciones Previas
+            if (EstadoApp.carrito.length === 0) {
+                alert('El carrito está vacío');
+                return;
+            }
+
+            const usuario = authService.getUsuarioActual();
+            if (!usuario || !usuario.id) {
+                alert('Debes iniciar sesión para confirmar la compra');
+                return;
+            }
+
+            // B) Recolectar Datos del Formulario
+            const tipoEntrega = document.querySelector('input[name="tipoEntrega"]:checked').value;
+            const metodoPago = document.querySelector('input[name="metodoPago"]:checked').value;
+            const notas = document.getElementById('input-notas')?.value || '';
+
+            // Preparar objeto dirección (solo si es delivery)
+            let direccionEntrega = null;
+            if (tipoEntrega === 'delivery') {
+                const calle = document.getElementById('input-calle').value;
+                const comuna = document.getElementById('input-comuna').value;
+                
+                if (!calle) {
+                    alert('Debes ingresar una dirección para el despacho');
+                    return;
+                }
+                
+                direccionEntrega = {
+                    calle: calle,
+                    comuna: comuna || 'Santiago',
+                    ciudad: 'Santiago',
+                    notas: notas
+                };
+            }
+
+            // Preparar datos de pago (Dummy o Reales del form)
+            const datosPago = {
+                metodo: metodoPago,
+                ultimosDigitos: metodoPago === 'tarjeta' ? '4242' : null, // Simulado por ahora
+                transaccionId: `PEND_${Date.now()}`
+            };
+
+            // C) Preparar Items del Carrito para GraphQL
+            const itemsInput = EstadoApp.carrito.map(item => ({
+                productoId: item.id,
+                nombre: item.nombre,
+                precio: Number(item.precio),
+                cantidad: Number(item.cantidad),
+                imagen: item.imagen
+            }));
+
+            // D) Definir la Mutation
+            const mutation = `
+                mutation CrearPedido(
+                    $usuarioId: ID!, 
+                    $items: [ItemPedidoInput!]!, 
+                    $tipoEntrega: String!, 
+                    $direccionEntrega: DireccionEntregaInput, 
+                    $metodoPago: String!, 
+                    $datosPago: DatosPagoInput!, 
+                    $notas: String
+                ) {
+                    crearPedido(
+                        usuarioId: $usuarioId, 
+                        items: $items, 
+                        tipoEntrega: $tipoEntrega, 
+                        direccionEntrega: $direccionEntrega, 
+                        metodoPago: $metodoPago, 
+                        datosPago: $datosPago, 
+                        notas: $notas
+                    ) {
+                        pedido { id numeroBoleta total estado }
+                        mensaje
+                    }
+                }
+            `;
+
+            const variables = {
+                usuarioId: usuario.id,
+                items: itemsInput,
+                tipoEntrega,
+                direccionEntrega,
+                metodoPago,
+                datosPago,
+                notas
+            };
+
+            // E) Enviar al Backend
+            console.log('📡 Creando pedido...', variables);
+            const btn = document.getElementById('btn-confirmar-compra');
+            btn.disabled = true;
+            btn.textContent = 'Procesando...';
+
+            const data = await GQL.request(mutation, variables);
+            
+            // F) Éxito
+            const nuevoPedido = data.crearPedido.pedido;
+            console.log('✅ Pedido creado:', nuevoPedido);
+
+            // Guardar ID del pedido temporalmente para la validación de pago
+            sessionStorage.setItem('pedido_actual_id', nuevoPedido.id);
+            sessionStorage.setItem('metodo_pago_actual', metodoPago);
+
+            // Vaciar carrito local (ya está en la DB)
+            await carritoService.vaciarCarrito();
+
+            // Redirigir a validación de pago
+            window.location.href = 'Val_pago.html';
+
+        } catch (error) {
+            console.error('❌ Error al crear pedido:', error);
+            alert('Hubo un error al procesar tu pedido: ' + error.message);
+            const btn = document.getElementById('btn-confirmar-compra');
+            btn.disabled = false;
+            btn.textContent = 'Confirmar Compra';
+        }
+    }
+
     renderizarResumen() {
+        // ... (Mantener el código anterior de renderizarResumen igual) ...
         const contenedor = document.getElementById('lista-resumen-checkout');
         if (!contenedor) return;
 
@@ -1494,7 +1610,6 @@ class CheckoutService {
 
         let subtotal = 0;
 
-        // Generar HTML de cada item
         carrito.forEach(item => {
             const totalItem = item.precio * item.cantidad;
             subtotal += totalItem;
@@ -1511,7 +1626,6 @@ class CheckoutService {
             contenedor.appendChild(div);
         });
 
-        // Actualizar Totales
         const elSubtotal = document.getElementById('checkout-subtotal');
         const elTotal = document.getElementById('checkout-total');
         
@@ -1519,53 +1633,154 @@ class CheckoutService {
         if (elTotal) elTotal.textContent = Utilidades.formatearPrecio(subtotal);
     }
 }
-
 // Instancia global
 const checkoutService = new CheckoutService();
 
 
 // =================== ORDER SERVICE - GESTIÓN DE PEDIDOS/BOLETAS ===================
 
+// =================== ORDER SERVICE - GESTIÓN DE PEDIDOS/BOLETAS ===================
+
 class OrderService {
     constructor() {
-        // Solo inicializar si estamos en la página de historial
+        // Detectar en qué página estamos para iniciar la lógica correcta
         if (document.getElementById('lista-pedidos')) {
             this.inicializarHistorial();
         }
+        
+        // Si estamos en la página de Tracking
+        if (document.querySelector('.tracker-container')) {
+            this.inicializarTracking();
+        }
     }
 
-    inicializarHistorial() {
-        console.log('📜 Inicializando Historial de Pedidos...');
-        this.cargarPedidosMock(); // Cargar datos falsos si no hay
+    // =================== 1. LOGICA DE TRACKING (Est_pedido.html) ===================
+    
+    async inicializarTracking() {
+        console.log('📍 Inicializando Tracking de Pedido...');
+        
+        const params = new URLSearchParams(window.location.search);
+        const pedidoId = params.get('id');
+
+        if (!pedidoId) {
+            alert('No se especificó un pedido para rastrear.');
+            window.location.href = 'Ges_boletas.html';
+            return;
+        }
+
+        try {
+            const query = `
+                query ObtenerTracking($id: ID!) {
+                    obtenerPedido(id: $id) {
+                        id
+                        numeroBoleta
+                        estado
+                        tiempoEstimado
+                        createdAt
+                        items { nombre cantidad }
+                    }
+                }
+            `;
+
+            const data = await GQL.request(query, { id: pedidoId });
+            const pedido = data.obtenerPedido;
+
+            if (!pedido) throw new Error('Pedido no encontrado');
+
+            this.renderizarTracking(pedido);
+
+        } catch (error) {
+            console.error('❌ Error cargando tracking:', error);
+            // Evitamos alert para no bloquear si es un error menor
+        }
+    }
+
+    renderizarTracking(pedido) {
+        // Datos básicos
+        const elId = document.getElementById('track-id');
+        const elFecha = document.getElementById('track-fecha');
+        
+        if (elId) elId.textContent = pedido.numeroBoleta || pedido.id.slice(-6);
+        if (elFecha) elFecha.textContent = new Date(Number(pedido.createdAt)).toLocaleDateString();
+
+        // Lógica de Pasos (Stepper)
+        const estadosOrden = ['confirmado', 'en_preparacion', 'en_camino', 'entregado'];
+        const pasosDOM = document.querySelectorAll('.tracker-step'); 
+
+        let indiceActual = -1;
+        let estadoNormalizado = pedido.estado;
+        
+        if (pedido.estado === 'pendiente') indiceActual = -1;
+        else if (pedido.estado === 'listo_retiro') estadoNormalizado = 'en_camino';
+        else if (pedido.estado === 'retirado') estadoNormalizado = 'entregado';
+        
+        indiceActual = estadosOrden.indexOf(estadoNormalizado);
+
+        pasosDOM.forEach((paso, index) => {
+            paso.classList.remove('active', 'done');
+            if (index < indiceActual) {
+                paso.classList.add('done'); 
+            } else if (index === indiceActual) {
+                paso.classList.add('active'); 
+            }
+        });
+
+        // Textos dinámicos
+        const titulos = ['Confirmado ✅', 'En cocina 🔥', 'En camino 🛵', 'Entregado 🍽️'];
+        const descripciones = ['Validando detalles.', 'Preparando tus Bocattos.', 'Repartidor en ruta.', '¡Disfrútalo!'];
+
+        const tituloEl = document.querySelector('.card-body h4');
+        const descEl = document.querySelector('.card-body p.text-muted:last-of-type');
+
+        if (tituloEl && indiceActual >= 0 && titulos[indiceActual]) tituloEl.textContent = titulos[indiceActual];
+        if (descEl && indiceActual >= 0 && descripciones[indiceActual]) descEl.textContent = descripciones[indiceActual];
+    }
+
+    // =================== 2. LOGICA DE HISTORIAL (Ges_boletas.html) ===================
+    
+    async inicializarHistorial() {
+        console.log('📜 Inicializando Historial de Pedidos Real...');
+        
+        const usuario = authService.getUsuarioActual();
+        if (!usuario || !usuario.id) {
+            // Si no está logueado, redirigir o mostrar vacío
+            return;
+        }
+
+        // Cargar pedidos del backend
+        this.pedidos = await this.obtenerMisPedidos(usuario.id);
+        
+        // Renderizar
         this.renderizarPedidos();
         this.registrarFiltros();
     }
 
-    // Simular base de datos local
-    cargarPedidosMock() {
-        const KEY = 'pedidos_bocatto';
-        let pedidos = Utilidades.cargarDesdeStorage(KEY, []);
-
-        if (pedidos.length === 0) {
-            console.log('🌱 Sembrando pedidos de prueba...');
-            // Crear 3 pedidos de ejemplo
-            pedidos = [
-                {
-                    id: '1001', boleta: 'B-9921', fecha: new Date().toISOString(), estado: 'en_preparacion',
-                    total: 15980, items: [{ nombre: 'Pizza Pepperoni', cant: 2, precio: 7990 }]
-                },
-                {
-                    id: '1002', boleta: 'B-8842', fecha: new Date(Date.now() - 86400000).toISOString(), estado: 'entregado',
-                    total: 5990, items: [{ nombre: 'Panini Caprese', cant: 1, precio: 5990 }]
-                },
-                {
-                    id: '1003', boleta: 'B-7731', fecha: new Date(Date.now() - 172800000).toISOString(), estado: 'entregado',
-                    total: 12980, items: [{ nombre: 'Sanguche de Potito', cant: 1, precio: 6990 }, { nombre: 'Bebida', cant: 2, precio: 2995 }]
+    async obtenerMisPedidos(usuarioId) {
+        try {
+            const query = `
+                query ObtenerMisPedidos($usuarioId: ID!) {
+                    obtenerPedidos(usuarioId: $usuarioId) {
+                        id
+                        numeroBoleta
+                        createdAt
+                        estado
+                        total
+                        tipoEntrega
+                        items { nombre cantidad precio }
+                    }
                 }
-            ];
-            Utilidades.guardarEnStorage(KEY, pedidos);
+            `;
+
+            const data = await GQL.request(query, { usuarioId });
+            // Mapeamos 'createdAt' a 'fecha' para compatibilidad con el renderizador
+            return data.obtenerPedidos.map(p => ({...p, fecha: p.createdAt})) || [];
+
+        } catch (error) {
+            console.error('❌ Error cargando historial:', error);
+            const lista = document.getElementById('lista-pedidos');
+            if(lista) lista.innerHTML = `<div class="text-center text-danger py-5">Error: ${error.message}</div>`;
+            return [];
         }
-        this.pedidos = pedidos;
     }
 
     renderizarPedidos(filtro = 'todos', busqueda = '') {
@@ -1574,10 +1789,17 @@ class OrderService {
 
         contenedor.innerHTML = '';
 
-        // Filtrar
+        if (!this.pedidos || this.pedidos.length === 0) {
+            contenedor.innerHTML = '<div class="text-center text-muted py-5">No tienes pedidos registrados aún.</div>';
+            return;
+        }
+
         const filtrados = this.pedidos.filter(p => {
             const pasaFiltro = filtro === 'todos' || p.estado === filtro;
-            const pasaBusqueda = !busqueda || JSON.stringify(p).toLowerCase().includes(busqueda.toLowerCase());
+            const textoBusqueda = busqueda.toLowerCase();
+            const pasaBusqueda = !busqueda || 
+                                 (p.numeroBoleta && p.numeroBoleta.toLowerCase().includes(textoBusqueda)) ||
+                                 p.id.toLowerCase().includes(textoBusqueda);
             return pasaFiltro && pasaBusqueda;
         });
 
@@ -1586,15 +1808,16 @@ class OrderService {
             return;
         }
 
-        // Renderizar Cards
         filtrados.forEach(p => {
-            const fechaFmt = new Date(p.fecha).toLocaleDateString('es-CL');
+            const fechaFmt = new Date(Number(p.fecha)).toLocaleDateString('es-CL');
             
-            // Configurar badge de estado
             let badgeClass = 'bg-secondary';
-            let estadoTexto = p.estado;
+            let estadoTexto = p.estado; // Simplificado
+            
+            if (p.estado === 'confirmado') badgeClass = 'bg-primary';
             if (p.estado === 'en_preparacion') { badgeClass = 'bg-warning text-dark'; estadoTexto = 'En Cocina'; }
-            if (p.estado === 'entregado') { badgeClass = 'bg-success'; estadoTexto = 'Entregado'; }
+            if (p.estado === 'en_camino') { badgeClass = 'bg-info text-dark'; estadoTexto = 'En Camino'; }
+            if (p.estado === 'entregado') badgeClass = 'bg-success';
 
             const div = document.createElement('div');
             div.className = 'card rounded-4 mb-3 border-secondary';
@@ -1603,15 +1826,15 @@ class OrderService {
                     <div class="d-flex justify-content-between align-items-start mb-2">
                         <div>
                             <span class="badge ${badgeClass} me-2">${estadoTexto}</span>
-                            <span class="text-muted small">Pedido #${p.id}</span>
+                            <span class="text-muted small">Boleta: ${p.numeroBoleta || 'Pendiente'}</span>
                         </div>
                         <div class="fw-bold text-warning">${Utilidades.formatearPrecio(p.total)}</div>
                     </div>
                     <div class="d-flex justify-content-between align-items-end">
-                        <div class="small text-muted">Fecha: ${fechaFmt} • Boleta: ${p.boleta}</div>
+                        <div class="small text-muted">Fecha: ${fechaFmt}</div>
                         <div>
-                            <button class="btn btn-sm btn-outline-light me-2 btn-ver-boleta" data-id="${p.id}">Ver Boleta</button>
-                            <a href="Est_pedido.html" class="btn btn-sm btn-danger">Seguimiento</a>
+                            <button class="btn btn-sm btn-outline-light me-2 btn-ver-boleta" data-id="${p.id}">Detalle</button>
+                            <a href="Est_pedido.html?id=${p.id}" class="btn btn-sm btn-danger">Seguimiento</a>
                         </div>
                     </div>
                 </div>
@@ -1619,54 +1842,62 @@ class OrderService {
             contenedor.appendChild(div);
         });
 
-        // Activar botones "Ver Boleta"
         document.querySelectorAll('.btn-ver-boleta').forEach(btn => {
             btn.addEventListener('click', (e) => this.abrirModalBoleta(e.target.dataset.id));
         });
     }
 
     registrarFiltros() {
-        // Chips
+        const inputBusqueda = document.getElementById('input-busqueda-pedido');
+        if (inputBusqueda) {
+            inputBusqueda.addEventListener('input', (e) => {
+                const chipActivo = document.querySelector('.chip.active');
+                const filtro = chipActivo ? chipActivo.dataset.filter : 'todos';
+                this.renderizarPedidos(filtro, e.target.value);
+            });
+        }
+
         document.querySelectorAll('.chip').forEach(chip => {
             chip.addEventListener('click', (e) => {
                 document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
                 e.target.classList.add('active');
-                this.renderizarPedidos(e.target.dataset.filter, document.getElementById('input-busqueda-pedido').value);
+                const busqueda = document.getElementById('input-busqueda-pedido')?.value || '';
+                this.renderizarPedidos(e.target.dataset.filter, busqueda);
             });
         });
-
-        // Buscador
-        const inputBusqueda = document.getElementById('input-busqueda-pedido');
-        if (inputBusqueda) {
-            inputBusqueda.addEventListener('input', (e) => {
-                const filtroActivo = document.querySelector('.chip.active').dataset.filter;
-                this.renderizarPedidos(filtroActivo, e.target.value);
-            });
-        }
     }
 
     abrirModalBoleta(id) {
         const pedido = this.pedidos.find(p => p.id === id);
         if (!pedido) return;
 
-        document.getElementById('modal-boleta-num').textContent = pedido.boleta;
-        document.getElementById('modal-boleta-fecha').textContent = new Date(pedido.fecha).toLocaleDateString();
-        document.getElementById('modal-boleta-total').textContent = Utilidades.formatearPrecio(pedido.total);
+        const elNum = document.getElementById('modal-boleta-num');
+        const elFecha = document.getElementById('modal-boleta-fecha');
+        const elTotal = document.getElementById('modal-boleta-total');
+        
+        if(elNum) elNum.textContent = pedido.numeroBoleta || '---';
+        if(elFecha) elFecha.textContent = new Date(Number(pedido.fecha)).toLocaleDateString();
+        if(elTotal) elTotal.textContent = Utilidades.formatearPrecio(pedido.total);
 
         const tbody = document.getElementById('modal-boleta-items');
-        tbody.innerHTML = '';
-        pedido.items.forEach(item => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${item.nombre}</td>
-                <td class="text-center">${item.cant}</td>
-                <td class="text-end">${Utilidades.formatearPrecio(item.precio)}</td>
-                <td class="text-end">${Utilidades.formatearPrecio(item.precio * item.cant)}</td>
-            `;
-            tbody.appendChild(tr);
-        });
+        if (tbody) {
+            tbody.innerHTML = '';
+            pedido.items.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${item.nombre}</td>
+                    <td class="text-center">${item.cantidad}</td>
+                    <td class="text-end">${Utilidades.formatearPrecio(item.precio)}</td>
+                    <td class="text-end">${Utilidades.formatearPrecio(item.precio * item.cantidad)}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
 
-        new bootstrap.Modal(document.getElementById('modalBoleta')).show();
+        const modalEl = document.getElementById('modalBoleta');
+        if (modalEl && window.bootstrap) {
+            new bootstrap.Modal(modalEl).show();
+        }
     }
 }
 
@@ -1677,88 +1908,111 @@ const orderService = new OrderService();
 
 class DashboardService {
     constructor() {
-        // Solo inicializar si estamos en la página de reportes
+        // Solo inicializar si estamos en la página de reportes y existe el gráfico
         if (document.getElementById('chartTop')) {
             this.inicializarDashboard();
         }
     }
 
-    inicializarDashboard() {
-        console.log('📊 Inicializando Dashboard de Ventas...');
+    async inicializarDashboard() {
+        console.log('📊 Inicializando Dashboard Real...');
         
-        // Variables para los gráficos (para poder destruirlos y redibujarlos)
+        // 1. Verificar si es admin (Seguridad Frontend)
+        if (!authService.esAdmin()) {
+            alert('Acceso denegado: Se requieren permisos de administrador.');
+            window.location.href = 'Web_principal.html';
+            return;
+        }
+
+        // Variables para las instancias de los gráficos (para poder destruirlos y redibujarlos)
         this.chartTop = null;
         this.chartPay = null;
         this.chartType = null;
 
-        // 1. Generar Datos Simulados (Para que se vea bonito)
-        this.datos = this.generarDatosSimulados();
-        
-        // 2. Configurar Filtros de Fecha
+        // 2. Configurar filtros de fecha (Listeners de los chips)
         this.configurarFiltros();
         
-        // 3. Renderizar vista inicial (Día actual)
-        this.actualizarDashboard('dia');
+        // 3. Cargar datos iniciales (por defecto "mes")
+        await this.cargarDatos('mes');
     }
 
-    generarDatosSimulados() {
-        // Generamos 150 pedidos aleatorios de los últimos 6 meses
-        const pedidos = [];
-        const productos = ['Pizza Pepperoni', 'Panini Caprese', 'Sanguche de Potito', 'Barros Luco', 'Bebida', 'Papas Fritas'];
-        const metodos = ['tarjeta', 'contraentrega'];
-        const tipos = ['delivery', 'retiro'];
+    async cargarDatos(periodo, fechaInicio = null, fechaFin = null) {
+        try {
+            // Mostrar estado de carga visual en los números
+            this.mostrarLoadingKPIs();
 
-        for (let i = 0; i < 150; i++) {
-            const diasAtras = Math.floor(Math.random() * 180);
-            const fecha = new Date();
-            fecha.setDate(fecha.getDate() - diasAtras);
+            // 1. Consulta GraphQL para obtener Datos Gráficos
+            const queryGraficos = `
+                query ObtenerDatosGraficos($periodo: String, $fechaInicio: String, $fechaFin: String) {
+                    obtenerDatosGraficos(periodo: $periodo, fechaInicio: $fechaInicio, fechaFin: $fechaFin) {
+                        datos {
+                            topProductos { nombre cantidadVendida }
+                            metodosPago { metodo cantidad }
+                            tiposEntrega { tipo cantidad }
+                        }
+                    }
+                }
+            `;
 
-            pedidos.push({
-                id: i,
-                fecha: fecha,
-                total: Math.floor(Math.random() * 20000) + 5000,
-                producto: productos[Math.floor(Math.random() * productos.length)],
-                metodo: metodos[Math.floor(Math.random() * metodos.length)],
-                tipo: tipos[Math.floor(Math.random() * tipos.length)]
-            });
+            // 2. Consulta GraphQL para obtener Reporte Consolidado (KPIs numéricos)
+            const queryKPIs = `
+                query ObtenerReporteConsolidado($periodo: String, $fechaInicio: String, $fechaFin: String) {
+                    obtenerReporteConsolidado(periodo: $periodo, fechaInicio: $fechaInicio, fechaFin: $fechaFin) {
+                        reporte {
+                            totalVentas
+                            cantidadPedidos
+                            ticketPromedio
+                            resumenProductos { totalProductosVendidos }
+                            resumenMetodosPago { metodoMasUsado }
+                            resumenTiposEntrega { tipoMasUsado }
+                        }
+                    }
+                }
+            `;
+
+            const variables = { periodo, fechaInicio, fechaFin };
+
+            // Ejecutar ambas consultas en paralelo para mayor velocidad
+            const [resGraficos, resKPIs] = await Promise.all([
+                GQL.request(queryGraficos, variables),
+                GQL.request(queryKPIs, variables)
+            ]);
+
+            const datosGraficos = resGraficos.obtenerDatosGraficos.datos;
+            const reporte = resKPIs.obtenerReporteConsolidado.reporte;
+
+            // 3. Renderizar todo en pantalla
+            this.renderizarKPIs(reporte);
+            this.renderizarGraficos(datosGraficos);
+
+        } catch (error) {
+            console.error('❌ Error cargando dashboard:', error);
+            alert('Error cargando datos del reporte: ' + error.message);
         }
-        return pedidos;
     }
 
     configurarFiltros() {
-        // Chips de periodo (Hoy, Mes, Año)
+        // Lógica para los chips (Hoy, Mes, Año)
         document.querySelectorAll('.chip[data-mode]').forEach(chip => {
             chip.addEventListener('click', (e) => {
-                // Activar chip visualmente
+                // Actualizar UI (clase active)
                 document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
                 e.target.classList.add('active');
                 
-                // Mostrar inputs correspondientes
                 const modo = e.target.dataset.mode;
                 this.mostrarInputFecha(modo);
                 
-                // Actualizar datos
-                this.actualizarDashboard(modo);
+                // Si no es personalizado, cargar datos inmediatamente
+                if (modo !== 'personalizado') {
+                    this.cargarDatos(modo);
+                }
             });
         });
-
-        // Listeners para los inputs de fecha
-        ['inp-dia', 'inp-mes', 'inp-anio'].forEach(id => {
-            const input = document.getElementById(id);
-            if (input) {
-                input.addEventListener('change', () => {
-                    const modo = document.querySelector('.chip.active').dataset.mode;
-                    this.actualizarDashboard(modo);
-                });
-            }
-        });
-
-        // Botón Exportar
+        
+        // Listener simple para botón exportar (Simulado por ahora en el frontend, real en backend)
         const btnExport = document.getElementById('btn-export');
         if (btnExport) {
-            btnExport.addEventListener('click', () => {
-                alert('📊 Generando archivo Excel... (Simulación)');
-            });
+            btnExport.addEventListener('click', () => alert('Funcionalidad de exportación disponible en Backend'));
         }
     }
 
@@ -1768,116 +2022,85 @@ class DashboardService {
         Utilidades.toggleElemento(document.getElementById('box-anio'), modo === 'anio');
     }
 
-    actualizarDashboard(modo) {
-        // 1. Filtrar datos según el periodo seleccionado
-        const datosFiltrados = this.filtrarDatos(modo);
-        
-        // 2. Calcular KPIs
-        this.renderizarKPIs(datosFiltrados);
-        
-        // 3. Dibujar Gráficos
-        this.renderizarGraficos(datosFiltrados);
+    mostrarLoadingKPIs() {
+        ['kpi-sales', 'kpi-prod', 'kpi-pay', 'kpi-type'].forEach(id => {
+            const el = document.getElementById(id);
+            if(el) el.textContent = '...';
+        });
     }
 
-    filtrarDatos(modo) {
-        const ahora = new Date();
-        let inicio, fin;
-
-        // Lógica simple de fechas
-        if (modo === 'dia') {
-            const inputVal = document.getElementById('inp-dia').value;
-            const base = inputVal ? new Date(inputVal + 'T00:00:00') : new Date(); // Truco para zona horaria
-            inicio = new Date(base.getFullYear(), base.getMonth(), base.getDate());
-            fin = new Date(base.getFullYear(), base.getMonth(), base.getDate() + 1);
-        } else if (modo === 'mes') {
-            inicio = new Date(ahora.getFullYear(), agora.getMonth(), 1); // Por defecto este mes
-            fin = new Date();
-        } else {
-            inicio = new Date(ahora.getFullYear(), 0, 1); // Este año
-            fin = new Date();
-        }
-
-        return this.datos.filter(p => p.fecha >= inicio && p.fecha < fin);
-    }
-
-    renderizarKPIs(datos) {
+    renderizarKPIs(reporte) {
         // Ventas Totales
-        const total = datos.reduce((sum, p) => sum + p.total, 0);
-        document.getElementById('kpi-sales').textContent = Utilidades.formatearPrecio(total);
-        document.getElementById('kpi-sales-sub').textContent = `${datos.length} pedidos en este período`;
+        document.getElementById('kpi-sales').textContent = Utilidades.formatearPrecio(reporte.totalVentas);
+        document.getElementById('kpi-sales-sub').textContent = `${reporte.cantidadPedidos} pedidos`;
 
-        // Producto Top
-        const conteoProd = {};
-        datos.forEach(p => conteoProd[p.producto] = (conteoProd[p.producto] || 0) + 1);
-        const topProd = Object.entries(conteoProd).sort((a,b) => b[1] - a[1])[0];
-        document.getElementById('kpi-prod').textContent = topProd ? topProd[0] : 'N/A';
-        document.getElementById('kpi-prod-sub').textContent = topProd ? `${topProd[1]} unidades vendidas` : '-';
+        // Producto Top (Unidades totales)
+        document.getElementById('kpi-prod').textContent = reporte.resumenProductos.totalProductosVendidos;
+        document.getElementById('kpi-prod-sub').textContent = 'unidades vendidas';
 
-        // Pago y Tipo (Lógica similar simplificada para el ejemplo)
-        const conteoPago = {};
-        datos.forEach(p => conteoPago[p.metodo] = (conteoPago[p.metodo] || 0) + 1);
-        const topPago = Object.entries(conteoPago).sort((a,b) => b[1] - a[1])[0];
-        document.getElementById('kpi-pay').textContent = topPago ? (topPago[0] === 'tarjeta' ? 'Tarjeta' : 'Efectivo') : 'N/A';
+        // Pago Favorito
+        document.getElementById('kpi-pay').textContent = reporte.resumenMetodosPago.metodoMasUsado.toUpperCase();
+        document.getElementById('kpi-pay-sub').textContent = 'más usado';
+
+        // Entrega Favorita
+        document.getElementById('kpi-type').textContent = reporte.resumenTiposEntrega.tipoMasUsado.toUpperCase();
+        document.getElementById('kpi-type-sub').textContent = 'más solicitado';
     }
 
     renderizarGraficos(datos) {
-        // Preparar datos para Chart.js
-        const conteoProd = {};
-        datos.forEach(p => conteoProd[p.producto] = (conteoProd[p.producto] || 0) + 1);
-        
-        const labels = Object.keys(conteoProd);
-        const data = Object.values(conteoProd);
+        // 1. Gráfico de Barras: Top Productos
+        const labelsProd = datos.topProductos.map(p => p.nombre);
+        const dataProd = datos.topProductos.map(p => p.cantidadVendida);
 
-        // Gráfico de Barras (Productos)
-        if (this.chartTop) this.chartTop.destroy(); // Limpiar anterior
-        
-        const ctxTop = document.getElementById('chartTop');
-        if (ctxTop) {
-            this.chartTop = new Chart(ctxTop, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Unidades Vendidas',
-                        data: data,
-                        backgroundColor: '#ffc107',
-                        borderColor: '#ffc107',
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    scales: {
-                        y: { beginAtZero: true, ticks: { color: '#ccc' } },
-                        x: { ticks: { color: '#ccc' } }
-                    },
-                    plugins: { legend: { labels: { color: '#ccc' } } }
-                }
-            });
+        this.crearGrafico('chartTop', 'bar', labelsProd, dataProd, 'Unidades', ['#ffc107']);
+
+        // 2. Gráfico de Dona: Métodos de Pago
+        const labelsPay = datos.metodosPago.map(m => m.metodo.toUpperCase());
+        const dataPay = datos.metodosPago.map(m => m.cantidad);
+
+        this.crearGrafico('chartPay', 'doughnut', labelsPay, dataPay, 'Pedidos', ['#ffc107', '#343a40', '#dc3545']);
+
+        // 3. Gráfico de Torta: Tipos de Entrega
+        const labelsType = datos.tiposEntrega.map(t => t.tipo.toUpperCase());
+        const dataType = datos.tiposEntrega.map(t => t.cantidad);
+
+        this.crearGrafico('chartType', 'pie', labelsType, dataType, 'Pedidos', ['#0dcaf0', '#198754']);
+    }
+
+    crearGrafico(canvasId, tipo, labels, data, labelDatos, colores) {
+        const ctx = document.getElementById(canvasId);
+        if (!ctx) return;
+
+        // Destruir gráfico anterior si existe para evitar superposiciones (glitch visual común)
+        if (this[canvasId] instanceof Chart) {
+            this[canvasId].destroy();
         }
 
-        // Gráfico de Dona (Métodos de Pago) - Simplificado
-        const conteoPago = { 'Tarjeta': 0, 'Efectivo': 0 };
-        datos.forEach(p => p.metodo === 'tarjeta' ? conteoPago['Tarjeta']++ : conteoPago['Efectivo']++);
-        
-        if (this.chartPay) this.chartPay.destroy();
-        const ctxPay = document.getElementById('chartPay');
-        if (ctxPay) {
-            this.chartPay = new Chart(ctxPay, {
-                type: 'doughnut',
-                data: {
-                    labels: Object.keys(conteoPago),
-                    datasets: [{
-                        data: Object.values(conteoPago),
-                        backgroundColor: ['#ffc107', '#343a40'],
-                        borderColor: '#212529'
-                    }]
+        // Crear nuevo gráfico
+        this[canvasId] = new Chart(ctx, {
+            type: tipo,
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: labelDatos,
+                    data: data,
+                    backgroundColor: colores,
+                    borderColor: '#212529',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { labels: { color: '#ccc' } }
                 },
-                options: { maintainAspectRatio: false, plugins: { legend: { labels: { color: '#ccc' } } } }
-            });
-        }
-        
-        // (Aquí iría el chartType igual al chartPay, pero por espacio lo omití en el ejemplo)
+                scales: tipo === 'bar' ? {
+                    y: { beginAtZero: true, ticks: { color: '#ccc' } },
+                    x: { ticks: { color: '#ccc' } }
+                } : {}
+            }
+        });
     }
 }
 

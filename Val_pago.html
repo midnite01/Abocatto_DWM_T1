@@ -79,53 +79,138 @@
   </div>
 </main>
 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script src="js/app.js?v=4" defer></script>
+
 <script>
 (() => {
-  // ===== CONFIGURACIÓN =====
-  // Dejar SIEMPRE éxito por ahora:
-  const ALWAYS_OK = true;        // <- en true: nunca hay fallo.
-  const FORCE_FAIL = false;      // <- si lo pones true, forzará el fallo (aunque ALWAYS_OK sea false).
-  const VALIDATION_SECONDS = 15; // cuenta regresiva visual
+  // Configuración
+  const API_URL = 'http://localhost:3000/graphql';
+  const PEDIDO_KEY = 'pedido_actual_id';
+  const USER_KEY = 'usuario_bocatto';
 
-  // Ruta de destino luego del OK (haremos esta página después):
-  const RUTA_TUS_PEDIDOS = 'Ges_pedidos.html';
-  // Si falla, vuelve a la forma de pago:
-  const RUTA_FORMA_PAGO = 'Ges_pagos.html';
-
-  // ===== LÓGICA =====
+  // Referencias DOM
   const elSecs = document.getElementById('secs');
   const boxLoading = document.getElementById('box-loading');
   const boxOk = document.getElementById('box-ok');
   const boxFail = document.getElementById('box-fail');
 
-  let secs = VALIDATION_SECONDS;
+  // Temporizador visual
+  let secs = 3; 
   elSecs.textContent = secs;
-
   const timer = setInterval(() => {
     secs--;
-    elSecs.textContent = secs;
-    if (secs <= 0) {
-      clearInterval(timer);
-      finalizarValidacion();
-    }
+    if(secs >= 0) elSecs.textContent = secs;
   }, 1000);
 
-  function finalizarValidacion() {
-    // "Bloque off" de fallo: queda desactivado si ALWAYS_OK = true
-    const willFail = FORCE_FAIL || (!ALWAYS_OK && Math.random() < 0.20); // 20% si quisieras simular
+  // === LÓGICA DE PAGO REAL ===
+  async function iniciarProcesoPago() {
+    const pedidoId = sessionStorage.getItem(PEDIDO_KEY);
+    const usuarioStorage = localStorage.getItem(USER_KEY);
+    
+    if (!pedidoId) {
+      mostrarFallo('No se encontró el número de pedido.');
+      return;
+    }
 
-    boxLoading.classList.add('d-none');
+    // Recuperamos token para autorizar la transacción
+    let token = null;
+    if (usuarioStorage) {
+        const usuario = JSON.parse(usuarioStorage);
+        token = usuario.token;
+    }
 
-    if (willFail) {
-      boxFail.classList.remove('d-none');
-      setTimeout(() => { window.location.href = RUTA_FORMA_PAGO; }, 2200);
-    } else {
-      boxOk.classList.remove('d-none');
-      setTimeout(() => { window.location.href = RUTA_TUS_PEDIDOS; }, 1500);
+    try {
+      // 1. Construir la Mutation
+      const query = `
+        mutation ProcesarPago($pedidoId: ID!, $metodoPago: String!, $datosTarjeta: DatosTarjetaInput) {
+          procesarPago(
+            pedidoId: $pedidoId, 
+            metodoPago: $metodoPago, 
+            datosTarjeta: $datosTarjeta
+          ) {
+            transaccion { id estado codigoTransaccion }
+            mensaje
+          }
+        }
+      `;
+
+// Recuperar el método de pago que guardamos en el checkout
+      const metodoGuardado = sessionStorage.getItem('metodo_pago_actual') || 'tarjeta';
+
+      const variables = {
+        pedidoId: pedidoId,
+        metodoPago: metodoGuardado, // Usamos el valor real (tarjeta o contraentrega)
+        datosTarjeta: metodoGuardado === 'tarjeta' ? {
+            numero: "4242424242424242", 
+            mesVencimiento: "12",
+            anioVencimiento: "30",
+            cvv: "123",
+            nombreTitular: "Cliente Bocatto"
+        } : null // Si es contraentrega, no mandamos tarjeta
+      };
+
+      // 2. Hacer el Fetch directo al Backend
+      // Usamos fetch directo aquí para no depender de si la clase GQL de app.js cargó o no
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': token || ''
+        },
+        body: JSON.stringify({ query, variables })
+      });
+
+      const json = await response.json();
+
+      if (json.errors) {
+        throw new Error(json.errors[0].message);
+      }
+
+      // 3. Éxito
+      const transaccion = json.data.procesarPago.transaccion;
+      console.log('✅ Transacción exitosa:', transaccion);
+      
+      mostrarExito();
+
+    } catch (error) {
+      console.error('❌ Error pago:', error);
+      mostrarFallo(error.message);
     }
   }
+
+  function mostrarExito() {
+    clearInterval(timer);
+    boxLoading.classList.add('d-none');
+    boxOk.classList.remove('d-none');
+    
+    // Redirigir al tracking con el ID correcto
+    const pedidoId = sessionStorage.getItem(PEDIDO_KEY);
+    setTimeout(() => {
+        window.location.href = `Est_pedido.html?id=${pedidoId}`;
+    }, 2000);
+  }
+
+  function mostrarFallo(mensaje) {
+    clearInterval(timer);
+    boxLoading.classList.add('d-none');
+    boxFail.classList.remove('d-none');
+    
+    const msgEl = document.createElement('div');
+    msgEl.className = 'text-danger small mt-2';
+    msgEl.textContent = mensaje;
+    boxFail.appendChild(msgEl);
+
+    setTimeout(() => {
+        window.location.href = 'Ges_pagos.html';
+    }, 3500);
+  }
+
+  // Arrancar
+  iniciarProcesoPago();
+
 })();
 </script>
-
 </body>
 </html>
