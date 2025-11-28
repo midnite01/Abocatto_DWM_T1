@@ -58,6 +58,7 @@
 </head>
 <body>
 
+<!-- =================== NAVBAR ADMIN =================== -->
 <nav id="navbarPrincipal" class="navbar navbar-expand-lg navbar-light bg-warning px-3">
   <div class="container-fluid">
     <a id="logoAbocatto" class="navbar-brand d-flex align-items-center" href="Web_principal.html">
@@ -81,9 +82,18 @@
     </div>
   </div> 
 </nav>
+<!--
+1.- id [navbarPrincipal] = Contenedor principal del navbar (admin)
+2.- id [logoAbocatto] = Enlace/branding a la web principal
+3.- id [btn-resp-mov] = Botón colapsable (responsive)
+4.- id [navbarContent] = Contenedor de enlaces del navbar
+5.- id [btn-logout] = Botón para cerrar sesión (admin)
+-->
 
+<!-- =================== SECCIÓN PANEL DE VENTAS (ADMIN) =================== -->
 <main class="container my-5">
 
+  <!-- ===== FILTROS Y EXPORTACIÓN ===== -->
   <div class="card rounded-4 mb-4 shadow-sm">
     <div class="card-body p-4">
       <div class="row g-3 align-items-end">
@@ -121,6 +131,7 @@
     </div>
   </div>
 
+  <!-- ===== KPI CARDS ===== -->
   <div class="row g-4 mb-4">
     <div class="col-md-6 col-lg-3">
       <div class="kpi-card">
@@ -152,6 +163,7 @@
     </div>
   </div>
 
+  <!-- ===== GRÁFICOS ===== -->
   <div class="row g-4">
     <div class="col-lg-8">
       <div class="card rounded-4 h-100">
@@ -185,6 +197,28 @@
   </div>
 
 </main>
+<!--
+IDs dentro de SECCIÓN PANEL DE VENTAS (ADMIN):
+1.- id [filtros-tiempo] = Contenedor de chips para filtrar por período
+2.- id [box-dia] = Contenedor de filtro “Día”
+3.- id [inp-dia] = Input de fecha (día)
+4.- id [box-mes] = Contenedor de filtro “Mes”
+5.- id [inp-mes] = Input de mes
+6.- id [box-anio] = Contenedor de filtro “Año”
+7.- id [inp-anio] = Selector de año
+8.- id [btn-export] = Botón para exportar datos
+9.- id [kpi-sales] = Valor de ventas totales
+10.- id [kpi-sales-sub] = Subtexto de ventas totales
+11.- id [kpi-prod] = Nombre/clave de producto más vendido
+12.- id [kpi-prod-sub] = Subtexto del producto top
+13.- id [kpi-pay] = Método de pago más usado
+14.- id [kpi-pay-sub] = Subtexto método de pago
+15.- id [kpi-type] = Tipo de entrega más usado
+16.- id [kpi-type-sub] = Subtexto tipo de entrega
+17.- id [chartTop] = Lienzo del gráfico Top productos
+18.- id [chartPay] = Lienzo del gráfico Métodos de pago
+19.- id [chartType] = Lienzo del gráfico Tipos de entrega
+-->
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="js/app.js?v=4" defer></script>

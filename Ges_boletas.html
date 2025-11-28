@@ -59,6 +59,7 @@
 </head>
 <body>
 
+<!-- =================== NAVBAR SUPERIOR =================== -->
 <nav id="navbarPrincipal" class="navbar navbar-expand-lg navbar-light bg-warning px-3">
   <div class="container-fluid">
     <a id="logoAbocatto" class="navbar-brand d-flex align-items-center" href="Web_principal.html">
@@ -94,7 +95,20 @@
     </div>
   </div> 
 </nav>
+<!--
+1.- id [navbarPrincipal] = Contenedor principal del navbar
+2.- id [logoAbocatto] = Enlace/branding al home
+3.- id [btn-resp-mov] = Botón colapsable (responsive)
+4.- id [navbarContent] = Contenedor de enlaces del menú
+5.- id [btn-login] = Botón para abrir modal de login
+6.- id [btn-pedidos] = Botón para ver pedidos del usuario
+7.- id [btn-carrito] = Botón para abrir el offcanvas del carrito
+8.- id [carr-cont] = Badge/contador del carrito
+9.- id [btn-admin] = Botón para acceder al panel admin
+10.- id [btn-logout] = Botón para cerrar sesión
+-->
 
+<!-- =================== MODAL DE LOGIN =================== -->
 <div class="modal fade" id="loginModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content bg-dark text-light rounded-4">
@@ -121,7 +135,15 @@
     </div>
   </div>
 </div>
+<!--
+1.- id [loginModal] = Modal de acceso (contenedor principal)
+2.- id [btn-registrarse] = Botón para ir al registro
+3.- id [form-logearse] = Formulario de login
+4.- id [login-Email] = Campo email de login
+5.- id [login-contraseña] = Campo contraseña de login
+-->
 
+<!-- =================== OFFCANVAS CARRITO =================== -->
 <div class="offcanvas offcanvas-end bg-dark text-light" tabindex="-1" id="offcanvasCarrito">
   <div class="offcanvas-header border-bottom">
     <h5 class="offcanvas-title fw-bold" style="color:#e6b800;">Tu carrito</h5>
@@ -138,7 +160,16 @@
     </div>
   </div>
 </div>
+<!--
+1.- id [offcanvasCarrito] = Offcanvas del carrito (contenedor principal)
+2.- id [carrito-items] = Contenedor de ítems del carrito
+3.- id [carrito-vacio] = Mensaje de carrito vacío
+4.- id [carrito-total] = Monto subtotal del carrito
+5.- id [btn-vaciar] = Botón para vaciar el carrito
+6.- id [btn-hacer-pedido] = Botón para iniciar el proceso de pedido
+-->
 
+<!-- =================== SECCIÓN MIS PEDIDOS =================== -->
 <main class="container my-5">
   
   <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
@@ -168,7 +199,13 @@
   </div>
 
 </main>
+<!--
+1.- id [filtros-pedidos] = Contenedor de chips/filtros de estado de pedido
+2.- id [input-busqueda-pedido] = Campo de búsqueda de pedidos
+3.- id [lista-pedidos] = Contenedor de la lista de pedidos
+-->
 
+<!-- =================== MODAL DETALLE DE BOLETA =================== -->
 <div class="modal fade" id="modalBoleta" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content bg-dark text-light rounded-4 border-secondary">
@@ -214,6 +251,14 @@
     </div>
   </div>
 </div>
+<!--
+1.- id [modalBoleta] = Modal de boleta (contenedor principal)
+2.- id [modal-boleta-num] = Número/ID de boleta mostrado en el título
+3.- id [modal-boleta-fecha] = Fecha de emisión de la boleta
+4.- id [modal-boleta-cliente] = Nombre del cliente
+5.- id [modal-boleta-items] = Cuerpo de la tabla con ítems
+6.- id [modal-boleta-total] = Total de la boleta
+-->
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="js/app.js?v=4" defer></script>

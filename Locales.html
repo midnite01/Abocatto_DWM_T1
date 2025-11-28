@@ -64,6 +64,7 @@
 </head>
 <body>
 
+<!-- =================== NAVBAR SUPERIOR =================== -->
 <nav id="navbarPrincipal" class="navbar navbar-expand-lg navbar-light bg-warning px-3">
   <div class="container-fluid">
     <a id="logoAbocatto" class="navbar-brand d-flex align-items-center" href="Web_principal.html">
@@ -91,10 +92,115 @@
     </div>
   </div> 
 </nav>
+<!--
+1.- id [navbarPrincipal] = Contenedor principal del navbar
+2.- id [logoAbocatto] = Enlace/branding al home
+3.- id [btn-resp-mov] = Botón colapsable (responsive)
+4.- id [navbarContent] = Contenedor de enlaces del menú
+5.- id [btn-login] = Botón para abrir modal de login
+6.- id [btn-pedidos] = Botón para ver pedidos del usuario
+7.- id [btn-carrito] = Botón para abrir el offcanvas del carrito
+8.- id [carr-cont] = Badge/contador del carrito
+9.- id [btn-admin] = Botón para acceder al panel admin
+10.- id [btn-logout] = Botón para cerrar sesión
+-->
 
-<div class="modal fade" id="loginModal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-lg modal-dialog-centered"><div class="modal-content bg-dark text-light rounded-4"><div class="modal-header border-0"><h5 class="modal-title">Acceso a Bocatto</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="row"><div class="col-md-6 border-end"><h6 class="fw-bold mb-3">¿Nuevo aquí?</h6><button type="button" class="btn btn-outline-warning w-100" id="btn-registrarse">Crear cuenta</button></div><div class="col-md-6"><h6 class="fw-bold mb-3">¿Ya tienes cuenta?</h6><form id="form-logearse"><div class="mb-3"><label>Email</label><input type="email" class="form-control" id="login-Email" required></div><div class="mb-3"><label>Contraseña</label><input type="password" class="form-control" id="login-contraseña" required></div><button type="submit" class="btn btn-warning w-100">Iniciar sesión</button></form></div></div></div></div></div></div>
-<div class="offcanvas offcanvas-end bg-dark text-light" tabindex="-1" id="offcanvasCarrito"><div class="offcanvas-header border-bottom"><h5 class="offcanvas-title fw-bold" style="color:#e6b800;">Tu carrito</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button></div><div class="offcanvas-body d-flex flex-column"><div id="carrito-items" class="flex-grow-1"><p class="text-center text-muted mt-5" id="carrito-vacio">Vacío</p></div><div class="border-top pt-3"><div class="d-flex justify-content-between mb-3"><h5 class="fw-bold">Subtotal</h5><h5 id="carrito-total">$0</h5></div><div class="d-grid gap-2"><button class="btn btn-outline-light" id="btn-vaciar">Vaciar</button><a id="btn-hacer-pedido" class="btn btn-danger fw-bold">Hacer pedido</a></div></div></div></div>
+<!-- =================== MODAL DE LOGIN =================== -->
+<div class="modal fade" id="loginModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content bg-dark text-light rounded-4">
 
+      <div class="modal-header border-0">
+        <h5 class="modal-title">Acceso a Bocatto</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+        <div class="row">
+
+          <div class="col-md-6 border-end">
+            <h6 class="fw-bold mb-3">¿Nuevo aquí?</h6>
+            <button type="button" class="btn btn-outline-warning w-100" id="btn-registrarse">
+              Crear cuenta
+            </button>
+          </div>
+
+          <div class="col-md-6">
+            <h6 class="fw-bold mb-3">¿Ya tienes cuenta?</h6>
+            <form id="form-logearse">
+
+              <div class="mb-3">
+                <label>Email</label>
+                <input type="email" class="form-control" id="login-Email" required>
+              </div>
+
+              <div class="mb-3">
+                <label>Contraseña</label>
+                <input type="password" class="form-control" id="login-contraseña" required>
+              </div>
+
+              <button type="submit" class="btn btn-warning w-100">
+                Iniciar sesión
+              </button>
+
+            </form>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+<!--
+1.- id [loginModal] = Modal de acceso (contenedor principal)
+2.- id [btn-registrarse] = Botón para ir al registro
+3.- id [form-logearse] = Formulario de login
+4.- id [login-Email] = Campo email de login
+5.- id [login-contraseña] = Campo contraseña de login
+-->
+
+<!-- =================== OFFCANVAS CARRITO =================== -->
+<div class="offcanvas offcanvas-end bg-dark text-light" tabindex="-1" id="offcanvasCarrito">
+
+  <div class="offcanvas-header border-bottom">
+    <h5 class="offcanvas-title fw-bold" style="color:#e6b800;">Tu carrito</h5>
+    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+  </div>
+
+  <div class="offcanvas-body d-flex flex-column">
+
+    <div id="carrito-items" class="flex-grow-1">
+      <p class="text-center text-muted mt-5" id="carrito-vacio">Vacío</p>
+    </div>
+
+    <div class="border-top pt-3">
+
+      <div class="d-flex justify-content-between mb-3">
+        <h5 class="fw-bold">Subtotal</h5>
+        <h5 id="carrito-total">$0</h5>
+      </div>
+
+      <div class="d-grid gap-2">
+        <button class="btn btn-outline-light" id="btn-vaciar">Vaciar</button>
+        <a id="btn-hacer-pedido" class="btn btn-danger fw-bold">Hacer pedido</a>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+<!--
+1.- id [offcanvasCarrito] = Offcanvas del carrito (contenedor principal)
+2.- id [carrito-items] = Contenedor de ítems del carrito
+3.- id [carrito-vacio] = Mensaje de carrito vacío
+4.- id [carrito-total] = Monto subtotal del carrito
+5.- id [btn-vaciar] = Botón para vaciar el carrito
+6.- id [btn-hacer-pedido] = Botón para iniciar el proceso de pedido
+-->
+
+<!-- =================== SECCIÓN NUESTRO LOCAL =================== -->
 <main class="container my-5">
   <div class="row justify-content-center">
     <div class="col-lg-10 col-xl-8">
@@ -140,9 +246,12 @@
     </div>
   </div>
 </main>
+<!--
+1.- id [local-status-badge] = Indicador visual de estado del local (abierto/cerrado)
+2.- id [local-status-text] = Texto de estado del local (abierto/cerrado)
+-->
 
-<!--=========================== MODAL DE REGISTRO DE USUARIO ================-->
-
+<!-- =================== MODAL DE REGISTRO DE USUARIO =================== -->
 <div class="modal fade" id="registroModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
     <div class="modal-content bg-dark text-light rounded-4 border-secondary">
@@ -238,6 +347,22 @@
     </div>
   </div>
 </div>
+<!--
+1.- id [registroModal] = Modal de registro (contenedor principal)
+2.- id [form-registro-completo] = Formulario de creación de cuenta
+3.- id [reg-nombre] = Campo de texto: nombre completo
+4.- id [reg-run] = Campo de texto: RUT/RUN
+5.- id [reg-sexo] = Selector de sexo
+6.- id [reg-fecha] = Selector de fecha de nacimiento
+7.- id [reg-email] = Campo de correo electrónico
+8.- id [reg-telefono] = Campo de teléfono
+9.- id [reg-pass] = Campo de contraseña
+10.- id [reg-direccion] = Campo de dirección (calle y número)
+11.- id [reg-comuna] = Campo de comuna
+12.- id [reg-provincia] = Campo de provincia
+13.- id [reg-region] = Campo de región
+14.- id [btn-volver-login] = Botón para volver al modal de login
+-->
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="js/app.js?v=4" defer></script>

@@ -39,15 +39,19 @@
 </head>
 <body>
 
+<!-- =================== NAVBAR SUPERIOR =================== -->
 <nav id="navbarPrincipal" class="navbar navbar-expand-lg navbar-light bg-warning px-3">
   <div class="container-fluid">
+
     <a id="logoAbocatto" class="navbar-brand d-flex align-items-center" href="Web_principal.html">
       <img src="Recursos_Esteticos/img/logo.png" alt="Bocatto" width="40" height="40" class="me-2">
       <span class="fw-bold">Bocatto</span>
     </a>
+
     <button id="btn-resp-mov" class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
       <span class="navbar-toggler-icon"></span>
     </button>
+
     <div class="collapse navbar-collapse justify-content-center" id="navbarContent">
       <ul class="navbar-nav mb-2 mb-lg-0 gap-3">
         <li class="nav-item"><a class="nav-link" href="Menu.html"><i class="bi bi-pizza"></i> Menú</a></li>
@@ -55,45 +59,186 @@
         <li class="nav-item"><a class="nav-link" href="#locales"><i class="bi bi-geo-alt"></i> Locales</a></li>
       </ul>
     </div>
+
     <div class="d-flex gap-3">
-      <button class="btn btn-outline-dark" id="btn-login" data-bs-toggle="modal" data-bs-target="#loginModal"><i class="bi bi-box-arrow-in-right"></i> Iniciar sesión</button>
-      <button class="btn btn-dark" id="btn-pedidos" hidden><i class="bi bi-bag"></i> Tus pedidos</button>
-      <button class="btn btn-warning position-relative" id="btn-carrito" hidden data-bs-toggle="offcanvas" data-bs-target="#offcanvasCarrito">
-        <i class="bi bi-cart"></i><span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="carr-cont" hidden>0</span>
+      <button class="btn btn-outline-dark" id="btn-login" data-bs-toggle="modal" data-bs-target="#loginModal">
+        <i class="bi bi-box-arrow-in-right"></i> Iniciar sesión
       </button>
-      <button class="btn btn-danger" id="btn-admin" hidden><i class="bi bi-gear-fill"></i> Panel Admin</button>
-      <button class="btn btn-secondary" id="btn-logout" hidden><i class="bi bi-box-arrow-right"></i> Cerrar sesión</button>
+
+      <button class="btn btn-dark" id="btn-pedidos" hidden>
+        <i class="bi bi-bag"></i> Tus pedidos
+      </button>
+
+      <button class="btn btn-warning position-relative" id="btn-carrito" hidden 
+        data-bs-toggle="offcanvas" data-bs-target="#offcanvasCarrito">
+        <i class="bi bi-cart"></i>
+        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" 
+              id="carr-cont" hidden>0</span>
+      </button>
+
+      <button class="btn btn-danger" id="btn-admin" hidden>
+        <i class="bi bi-gear-fill"></i> Panel Admin
+      </button>
+
+      <button class="btn btn-secondary" id="btn-logout" hidden>
+        <i class="bi bi-box-arrow-right"></i> Cerrar sesión
+      </button>
     </div>
+
   </div> 
 </nav>
 
-<div class="modal fade" id="loginModal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-lg modal-dialog-centered"><div class="modal-content bg-dark text-light rounded-4"><div class="modal-header border-0"><h5 class="modal-title">Acceso a Bocatto</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="row"><div class="col-md-6 border-end"><h6 class="fw-bold mb-3">¿Nuevo aquí?</h6><button type="button" class="btn btn-outline-warning w-100" id="btn-registrarse">Crear cuenta</button></div><div class="col-md-6"><h6 class="fw-bold mb-3">¿Ya tienes cuenta?</h6><form id="form-logearse"><div class="mb-3"><label>Email</label><input type="email" class="form-control" id="login-Email" required></div><div class="mb-3"><label>Contraseña</label><input type="password" class="form-control" id="login-contraseña" required></div><button type="submit" class="btn btn-warning w-100">Iniciar sesión</button></form></div></div></div></div></div></div>
-<div class="offcanvas offcanvas-end bg-dark text-light" tabindex="-1" id="offcanvasCarrito"><div class="offcanvas-header border-bottom"><h5 class="offcanvas-title fw-bold" style="color:#e6b800;">Tu carrito</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button></div><div class="offcanvas-body d-flex flex-column"><div id="carrito-items" class="flex-grow-1"><p class="text-center text-muted mt-5" id="carrito-vacio">Vacío</p></div><div class="border-top pt-3"><div class="d-flex justify-content-between mb-3"><h5 class="fw-bold">Subtotal</h5><h5 id="carrito-total">$0</h5></div><div class="d-grid gap-2"><button class="btn btn-outline-light" id="btn-vaciar">Vaciar</button><a id="btn-hacer-pedido" class="btn btn-danger fw-bold">Hacer pedido</a></div></div></div></div>
+<!--
+1.- id [navbarPrincipal] = Navbar principal de la página
+2.- id [logoAbocatto] = Logo + texto Bocatto (link)
+3.- id [btn-resp-mov] = Botón hamburguesa
+4.- id [navbarContent] = Contenedor del menú colapsable
+5.- id [btn-login] = Botón para abrir modal login
+6.- id [btn-pedidos] = Botón “Mis pedidos”
+7.- id [btn-carrito] = Botón para abrir el carrito
+8.- id [carr-cont] = Contador visual del carrito
+9.- id [btn-admin] = Panel admin
+10.- id [btn-logout] = Botón cerrar sesión
+-->
 
+
+
+<!-- =================== MODAL DE LOGIN =================== -->
+<div class="modal fade" id="loginModal" tabindex="-1" aria-hidden="true">
+
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content bg-dark text-light rounded-4">
+
+      <div class="modal-header border-0">
+        <h5 class="modal-title">Acceso a Bocatto</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+        <div class="row">
+
+          <div class="col-md-6 border-end">
+            <h6 class="fw-bold mb-3">¿Nuevo aquí?</h6>
+            <button type="button" class="btn btn-outline-warning w-100" id="btn-registrarse">
+              Crear cuenta
+            </button>
+          </div>
+
+          <div class="col-md-6">
+            <h6 class="fw-bold mb-3">¿Ya tienes cuenta?</h6>
+
+            <form id="form-logearse">
+
+              <div class="mb-3">
+                <label class="form-label">Email</label>
+                <input type="email" class="form-control" id="login-Email" required>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">Contraseña</label>
+                <input type="password" class="form-control" id="login-contraseña" required>
+              </div>
+
+              <button type="submit" class="btn btn-warning w-100">Iniciar sesión</button>
+
+            </form>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<!--
+1.- id [loginModal] = Contenedor principal del modal
+2.- id [btn-registrarse] = Botón para ir al registro
+3.- id [form-logearse] = Formulario de login
+4.- id [login-Email] = Campo email
+5.- id [login-contraseña] = Campo contraseña
+-->
+
+
+
+<!-- =================== OFFCANVAS CARRITO =================== -->
+<div class="offcanvas offcanvas-end bg-dark text-light" tabindex="-1" id="offcanvasCarrito">
+
+  <div class="offcanvas-header border-bottom">
+    <h5 class="offcanvas-title fw-bold" style="color:#e6b800;">Tu carrito</h5>
+    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+  </div>
+
+  <div class="offcanvas-body d-flex flex-column">
+
+    <div id="carrito-items" class="flex-grow-1">
+      <p class="text-center text-muted mt-5" id="carrito-vacio">Vacío</p>
+    </div>
+
+    <div class="border-top pt-3">
+      <div class="d-flex justify-content-between mb-3">
+        <h5 class="fw-bold">Subtotal</h5>
+        <h5 id="carrito-total">$0</h5>
+      </div>
+
+      <div class="d-grid gap-2">
+        <button class="btn btn-outline-light" id="btn-vaciar">Vaciar</button>
+        <a id="btn-hacer-pedido" class="btn btn-danger fw-bold">Hacer pedido</a>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<!--
+1.- id [offcanvasCarrito] = Panel lateral del carrito
+2.- id [carrito-items] = Contenedor de productos
+3.- id [carrito-vacio] = Mensaje “Vacío”
+4.- id [carrito-total] = Subtotal del carrito
+5.- id [btn-vaciar] = Vaciar carrito
+6.- id [btn-hacer-pedido] = Botón “Hacer pedido”
+-->
+
+
+
+<!-- =================== SECCIÓN ESTADO DEL PEDIDO =================== -->
 <main class="container my-5">
+
   <div class="row justify-content-center">
     <div class="col-lg-8">
-      
+
       <div class="card rounded-4 shadow-lg mb-4">
         <div class="card-body p-4 text-center">
-          <h2 class="text-warning fw-bold" style="font-family:'Oswald', sans-serif;">ESTADO DEL PEDIDO</h2>
-          <p class="text-muted">Pedido #<span id="track-id">8058</span> • <span id="track-fecha">Hoy</span></p>
-          
+
+          <h2 class="text-warning fw-bold" style="font-family:'Oswald', sans-serif;">
+            ESTADO DEL PEDIDO
+          </h2>
+
+          <p class="text-muted">
+            Pedido #<span id="track-id">8058</span> • 
+            <span id="track-fecha">Hoy</span>
+          </p>
+
           <div class="tracker-container px-4">
             <div class="tracker-line"></div>
-            
+
             <div class="tracker-step done">
               <i class="bi bi-receipt"></i>
               <span class="step-label">Confirmado</span>
             </div>
+
             <div class="tracker-step active">
               <i class="bi bi-fire"></i>
               <span class="step-label">Preparando</span>
             </div>
+
             <div class="tracker-step">
               <i class="bi bi-bicycle"></i>
               <span class="step-label">En Camino</span>
             </div>
+
             <div class="tracker-step">
               <i class="bi bi-house-door"></i>
               <span class="step-label">Entregado</span>
@@ -107,16 +252,27 @@
               <span class="visually-hidden">Cargando...</span>
             </div>
           </div>
+
         </div>
       </div>
 
       <div class="text-center">
-        <a href="Ges_boletas.html" class="btn btn-outline-light"><i class="bi bi-arrow-left"></i> Volver a Mis Pedidos</a>
+        <a href="Ges_boletas.html" class="btn btn-outline-light">
+          <i class="bi bi-arrow-left"></i> Volver a Mis Pedidos
+        </a>
       </div>
 
     </div>
   </div>
+
 </main>
+
+<!--
+1.- id [track-id] = Número del pedido
+2.- id [track-fecha] = Fecha mostrada del pedido
+-->
+
+
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="js/app.js?v=4" defer></script>

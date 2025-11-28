@@ -1,14 +1,17 @@
 // =================== ESTRUCTURA BASE APP.JS ===================
 // Versión: INTEGRACIÓN REAL (Backend: localhost:3000)
 
-// 1. CONFIGURACIÓN Y CLIENTE GRAPHQL (Nuestro "Mini-Apollo")
+// 1. CONFIGURACIÓN Y CLIENTE GRAPHQL (Nuestro "Mini-Apollo") esta es parte del mini garzon. ¿Como funciona la logica de tokens, de la que tanto se habla?
 const CONFIG = {
     API_URL: 'http://localhost:3000/graphql', // ¡La dirección de tu cocina!
     CAR_KEY: 'carrito_bocatto',
     USER_KEY: 'usuario_bocatto',
     ROLES: { VISITANTE: 'visitante', CLIENTE: 'cliente', ADMIN: 'admin' }
 };
-
+/* —-----------------------------SUB-LÓGICA : CLASE GQL (Manejador de Peticiones)—-----------*/
+/* Esta clase estática centraliza la comunicación. Toma la orden (query/variables), ¿como hace para centralizar la comunicación? ¿que es un query? ¿como inyecta un token? ¿cuando habla de variables a que se refiere?
+busca si hay un usuario logueado para inyectar su token, y maneja la respuesta cruda del servidor.
+*/
 // Clase para hablar con el Backend
 class GQL {
     static async request(query, variables = {}) {
@@ -46,8 +49,19 @@ class GQL {
         }
     }
 }
+/* ====== Logica: GESTIÓN DE ESTADO Y REFERENCIAS DOM ===================
+   Este bloque centraliza la memoria de la aplicación (EstadoApp) y crea un diccionario
+   masivo de referencias a los elementos HTML (ElementosDOM). También define las herramientas
+   (Utilidades) que serán usadas por todos los servicios posteriores para formatear dinero,
+   manipular el DOM y persistir datos en el navegador.
+   ====================================================== */
 
 // 2. ESTADO GLOBAL DE LA APLICACIÓN
+/* —-----------------------------SUB-LÓGICA : STORE (Estado Global)—-----------*/
+/* Aquí vive la "verdad" de la app en tiempo de ejecución.
+   En lugar de tener variables sueltas, todo se agrupa en 'EstadoApp'.
+   Esto facilita el debugging porque puedes escribir 'EstadoApp' en la consola y ver todo. ¿por que son tan pocos los campos de Estadoapp ? ¿no deberia haber mas campos?
+*/
 const EstadoApp = {
     // Autenticación
     usuario: {
@@ -75,6 +89,14 @@ const EstadoApp = {
 };
 
 // 3. REFERENCIAS A ELEMENTOS DEL DOM (todos los IDs que identificamos)
+/* —-----------------------------SUB-LÓGICA : MAPEO DEL DOM—-----------*/
+/* Se capturan todos los elementos HTML por su ID y se guardan en un objeto. 
+   IMPORTANTE: Como este script se carga en todas las páginas (Home, Menú, Pagos),
+   muchos de estos elementos serán 'null' dependiendo de en qué página esté el usuario.
+   Por ejemplo: 'btn-confirmar-compra' será null si estoy en el Home.
+   Entiendo que este es el diccionaro, que es como un mapa de todas las estrcuturas html que hay en el frontend, aqui faltan muchas estructuras, si las coloco todas,
+   el codigo se vuelve mas facil de manejar ?
+*/
 const ElementosDOM = {
     // NAVBAR (13 elementos)
     navbarPrincipal: document.getElementById('navbarPrincipal'),
@@ -129,7 +151,7 @@ const ElementosDOM = {
     btnHacerPedido: document.getElementById('btn-hacer-pedido')
 };
 
-// 4. UTILIDADES GLOBALES
+// 4. UTILIDADES GLOBALES No entiendo como funciona esta parte. 
 const Utilidades = {
     // Formateo de precios CLP
     formatearPrecio: (precio) => {
@@ -171,7 +193,7 @@ const Utilidades = {
     }
 };
 
-// 5. INICIALIZACIÓN BASE
+// 5. INICIALIZACIÓN BASE Es necesario esto si mas arriba tenemos el estado global? y mas abajo tenemos los servicios?
 function inicializarBase() {
     console.log('🚀 Inicializando Bocatto App...');
     
@@ -195,8 +217,14 @@ function inicializarBase() {
 // Inicializar inmediatamente
 inicializarBase();
 
-// =================== AUTH SERVICE - AUTENTICACIÓN ===================
+/* ====== Logica: AUTH SERVICE (Gestión de Identidad y Sesión) ===================
+   Esta clase administra el ciclo de vida del usuario: Inicio de sesión, Registro, 
+   Cierre de sesión y Persistencia (mantener la cuenta abierta al recargar).
+   También actúa como "Controlador de UI", mostrando u ocultando botones según el rol (Admin/Cliente).
+   ====================================================== */
 
+
+/* No se hasta donde esto es una simulacion 
 class AuthService {
     constructor() {
         this.usuariosSimulados = this.inicializarUsuariosSimulados();
@@ -228,9 +256,9 @@ class AuthService {
             }
         ];
     }
-
-    // 2. LOGIN (simulado - preparado para API)
-// 2. LOGIN REAL (Conectado al Backend)
+    */
+   // 2. LOGIN REAL (Conectado al Backend)
+class AuthService {
     async login(email, password) {
         try {
             EstadoApp.ui.cargando = true;
@@ -277,16 +305,16 @@ class AuthService {
             return { exito: true, usuario: sesionUsuario };
 
         } catch (error) {
-            console.error('❌ Error en login:', error.message);
-            alert('Error al iniciar sesión: ' + error.message);
+            console.error('❌ Error en login:', error.message);// Error: UI bloqueante. Usar 'alert' detiene la ejecución del hilo principal.Solución: Reemplazar por un mensaje en el DOM (ej: div .alert-danger dentro del modal).
+            alert('Error al iniciar sesión: ' + error.message); // ¿por que dice que detiene el hilo principal? ¿ a que se refiere con eso?
             return { exito: false, error: error.message };
         } finally {
             EstadoApp.ui.cargando = false;
             this.mostrarLoadingLogin(false);
         }
     }
-
-    // 3. REGISTRO REAL (COMPLETO)
+    /* —-----------------------------SUB-LÓGICA : REGISTRO REAL (Integración Backend) —-----------*/
+    // Envía el formulario extenso de registro a la API.
     async register(datos) {
         try {
             EstadoApp.ui.cargando = true;
@@ -328,7 +356,7 @@ class AuthService {
             const modalReg = bootstrap.Modal.getInstance(document.getElementById('registroModal'));
             if (modalReg) modalReg.hide();
 
-            // Limpiar backdrop por si acaso
+            // Limpiar backdrop por si acaso ¿que es un backdrop?
             document.body.classList.remove('modal-open');
             const backdrops = document.querySelectorAll('.modal-backdrop');
             backdrops.forEach(el => el.remove());
@@ -419,6 +447,8 @@ class AuthService {
         }
     }
 
+        /* —-----------------------------SUB-LÓGICA : GESTIÓN VISUAL DE ROLES —-----------*/
+    // Controla qué botones del Navbar y de la página ve el usuario según su rol.
     actualizarNavbar() {
         const { usuario } = EstadoApp;
         
@@ -495,7 +525,7 @@ toggleElementosAdmin() {
     console.log(`👑 Elementos admin: ${esAdmin ? 'VISIBLES' : 'OCULTOS'} (${elementosAdmin.length} elementos)`);
 }
 
-    // 6. MANEJO DE MODALES
+    // 6. MANEJO DE MODALES-----------------------¿ sera que el problema de cierre de modal despues de crear un objeto puede resolverse aqui ? 
     cerrarModalLogin() {
         if (Utilidades.elementoExiste(ElementosDOM.loginModal) && window.bootstrap) {
             const modal = bootstrap.Modal.getInstance(ElementosDOM.loginModal);
@@ -532,14 +562,14 @@ toggleElementosAdmin() {
         // Podríamos mostrar el error en el modal de login
         alert(`Error de login: ${mensaje}`); // Temporal - mejorar con UI propia
     }
-
-    // 8. UTILIDADES
+/*
+    // 8. UTILIDADES Esto al parecer es una simulacion que ya no se usa borrar hasa la liena 570
     generarTokenSimulado(usuarioId) {
         // En realidad sería un JWT del backend
         return `simulated_token_${usuarioId}_${Date.now()}`;
     }
-
-    // 9. GETTERS
+*/
+    // 9. GETTERS ¿que son los getters? ¿para que sirven?
     getUsuarioActual() {
         return { ...EstadoApp.usuario };
     }
@@ -560,12 +590,20 @@ toggleElementosAdmin() {
 // Instancia global del servicio
 const authService = new AuthService();
 
-// =================== CARRITO SERVICE - CARRITO DE COMPRAS ===================
+/* ====== Logica: CARRITO SERVICE (Gestión del Carrito de Compras) ===================
+   Esta clase maneja toda la lógica del carrito: añadir productos, modificar cantidades,
+   calcular totales y persistir la información en localStorage para que no se pierda al recargar.
+   También actúa como puente hacia la pasarela de pago ('Ges_pagos.html').
+   ====================================================== */
+
 
 class CarritoService {
     constructor() {
         this.cargarCarritoInicial();
     }
+
+        /* —-----------------------------SUB-LÓGICA : PERSISTENCIA (LocalStorage)—-----------*/
+    // Carga o guarda el estado del carrito en el navegador. Esta bien 
 
     // 1. INICIALIZACIÓN
     cargarCarritoInicial() {
@@ -576,6 +614,8 @@ class CarritoService {
     persistirCarrito() {
         Utilidades.guardarEnStorage(CONFIG.CAR_KEY, EstadoApp.carrito);
     }
+    /* —-----------------------------SUB-LÓGICA : GESTIÓN DE ITEMS (CRUD Local)—-----------*/
+    // Lógica para manipular el array de productos en memoria.
 
     // 2. AGREGAR PRODUCTOS AL CARRITO
     async agregarAlCarrito(nombre, precio, imagen, productoId = null) {
@@ -587,7 +627,7 @@ class CarritoService {
             }
 
             const producto = {
-                id: productoId || this.generarIdTemporal(),
+                id: productoId || this.generarIdTemporal(), // Podemos sacar esto, no ? ya tenemos id reales
                 nombre: nombre,
                 precio: Number(precio) || 0,
                 imagen: imagen || 'Recursos_Esteticos/img/default.jpg',
@@ -637,7 +677,7 @@ class CarritoService {
             switch (operacion) {
                 case 'incrementar':
                     item.cantidad++;
-                    console.log(`➕ Incrementado: ${item.nombre} (${item.cantidad})`);
+                    console.log(`➕ Incrementado: ${item.nombre} (${item.cantidad})`);// Aqui el boton para agregar del mismo producto 
                     break;
 
                 case 'decrementar':
@@ -646,7 +686,7 @@ class CarritoService {
                         EstadoApp.carrito.splice(itemIndex, 1);
                         console.log(`🗑️ Eliminado: ${item.nombre}`);
                     } else {
-                        console.log(`➖ Decrementado: ${item.nombre} (${item.cantidad})`);
+                        console.log(`➖ Decrementado: ${item.nombre} (${item.cantidad})`);// Aqui el boton para restar del mismo producto
                     }
                     break;
 
@@ -706,6 +746,10 @@ class CarritoService {
             return { exito: false, error: error.message };
         }
     }
+
+        /* —-----------------------------SUB-LÓGICA : RENDERIZADO VISUAL—-----------*/
+    // Actualiza el HTML del Offcanvas (barra lateral) y el contador (badge) del navbar.
+
 
     // 6. RENDERIZADO DEL CARRITO
     renderCarrito() {
@@ -808,6 +852,9 @@ class CarritoService {
         };
     }
 
+        /* —-----------------------------SUB-LÓGICA : PROCESAR PEDIDO (Navegación)—-----------*/
+    // Valida condiciones mínimas y redirige al usuario a la página de pago.
+
     // 8. MANEJO DE PEDIDOS
    // En CarritoService (dentro de app.js)
 
@@ -861,12 +908,12 @@ class CarritoService {
             modal.show();
         }
     }
-
-    // 10. UTILIDADES
+/*
+    // 10. UTILIDADES Simulacion de ID temporal
     generarIdTemporal() {
         return `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     }
-
+*/
     // 11. GETTERS
     estaVacio() {
         return EstadoApp.carrito.length === 0;
@@ -881,6 +928,10 @@ class CarritoService {
 const carritoService = new CarritoService();
 
 // Funciones globales para compatibilidad con HTML existente
+// Error: Uso de 'window' para exponer funciones globales.
+// Aunque necesario para los onclick="" en el HTML antiguo, es una mala práctica moderna ("Polluting Global Scope").
+// Si el HTML se refactoriza para usar solo event listeners (como ya hicimos en AppInicializador), esto se puede borrar. ¿se puede borrar por que ya no se usa?
+// Funciones globales para compatibilidad con HTML existente 
 window.agregarAlCarrito = function(nombre, precio, imagen) {
     return carritoService.agregarAlCarrito(nombre, precio, imagen);
 };
@@ -897,10 +948,14 @@ window.renderCarrito = function() {
     return carritoService.renderCarrito();
 };
 
-// =================== PRODUCT SERVICE - GESTIÓN DE PRODUCTOS ===================
+/* ====== Logica: PRODUCT SERVICE (Gestión del Catálogo) ===================
+   Esta clase administra el inventario de productos: Carga inicial, CRUD (Crear, Leer, Actualizar, Eliminar)
+   conectado al Backend GraphQL, y la renderización dinámica de las tarjetas en el HTML.
+   También gestiona la apertura y cierre de los modales de administración.
+   ====================================================== */
 
 class ProductService {
-    constructor() {
+   /* constructor() {
         this.productosSimulados = this.inicializarProductosSimulados();
         this.cargarProductosIniciales();
     }
@@ -953,8 +1008,11 @@ class ProductService {
         };
         console.log('📦 Productos simulados cargados');
     }
+*/
 
-// 2. OBTENER PRODUCTOS REAL (Conectado al Backend)
+    /* —-----------------------------SUB-LÓGICA : LECTURA DE DATOS (Backend)—-----------*/
+    // Pide los productos a la API, ya sea todos o filtrados por categoría.
+// 2. OBTENER PRODUCTOS REAL (Conectado al Backend) ¿aqui es donde necesitamos resolver el problema de que acompañamientos no se este viendo?
     async obtenerProductos(categoria = null) {
         try {
             const query = `
@@ -1031,6 +1089,9 @@ class ProductService {
             return null;
         }
     }
+    
+    /* —-----------------------------SUB-LÓGICA : ESCRITURA DE DATOS (Admin)—-----------*/
+    // Funciones protegidas (validación de rol) para modificar el catálogo.
 
 // 3. CREAR PRODUCTO REAL (Conectado al Backend)
     async crearProducto(datosProducto) {
@@ -1184,7 +1245,8 @@ class ProductService {
         }
     }
 
-// 6. RENDERIZADO DE PRODUCTOS
+    /* —-----------------------------SUB-LÓGICA : RENDERIZADO DOM—-----------*/
+    // Transforma los datos JSON en HTML y los inyecta en la página.
     async renderProductosCategoria(categoria) {
         // TRUCO INTELIGENTE: 
         // Si la categoría viene de la BD como "acompañamientos", la traducimos al ID "acompanamientos"
@@ -1192,6 +1254,13 @@ class ProductService {
         if (categoria === 'acompañamientos') {
             sufijoId = 'acompanamientos';
         }
+                // Error Relacionado al #4: Aquí está el manejo de la "ñ".
+        // La lógica asume que el ID del HTML es 'contenedor-acompanamientos' (sin ñ) 
+        // pero que la categoría en la BD es 'acompañamientos' (con ñ).
+        // Si al refrescar la página, el 'AppInicializador' llama a esta función usando el string 'acompañamientos',
+        // esta lógica funciona. PERO, si el Backend devuelve la categoría normalizada sin ñ, o si hay un mismatch
+        // entre lo que espera 'obtenerProductos' y lo que hay en BD, la lista volverá vacía.
+        // SOLUCIÓN: Revisar estrictamente qué string exacto está guardado en MongoDB para los productos de esa categoría.
 
         const contenedorId = `contenedor-${sufijoId}`;
         const contenedor = document.getElementById(contenedorId);
@@ -1232,7 +1301,8 @@ class ProductService {
         }
     }
 
-    crearCardProducto(producto) {
+     /* —-----------------------------SUB-LÓGICA : CREACION DE PRODUCTO—-----------*/
+    crearCardProducto(producto) {                // ... (Generación de string HTML para la Card de Bootstrap) Incluye botones de Admin ocultos por defecto (display: none) que AuthService activará luego.
         return `
             <div class="col" data-producto-id="${producto.id}" data-categoria="${producto.categoria}">
                 <div class="card h-100 rounded-4">
@@ -1270,8 +1340,11 @@ class ProductService {
         `;
     }
 
+        /* —-----------------------------SUB-LÓGICA : GESTIÓN DE MODALES (UI Admin)—-----------*/
+    // Controla el formulario emergente para crear/editar.
+
     // 7. MANEJO DEL MODAL DE PRODUCTOS
-    abrirModalAgregarProducto(categoria) {
+    abrirModalAgregarProducto(categoria) {                                       // ... (Resetear form y abrir modal con Bootstrap) quizas aqui falta una funcion que cierre el modal despues de guardar asi se resuelve el problema da la parlisis
         if (!Utilidades.elementoExiste(ElementosDOM.modalAddProduct)) return;
 
         // Configurar modal para agregar
@@ -1309,20 +1382,19 @@ class ProductService {
         });
     }
 
-async manejarSubmitProducto(event) {
+async manejarSubmitProducto(event) {                   // ... (Referencias a botones y spinners) ¿que es el spinner?
         event.preventDefault();
 
         const btnGuardar = ElementosDOM.btnGuardarProducto;
         const textoBtn = ElementosDOM.textoBtnGuardar;
         const spinner = ElementosDOM.spinnerGuardar;
 
-        try {
-            // Mostrar loading
+        try {// ... (Bloquear botón y mostrar spinner)
             textoBtn.style.display = 'none';
             spinner.style.display = 'inline-block';
             btnGuardar.disabled = true;
 
-            const datos = {
+            const datos = {// Recolectar datos del formulario
                 nombre: ElementosDOM.productName.value,
                 descripcion: ElementosDOM.productDesc.value,
                 precio: ElementosDOM.productPrice.value,
@@ -1354,7 +1426,11 @@ async manejarSubmitProducto(event) {
             alert(`Error: ${error.message}`);
         } finally {
             // === ZONA DE SEGURIDAD Y LIMPIEZA (LA SOLUCIÓN VIOLENTA) ===
-            // Esto se ejecuta SIEMPRE, haya éxito o error, para devolver el control.
+            // Error Relacionado al #5: "La página paraliza el scroll".
+            // Este bloque 'finally' contiene la lógica explícita para forzar la reactivación del scroll.
+            // Si Bootstrap falla al limpiar sus clases (algo común si el modal se cierra o renderiza rápido),
+            // estas líneas fuerzan al navegador a quitar 'modal-open' y restaurar 'overflow: auto'.
+            // OBSERVACIÓN: Es un parche efectivo, pero indica que el manejo del ciclo de vida del modal de Bootstrap podría ser inestable. ¿por qué el ciclo de vida del modal bootstrap es inestable?¿nosotros lo hicimos inestable?
 
             // 1. Restaurar botón
             textoBtn.textContent = 'Guardar';
@@ -1385,8 +1461,10 @@ async manejarSubmitProducto(event) {
             document.body.style.paddingRight = '0';
         }
     }
+        // Fin de la violencia 
 
-    // 8. UTILIDADES
+/*
+    // 8. UTILIDADES simulacion de ID temporal
     generarNuevoId() {
         const todosProductos = [
             ...EstadoApp.productos.promos,
@@ -1396,7 +1474,7 @@ async manejarSubmitProducto(event) {
         const maxId = todosProductos.reduce((max, p) => Math.max(max, p.id), 0);
         return maxId + 1;
     }
-
+*/
     // 9. GETTERS
     obtenerCategorias() {
         return Object.keys(EstadoApp.productos);
@@ -1424,7 +1502,14 @@ async manejarSubmitProducto(event) {
 // Instancia global del servicio
 const productService = new ProductService();
 
-// =================== CHECKOUT SERVICE - GESTIÓN DE PAGOS ===================
+/* ====== Logica: CHECKOUT SERVICE (Gestión del Proceso de Pago) ===================
+   Esta clase controla la interfaz de usuario en la página de pago ('Ges_pagos.html').
+   Sus funciones principales son:
+   1. Alternar la visibilidad de formularios (Delivery vs Retiro, Tarjeta vs Efectivo).
+   2. Recopilar todos los datos del formulario y del carrito.
+   3. Enviar la Mutation 'crearPedido' al Backend.
+   4. Redirigir al usuario a la pantalla de validación ('Val_pago.html').
+   ====================================================== */
 
 class CheckoutService {
     constructor() {
@@ -1433,6 +1518,9 @@ class CheckoutService {
             this.inicializarCheckout();
         }
     }
+    /* —-----------------------------SUB-LÓGICA : INTERACTIVIDAD UI—-----------*/
+    // Configura los "Toggles" visuales. Si seleccionas Delivery, muestra el input de dirección.
+    // Si seleccionas Retiro, lo esconde. Lo mismo para el método de pago.
 
     inicializarCheckout() {
         console.log('💳 Inicializando Checkout...');
@@ -1473,7 +1561,8 @@ class CheckoutService {
             });
         }
     }
-
+    /* —-----------------------------SUB-LÓGICA : CREACIÓN DEL PEDIDO (Core)—-----------*/
+    // Recolecta datos, valida, formatea para GraphQL y envía al servidor.
     async procesarCompra() {
         try {
             // A) Validaciones Previas
@@ -1515,9 +1604,15 @@ class CheckoutService {
             // Preparar datos de pago (Dummy o Reales del form)
             const datosPago = {
                 metodo: metodoPago,
-                ultimosDigitos: metodoPago === 'tarjeta' ? '4242' : null, // Simulado por ahora
+                ultimosDigitos: metodoPago === 'tarjeta' ? '4242' : null, // Simulado por ahora ¿Porque esto esta simulado ?
                 transaccionId: `PEND_${Date.now()}`
             };
+                        /*Simulacion detectada: Datos de tarjeta hardcodeados.
+              Aunque estamos en una "Integración Real" con la base de datos, el Frontend NO está enviando
+              los datos reales de la tarjeta al backend en este paso, sino que envía un placeholder ('4242').
+              Esto es correcto por seguridad (no queremos guardar tarjetas completas en la colección de Pedidos),
+              pero implica que la validación real de la tarjeta ocurrirá después, en 'Val_pago.html'.
+            */
 
             // C) Preparar Items del Carrito para GraphQL
             const itemsInput = EstadoApp.carrito.map(item => ({
@@ -1577,6 +1672,7 @@ class CheckoutService {
             console.log('✅ Pedido creado:', nuevoPedido);
 
             // Guardar ID del pedido temporalmente para la validación de pago
+            // Esto es crucial: Le pasamos el "testigo" a la siguiente página.
             sessionStorage.setItem('pedido_actual_id', nuevoPedido.id);
             sessionStorage.setItem('metodo_pago_actual', metodoPago);
 
@@ -1595,6 +1691,8 @@ class CheckoutService {
         }
     }
 
+        /* —-----------------------------SUB-LÓGICA : RENDERIZADO RESUMEN—-----------*/
+    // Dibuja la lista pequeña de productos en el lado derecho de la pantalla de pago.
     renderizarResumen() {
         // ... (Mantener el código anterior de renderizarResumen igual) ...
         const contenedor = document.getElementById('lista-resumen-checkout');
@@ -1637,9 +1735,13 @@ class CheckoutService {
 const checkoutService = new CheckoutService();
 
 
-// =================== ORDER SERVICE - GESTIÓN DE PEDIDOS/BOLETAS ===================
 
-// =================== ORDER SERVICE - GESTIÓN DE PEDIDOS/BOLETAS ===================
+/* ====== Logica: ORDER SERVICE (Historial y Seguimiento) ===================
+   Esta clase gestiona las dos vistas post-compra:
+   1. 'Est_pedido.html' (Tracking): Muestra el progreso visual (stepper) de un pedido específico.
+   2. 'Ges_boletas.html' (Historial): Lista todos los pedidos anteriores del usuario con filtros y búsqueda.
+   Actúa consultando la API 'obtenerPedido' y 'obtenerPedidos' respectivamente.
+   ====================================================== */
 
 class OrderService {
     constructor() {
@@ -1654,7 +1756,9 @@ class OrderService {
         }
     }
 
-    // =================== 1. LOGICA DE TRACKING (Est_pedido.html) ===================
+    /* —-----------------------------SUB-LÓGICA : TRACKING (Visualización de Estado)(Est_pedido.html)—-----------*/
+    // Se ejecuta solo en 'Est_pedido.html'.
+    // Toma el ID de la URL (?id=...), busca el pedido en la BD y actualiza el gráfico de pasos.
     
     async inicializarTracking() {
         console.log('📍 Inicializando Tracking de Pedido...');
@@ -1700,6 +1804,9 @@ class OrderService {
         const elId = document.getElementById('track-id');
         const elFecha = document.getElementById('track-fecha');
         
+        // Error Potencial: Formato de Fecha.
+        // Si 'createdAt' viene del backend como string ISO ("2023-10..."), 'Number()' devolverá NaN.
+        // Solución: Usar 'new Date(pedido.createdAt)' directamente o verificar el formato antes de castear.
         if (elId) elId.textContent = pedido.numeroBoleta || pedido.id.slice(-6);
         if (elFecha) elFecha.textContent = new Date(Number(pedido.createdAt)).toLocaleDateString();
 
@@ -1710,13 +1817,23 @@ class OrderService {
         let indiceActual = -1;
         let estadoNormalizado = pedido.estado;
         
+        // Normalización de estados del Backend (8 tipos) a estados Visuales (4 pasos)
         if (pedido.estado === 'pendiente') indiceActual = -1;
         else if (pedido.estado === 'listo_retiro') estadoNormalizado = 'en_camino';
         else if (pedido.estado === 'retirado') estadoNormalizado = 'entregado';
         
+                // Error Relacionado al #3 (Progreso Real):
+        // El array 'estadosOrden' NO incluye 'cancelado'. Si el pedido está cancelado, 'indexOf' devuelve -1.
+        // Visualmente, el tracker se quedará vacío (ningún paso activo), lo cual puede confundir al usuario.
+        // Solución: Agregar lógica específica para mostrar un estado de "Cancelado" o alerta roja.
+
         indiceActual = estadosOrden.indexOf(estadoNormalizado);
 
         pasosDOM.forEach((paso, index) => {
+            // Error Relacionado al #2 (Contraste):
+            // Aquí se asignan las clases '.active' y '.done'. Si el CSS de estas clases
+            // tiene colores grises sobre fondo negro (como reportaste), aquí es donde el JS
+            // "activa" ese estilo defectuoso. La corrección será CSS, pero el JS es el gatillante.
             paso.classList.remove('active', 'done');
             if (index < indiceActual) {
                 paso.classList.add('done'); 
@@ -1736,7 +1853,8 @@ class OrderService {
         if (descEl && indiceActual >= 0 && descripciones[indiceActual]) descEl.textContent = descripciones[indiceActual];
     }
 
-    // =================== 2. LOGICA DE HISTORIAL (Ges_boletas.html) ===================
+    /* —-----------------------------SUB-LÓGICA : HISTORIAL (Lista y Filtros) (Ges_boletas.html)—-----------*/
+    // Se ejecuta en 'Ges_boletas.html'. Obtiene la lista y maneja el buscador/chips en el cliente.
     
     async inicializarHistorial() {
         console.log('📜 Inicializando Historial de Pedidos Real...');
@@ -1893,7 +2011,7 @@ class OrderService {
                 tbody.appendChild(tr);
             });
         }
-
+        // Error Potencial: Si 'window.bootstrap' no está cargado (CDN falló), esto crashea.
         const modalEl = document.getElementById('modalBoleta');
         if (modalEl && window.bootstrap) {
             new bootstrap.Modal(modalEl).show();
@@ -1904,20 +2022,33 @@ class OrderService {
 // Instancia global
 const orderService = new OrderService();
 
-// =================== DASHBOARD SERVICE - REPORTES ADMIN ===================
+/* ====== Logica: DASHBOARD SERVICE (Panel de Control y Reportes) ===================
+   Esta clase administra la vista exclusiva de Administrador ('Ges_reportes.html').
+   Sus responsabilidades son:
+   1. Proteger la ruta (Verificar rol Admin).
+   2. Gestionar los filtros de fecha (Día, Mes, Año).
+   3. Solicitar métricas calculadas al Backend mediante GraphQL.
+   4. Renderizar gráficos interactivos usando la librería Chart.js.
+   ====================================================== */
 
 class DashboardService {
     constructor() {
-        // Solo inicializar si estamos en la página de reportes y existe el gráfico
+        // Solo inicializar si estamos en la página de reportes y existe el gráfico principal
+        // Esto evita errores si cargamos este script en el Home o el Menú.
         if (document.getElementById('chartTop')) {
             this.inicializarDashboard();
         }
     }
 
+    /* —-----------------------------SUB-LÓGICA : INICIALIZACIÓN Y SEGURIDAD—-----------*/
+    // Verifica permisos y prepara el terreno para los gráficos.
     async inicializarDashboard() {
         console.log('📊 Inicializando Dashboard Real...');
         
         // 1. Verificar si es admin (Seguridad Frontend)
+        // Error: Seguridad solo en cliente. Si un usuario experto modifica el JS o el localStorage,
+        // podría saltarse este check. Aunque el Backend debe tener su propia seguridad (los TODOs que vimos),
+        // aquí es la primera línea de defensa.
         if (!authService.esAdmin()) {
             alert('Acceso denegado: Se requieren permisos de administrador.');
             window.location.href = 'Web_principal.html';
@@ -1925,6 +2056,7 @@ class DashboardService {
         }
 
         // Variables para las instancias de los gráficos (para poder destruirlos y redibujarlos)
+        // Es vital guardar las referencias para llamar a .destroy() antes de actualizar.
         this.chartTop = null;
         this.chartPay = null;
         this.chartType = null;
@@ -1935,6 +2067,9 @@ class DashboardService {
         // 3. Cargar datos iniciales (por defecto "mes")
         await this.cargarDatos('mes');
     }
+
+        /* —-----------------------------SUB-LÓGICA : CARGA DE DATOS (GraphQL)—-----------*/
+    // Realiza dos consultas en paralelo: una para los gráficos y otra para los números (KPIs).
 
     async cargarDatos(periodo, fechaInicio = null, fechaFin = null) {
         try {
@@ -1991,6 +2126,8 @@ class DashboardService {
         }
     }
 
+    /* —-----------------------------SUB-LÓGICA : INTERACTIVIDAD DE FILTROS—-----------*/
+    // Maneja los clicks en los botones de "Hoy", "Mes", "Año" y muestra inputs si es necesario.
     configurarFiltros() {
         // Lógica para los chips (Hoy, Mes, Año)
         document.querySelectorAll('.chip[data-mode]').forEach(chip => {
@@ -2016,7 +2153,11 @@ class DashboardService {
         }
     }
 
-    mostrarInputFecha(modo) {
+    /*Simulacion detectada: Botón de Exportación.
+      Aunque el Backend tiene la mutación `exportarReporteExcel`, el Frontend aquí solo muestra un alert.
+      Para conectar la funcionalidad real, deberíamos llamar a `GQL.request` con esa mutación y manejar
+      la respuesta (que devuelve un string CSV) creando un Blob y forzando la descarga en el navegador.
+    */    mostrarInputFecha(modo) {
         Utilidades.toggleElemento(document.getElementById('box-dia'), modo === 'dia');
         Utilidades.toggleElemento(document.getElementById('box-mes'), modo === 'mes');
         Utilidades.toggleElemento(document.getElementById('box-anio'), modo === 'anio');
@@ -2028,6 +2169,9 @@ class DashboardService {
             if(el) el.textContent = '...';
         });
     }
+
+        /* —-----------------------------SUB-LÓGICA : RENDERIZADO VISUAL (Chart.js)—-----------*/
+    // Dibuja los números en las tarjetas y los gráficos en los canvas.
 
     renderizarKPIs(reporte) {
         // Ventas Totales
@@ -2068,10 +2212,15 @@ class DashboardService {
     }
 
     crearGrafico(canvasId, tipo, labels, data, labelDatos, colores) {
+        // Error: Dependencia Externa.
+        // Si la librería Chart.js no se cargó en el HTML (<script src="...chart.umd.min.js">), 
+        // 'Chart' no estará definido y esto romperá la ejecución.
+        // Solución: Verificar `if (typeof Chart === 'undefined')` antes de instanciar.
         const ctx = document.getElementById(canvasId);
         if (!ctx) return;
 
         // Destruir gráfico anterior si existe para evitar superposiciones (glitch visual común)
+        // Esto es muy importante en SPAs o páginas que no recargan al cambiar filtros.
         if (this[canvasId] instanceof Chart) {
             this[canvasId].destroy();
         }
@@ -2107,12 +2256,19 @@ class DashboardService {
 // Instancia global
 const dashboardService = new DashboardService();
 
-// =================== EVENT LISTENERS E INICIALIZACIÓN ===================
+/* ====== Logica: APP INICIALIZADOR (Orquestación y Eventos Globales) ===================
+   Esta clase es el punto de entrada (Entry Point). Su función es coordinar el arranque de la aplicación.
+   Asegura que el DOM esté listo, carga la sesión, llena los estantes de productos y
+   conecta todos los cables (Event Listeners) para que los botones funcionen.
+   ====================================================== */
 
 class AppInicializador {
     constructor() {
         this.eventListenersRegistrados = false;
     }
+
+        /* —-----------------------------SUB-LÓGICA : SECUENCIA DE ARRANQUE—-----------*/
+    // Define el orden estricto de carga: Sesión -> Datos -> Interacción -> Visualización.
 
     // 1. INICIALIZACIÓN PRINCIPAL
     async inicializarApp() {
@@ -2138,12 +2294,21 @@ class AppInicializador {
         }
     }
 
+    
+    /* —-----------------------------SUB-LÓGICA : CARGA MASIVA DE CATEGORÍAS—-----------*/
+    // Recorre una lista predefinida de categorías y le pide al ProductService que las llene.
 // 2. CARGA DE PRODUCTOS INICIALES
     async cargarProductosIniciales() {
         try {
             console.log('🔄 Cargando catálogo completo...');
 
             // Lista de todas las categorías que tu negocio maneja
+            // Error Relacionado al #4 (Acompañamientos):
+            // Esta lista está "Hardcodeada" (escrita a mano). Si en la Base de Datos creas una categoría nueva
+            // llamada "Postres", NO APARECERÁ en la página a menos que la agregues manualmente aquí.
+            // Además, si aquí dice 'acompañamientos' (con ñ) y el ID del HTML es 'contenedor-acompanamientos' (sin ñ),
+            // dependemos totalmente del "Truco Inteligente" que vimos en ProductService.
+            // Solución Ideal: Obtener esta lista dinámicamente desde el Backend (Query obtenerCategorias).
             const categoriasAContenedor = [
                 'promos', 
                 'sandwiches', 
@@ -2174,6 +2339,8 @@ class AppInicializador {
         }
     }
 
+    /* —-----------------------------SUB-LÓGICA : GESTOR DE EVENTOS (Controlador)—-----------*/
+    // Centraliza la asignación de clicks y submits. Usa el patrón de "Delegación" para eficiencia.
     // 3. REGISTRO DE EVENT LISTENERS
     registrarEventListeners() {
         if (this.eventListenersRegistrados) {
@@ -2234,6 +2401,10 @@ registrarListenersAutenticacion() {
                 e.preventDefault();
                 
                 // Recolectar datos del formulario gigante
+                // Error Relacionado al #1 (Estilos Modal):
+                // El JS funciona bien recolectando datos, pero el problema reportado es visual (contraste).
+                // Sin embargo, si al cambiar los estilos CSS cambiamos los IDs de los inputs, este bloque fallará.
+                // Mantener los IDs 'reg-nombre', 'reg-run', etc., intactos al arreglar el CSS.
                 const datos = {
                     nombre: document.getElementById('reg-nombre').value,
                     run: document.getElementById('reg-run').value,
@@ -2267,6 +2438,7 @@ registrarListenersAutenticacion() {
     // 5. LISTENERS DE CARRITO (DELEGACIÓN DE EVENTOS)
     registrarListenersCarrito() {
         // Delegación para botones "Agregar al carrito" en productos
+        // Esto es muy eficiente: un solo listener para todos los botones de la página.
         document.addEventListener('click', async (e) => {
             if (e.target.classList.contains('btn-agregar-carrito')) {
                 const nombre = e.target.dataset.nombre;
@@ -2278,7 +2450,7 @@ registrarListenersAutenticacion() {
             }
         });
 
-        // Delegación para botones dentro del carrito
+        // Delegación para botones dentro del carrito(+, -, Eliminar)
         if (Utilidades.elementoExiste(ElementosDOM.carritoItems)) {
             ElementosDOM.carritoItems.addEventListener('click', async (e) => {
                 const productoId = e.target.dataset.productoId;
@@ -2313,6 +2485,7 @@ registrarListenersAutenticacion() {
         }
 
         // Re-renderizar carrito cuando se abre el offcanvas
+        // Esto asegura que si agregaste algo y el carrito estaba oculto, al abrirlo se vea actualizado.
         if (Utilidades.elementoExiste(ElementosDOM.offcanvasCarrito)) {
             ElementosDOM.offcanvasCarrito.addEventListener('show.bs.offcanvas', () => {
                 carritoService.renderCarrito();
@@ -2394,7 +2567,7 @@ registrarListenersProductos() {
             authService.toggleElementosAdmin();
         });
 
-        // --- NUEVO: Listener para botón Tus Pedidos ---
+        // --- Listener para botón Tus Pedidos ---
         if (Utilidades.elementoExiste(ElementosDOM.btnPedidos)) {
             ElementosDOM.btnPedidos.addEventListener('click', () => {
                 console.log('📂 Yendo a mis pedidos...');
@@ -2402,7 +2575,7 @@ registrarListenersProductos() {
             });
         }
 
-        // --- NUEVO: Listener para botón Panel Admin ---
+        // --- Listener para botón Panel Admin ---
         if (Utilidades.elementoExiste(ElementosDOM.btnAdmin)) {
             ElementosDOM.btnAdmin.addEventListener('click', () => {
                 console.log('👑 Yendo al panel de admin...');
@@ -2410,7 +2583,7 @@ registrarListenersProductos() {
             });
         }
 
-        // --- NUEVO: Listener para botón Locales del Navbar ---
+        // --- Listener para botón Locales del Navbar ---
         // Lo enlazamos al enlace del navbar principal que tiene el href="#locales"
         document.querySelectorAll('a[href="#locales"]').forEach(link => {
             link.addEventListener('click', (e) => {
@@ -2419,7 +2592,11 @@ registrarListenersProductos() {
                 window.location.href = 'Locales.html';
             });
         });
-        // ----------------------------------------------------
+        // FALTANTE RELACIONADO AL ERROR 6 (Carrusel):
+        // No veo ningún listener registrado para "Editar Carrusel".
+        // La lista de errores menciona que se debe crear esta funcionalidad.
+        // Aquí es donde deberíamos registrar el botón (probablemente en Web_principal.html)
+        // para abrir un modal de gestión de imágenes.
 
         console.log('🌐 Listeners globales registrados');
     }
@@ -2450,6 +2627,7 @@ registrarListenersProductos() {
 const appInicializador = new AppInicializador();
 
 // Inicializar cuando el DOM esté listo
+// Asegura que no intentemos buscar elementos (getElementById) antes de que existan.
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
         appInicializador.inicializarApp();
@@ -2460,6 +2638,9 @@ if (document.readyState === 'loading') {
 
 // =================== COMPATIBILIDAD CON CÓDIGO EXISTENTE ===================
 
+// Funciones globales (Polluting Global Scope)
+// Error: Mantener funciones en 'window' es mala práctica si ya usamos listeners.
+// Se recomienda borrar esto una vez que estemos seguros de que el HTML no tiene 'onclick="..."'.
 // Mantener funciones globales para compatibilidad
 window.actualizarNavbar = function() {
     authService.actualizarNavbar();

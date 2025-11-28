@@ -39,6 +39,7 @@
 </head>
 <body>
 
+<!-- =================== NAVBAR SUPERIOR =================== -->
 <nav id="navbarPrincipal" class="navbar navbar-expand-lg navbar-light bg-warning px-3">
   <div class="container-fluid">
     <a id="logoAbocatto" class="navbar-brand d-flex align-items-center" href="Web_principal.html">
@@ -74,7 +75,20 @@
     </div>
   </div> 
 </nav>
+<!--
+1.- id [navbarPrincipal] = Contenedor principal del navbar
+2.- id [logoAbocatto] = Enlace/branding al home
+3.- id [btn-resp-mov] = Botón colapsable (responsive)
+4.- id [navbarContent] = Contenedor de enlaces del menú
+5.- id [btn-login] = Botón para abrir modal de login
+6.- id [btn-pedidos] = Botón para ver pedidos del usuario
+7.- id [btn-carrito] = Botón para abrir el offcanvas del carrito
+8.- id [carr-cont] = Badge/contador del carrito
+9.- id [btn-admin] = Botón para acceder al panel admin
+10.- id [btn-logout] = Botón para cerrar sesión
+-->
 
+<!-- =================== MODAL DE LOGIN =================== -->
 <div class="modal fade" id="loginModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content bg-dark text-light rounded-4">
@@ -108,7 +122,15 @@
     </div>
   </div>
 </div>
+<!--
+1.- id [loginModal] = Modal de acceso (contenedor principal)
+2.- id [btn-registrarse] = Botón para ir al registro
+3.- id [form-logearse] = Formulario de login
+4.- id [login-Email] = Campo email de login
+5.- id [login-contraseña] = Campo contraseña de login
+-->
 
+<!-- =================== OFFCANVAS CARRITO =================== -->
 <div class="offcanvas offcanvas-end bg-dark text-light" tabindex="-1" id="offcanvasCarrito" aria-labelledby="offcanvasCarritoLabel">
   <div class="offcanvas-header border-bottom">
     <h5 class="offcanvas-title fw-bold" id="offcanvasCarritoLabel" style="color:#e6b800;">Tu carrito</h5>
@@ -130,12 +152,23 @@
     </div>
   </div>
 </div>
+<!--
+1.- id [offcanvasCarrito] = Offcanvas del carrito (contenedor principal)
+2.- id [offcanvasCarritoLabel] = Título del offcanvas
+3.- id [carrito-items] = Contenedor de ítems del carrito
+4.- id [carrito-vacio] = Mensaje de carrito vacío
+5.- id [carrito-total] = Monto subtotal del carrito
+6.- id [btn-vaciar] = Botón para vaciar el carrito
+7.- id [btn-hacer-pedido] = Botón para iniciar el proceso de pedido
+-->
 
+<!-- =================== SECCIÓN CHECKOUT =================== -->
 <main class="container my-5">
   <div class="row g-4">
     
     <div class="col-lg-8">
       
+      <!-- ===== CARD TIPO DE ENTREGA ===== -->
       <div class="card rounded-4 mb-4">
         <div class="card-header bg-warning text-dark fw-bold">
           <i class="bi bi-truck"></i> Tipo de Entrega
@@ -179,6 +212,7 @@
         </div>
       </div>
 
+      <!-- ===== CARD MÉTODO DE PAGO ===== -->
       <div class="card rounded-4">
         <div class="card-header bg-warning text-dark fw-bold">
           <i class="bi bi-credit-card"></i> Método de Pago
@@ -230,6 +264,7 @@
     </div>
 
     <div class="col-lg-4">
+      <!-- ===== CARD RESUMEN DEL PEDIDO ===== -->
       <div class="card rounded-4 shadow-lg sticky-top" style="top: 100px; z-index: 1;">
         <div class="card-body">
           <h5 class="fw-bold text-warning-custom mb-3">Resumen del Pedido</h5>
@@ -266,6 +301,33 @@
 
   </div>
 </main>
+<!--
+IDs dentro de SECCIÓN CHECKOUT:
+1.- id [entrega-retiro] = Radio "Retiro en Local"
+2.- id [entrega-delivery] = Radio "Despacho a Domicilio"
+3.- id [seccion-info-retiro] = Aviso con info del local para retiro
+4.- id [seccion-direccion-delivery] = Contenedor de formulario de dirección
+5.- id [form-direccion] = Formulario de dirección de despacho
+6.- id [input-calle] = Campo "Calle y número"
+7.- id [input-comuna] = Campo "Comuna"
+8.- id [input-ciudad] = Campo "Ciudad"
+9.- id [input-notas] = Campo "Notas adicionales"
+10.- id [pago-contraentrega] = Radio "Pago contra entrega"
+11.- id [pago-tarjeta] = Radio "Pago con tarjeta"
+12.- id [seccion-info-contraentrega] = Aviso de información de contraentrega
+13.- id [seccion-tarjeta] = Contenedor de datos de tarjeta
+14.- id [form-tarjeta] = Formulario de pago con tarjeta
+15.- id [card-numero] = Número de tarjeta
+16.- id [card-nombre] = Nombre del titular
+17.- id [card-exp] = Fecha de expiración (MM/AA)
+18.- id [card-cvv] = Código de seguridad (CVV)
+19.- id [guardar-tarjeta] = Checkbox para guardar tarjeta
+20.- id [lista-resumen-checkout] = Contenedor lista de productos del resumen
+21.- id [checkout-subtotal] = Subtotal del checkout
+22.- id [checkout-envio] = Texto de costo de envío
+23.- id [checkout-total] = Total del checkout
+24.- id [btn-confirmar-compra] = Botón para confirmar la compra
+-->
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="js/app.js?v=4" defer></script>
