@@ -1,15 +1,22 @@
 // =================== ESTRUCTURA BASE APP.JS ===================
 // Versión: INTEGRACIÓN REAL (Backend: localhost:3000)
 
-// 1. CONFIGURACIÓN Y CLIENTE GRAPHQL (Nuestro "Mini-Apollo") esta es parte del mini garzon. ¿Como funciona la logica de tokens, de la que tanto se habla?
+// =================== LÓGICA GLOBAL DE LA APLICACIÓN ===================
+
+// ----------------- CONFIGURACIÓN Y CLIENTE GRAPHQL (Nuestro "Mini-Apollo") ----------------- 
+/*
+Este bloque CONFIG es el centro de control para no repetir texto a lo largo del código y mantener el orden en la memoria del navegador.
+Todo lo que se va a guardar en localStorage, se definen aquí.
+*/
 const CONFIG = {
-    API_URL: 'http://localhost:3000/graphql', // ¡La dirección de tu cocina!
+    API_URL: 'http://localhost:3000/graphql', // URL del servidor GraphQL
     CAR_KEY: 'carrito_bocatto',
     USER_KEY: 'usuario_bocatto',
     ROLES: { VISITANTE: 'visitante', CLIENTE: 'cliente', ADMIN: 'admin' }
 };
-/* —-----------------------------SUB-LÓGICA : CLASE GQL (Manejador de Peticiones)—-----------*/
-/* Esta clase estática centraliza la comunicación. Toma la orden (query/variables), ¿como hace para centralizar la comunicación? ¿que es un query? ¿como inyecta un token? ¿cuando habla de variables a que se refiere?
+// —----------------------------- LÓGICA : CLASE GQL- MANEJO DE PETICIONES —-----------*/
+/* 
+Esta clase estática centraliza la comunicación. Toma la orden (query/variables), 
 busca si hay un usuario logueado para inyectar su token, y maneja la respuesta cruda del servidor.
 */
 // Clase para hablar con el Backend
@@ -49,18 +56,14 @@ class GQL {
         }
     }
 }
-/* ====== Logica: GESTIÓN DE ESTADO Y REFERENCIAS DOM ===================
-   Este bloque centraliza la memoria de la aplicación (EstadoApp) y crea un diccionario
-   masivo de referencias a los elementos HTML (ElementosDOM). También define las herramientas
-   (Utilidades) que serán usadas por todos los servicios posteriores para formatear dinero,
-   manipular el DOM y persistir datos en el navegador.
-   ====================================================== */
 
-// 2. ESTADO GLOBAL DE LA APLICACIÓN
-/* —-----------------------------SUB-LÓGICA : STORE (Estado Global)—-----------*/
-/* Aquí vive la "verdad" de la app en tiempo de ejecución.
-   En lugar de tener variables sueltas, todo se agrupa en 'EstadoApp'.
-   Esto facilita el debugging porque puedes escribir 'EstadoApp' en la consola y ver todo. ¿por que son tan pocos los campos de Estadoapp ? ¿no deberia haber mas campos?
+// —-----------------------------LÓGICA : STORE/ ESTADO GLOBAL DE LA APLICACIÓN—-----------
+/* 
+Aquí vive la "verdad" de la app en tiempo de ejecución.
+En lugar de tener variables sueltas, todo se agrupa en 'EstadoApp'.
+Esto facilita el debugging porque puedes escribir 'EstadoApp' en la consola y ver todo.
+Esta es la Memoria RAM de tu aplicación frontend. Mientras la página esté abierta, aquí viven los datos.
+EstadoApp solo guarda lo que necesitas acceder rápidamente y en múltiples lugares.
 */
 const EstadoApp = {
     // Autenticación
@@ -88,14 +91,14 @@ const EstadoApp = {
     }
 };
 
-// 3. REFERENCIAS A ELEMENTOS DEL DOM (todos los IDs que identificamos)
-/* —-----------------------------SUB-LÓGICA : MAPEO DEL DOM—-----------*/
-/* Se capturan todos los elementos HTML por su ID y se guardan en un objeto. 
-   IMPORTANTE: Como este script se carga en todas las páginas (Home, Menú, Pagos),
-   muchos de estos elementos serán 'null' dependiendo de en qué página esté el usuario.
-   Por ejemplo: 'btn-confirmar-compra' será null si estoy en el Home.
-   Entiendo que este es el diccionaro, que es como un mapa de todas las estrcuturas html que hay en el frontend, aqui faltan muchas estructuras, si las coloco todas,
-   el codigo se vuelve mas facil de manejar ?
+
+// -----------------------------LÓGICA : MAPEO DEL DOM -----------
+/* 
+Se capturan todos los elementos HTML por su ID y se guardan en un objeto. 
+IMPORTANTE: Como este script se carga en todas las páginas (Home, Menú, Pagos),
+muchos de estos elementos serán 'null' dependiendo de en qué página esté el usuario.
+Por ejemplo: 'btn-confirmar-compra' será null si estoy en el Home.
+Es un diccionario para tener "a mano" todos los botones y cajas del HTML.
 */
 const ElementosDOM = {
     // NAVBAR (13 elementos)
@@ -151,7 +154,9 @@ const ElementosDOM = {
     btnHacerPedido: document.getElementById('btn-hacer-pedido')
 };
 
-// 4. UTILIDADES GLOBALES No entiendo como funciona esta parte. 
+// ---------------------LOGICA : UTILIDADES GLOBALES -----------------
+//Es tu caja de herramientas. Son funciones "tontas" (puras) que no saben nada del negocio, solo hacen tareas repetitivas.
+
 const Utilidades = {
     // Formateo de precios CLP
     formatearPrecio: (precio) => {
@@ -193,7 +198,8 @@ const Utilidades = {
     }
 };
 
-// 5. INICIALIZACIÓN BASE Es necesario esto si mas arriba tenemos el estado global? y mas abajo tenemos los servicios?
+// -------------------------LOGICA : INICIALIZACIÓN BASE -----------------------
+// Esta función corre al cargar la app, para preparar el estado inicial. Es el "arranque en frío". Se ejecuta apenas el navegador lee el archivo.
 function inicializarBase() {
     console.log('🚀 Inicializando Bocatto App...');
     
@@ -217,11 +223,13 @@ function inicializarBase() {
 // Inicializar inmediatamente
 inicializarBase();
 
-/* ====== Logica: AUTH SERVICE (Gestión de Identidad y Sesión) ===================
-   Esta clase administra el ciclo de vida del usuario: Inicio de sesión, Registro, 
-   Cierre de sesión y Persistencia (mantener la cuenta abierta al recargar).
-   También actúa como "Controlador de UI", mostrando u ocultando botones según el rol (Admin/Cliente).
-   ====================================================== */
+/*
+====================================== LOGICA DE AUTENTICACIÓN (AuthService) GESTION DE USUARIO ======================================
+Esta clase administra el ciclo de vida del usuario: Inicio de sesión, Registro, 
+Cierre de sesión y Persistencia (mantener la cuenta abierta al recargar).
+También actúa como "Controlador de UI", mostrando u ocultando botones según el rol (Admin/Cliente).
+======================================================================================================================================
+*/
 
 
 /* No se hasta donde esto es una simulacion 
@@ -257,7 +265,12 @@ class AuthService {
         ];
     }
     */
-   // 2. LOGIN REAL (Conectado al Backend)
+
+// --------------------------- METODO: LOGIN INTEGRADO CON BACKEND ---------------------------
+/*
+Este método es el encargado de autenticar a un usuario frente al servidor. Toma el correo y la contraseña ingresados, los envía al Backend para su verificación y, 
+si son correctos, guarda la "llave" (token) que permite al usuario navegar como alguien identificado.
+*/
 class AuthService {
     async login(email, password) {
         try {
@@ -313,8 +326,12 @@ class AuthService {
             this.mostrarLoadingLogin(false);
         }
     }
-    /* —-----------------------------SUB-LÓGICA : REGISTRO REAL (Integración Backend) —-----------*/
-    // Envía el formulario extenso de registro a la API.
+
+// —-----------------------------METODO : REGISTRO INTEGRADO CON EL BACKEND —-----------
+/*
+Este método maneja la creación de una cuenta nueva. Es más complejo que el login porque debe empaquetar un formulario extenso (Nombre, RUT, Dirección, etc.) 
+y enviarlo al servidor. Si todo sale bien, inicia sesión automáticamente para que el usuario no tenga que loguearse después de registrarse.
+*/
     async register(datos) {
         try {
             EstadoApp.ui.cargando = true;
@@ -372,7 +389,11 @@ class AuthService {
         }
     }
 
-    // 3. LOGOUT
+// —----------------------------- METODO : LOGOUT -----------
+/*
+Este método se encarga de cerrar la sesión del usuario. A diferencia del Login o Registro, esta es una operación principalmente local: se trata de "olvidar" 
+quién es el usuario en el navegador para que vuelva a ser un visitante anónimo.
+*/ 
     async logout() {
         try {
             const usuarioAnterior = { ...EstadoApp.usuario };
@@ -403,7 +424,11 @@ class AuthService {
         }
     }
 
-    // 4. VERIFICAR SESIÓN EXISTENTE
+// -------------------------- METODO: VERIFICAR SESIÓN EXISTENTE----------------
+/*
+Este método se ejecuta automáticamente cuando la página carga (dentro de inicializarBase o AppInicializador). 
+Su misión es revisar si el usuario dejó una sesión abierta anteriormente para no obligarlo a loguearse de nuevo.
+*/
     verificarSesionActiva() {
         const usuarioStorage = Utilidades.cargarDesdeStorage(CONFIG.USER_KEY);
         
@@ -417,7 +442,11 @@ class AuthService {
         return false;
     }
 
-    // 5. ACTUALIZACIÓN DE INTERFAZ
+// ------------------------------METODO: ACTUALIZACIÓN DE INTERFAZ-------------------------
+/*
+Estos métodos son los tramolla. Se llaman inmediatamente después de que cambia el estado de la sesión (EstadoApp.usuario) 
+para reflejar esos cambios en la pantalla.
+*/
     actualizarUIpostLogin() {
         // Actualizar navbar según rol
         this.actualizarNavbar();
@@ -447,8 +476,11 @@ class AuthService {
         }
     }
 
-        /* —-----------------------------SUB-LÓGICA : GESTIÓN VISUAL DE ROLES —-----------*/
-    // Controla qué botones del Navbar y de la página ve el usuario según su rol.
+//—----------------------------- GESTIÓN VISUAL DE ROLES —-----------
+/*
+Este conjunto de funciones se encarga de adaptar la interfaz (HTML) basándose en el "sombrero" que lleva puesto el usuario (Visitante, Cliente o Admin). 
+Se ejecuta cada vez que cambia el estado de la sesión.
+*/ 
     actualizarNavbar() {
         const { usuario } = EstadoApp;
         
@@ -525,7 +557,10 @@ toggleElementosAdmin() {
     console.log(`👑 Elementos admin: ${esAdmin ? 'VISIBLES' : 'OCULTOS'} (${elementosAdmin.length} elementos)`);
 }
 
-    // 6. MANEJO DE MODALES-----------------------¿ sera que el problema de cierre de modal despues de crear un objeto puede resolverse aqui ? 
+// --------------------------------------- MANEJO DE MODALES----------------------
+/*
+Este bloque contiene utilidades para manipular las ventanas emergentes (Modales) y paneles laterales (Offcanvas) de Bootstrap mediante JavaScript.
+*/
     cerrarModalLogin() {
         if (Utilidades.elementoExiste(ElementosDOM.loginModal) && window.bootstrap) {
             const modal = bootstrap.Modal.getInstance(ElementosDOM.loginModal);
@@ -550,7 +585,10 @@ toggleElementosAdmin() {
         }
     }
 
-    // 7. FEEDBACK VISUAL
+    //-------------------------FEEDBACK VISUAL---------------------------------------
+    /*
+    Este bloque gestiona la comunicación inmediata con el usuario mientras el sistema "piensa" o cuando algo sale mal.
+    */ 
     mostrarLoadingLogin(mostrar) {
         // Podríamos implementar spinners en el modal de login
         if (Utilidades.elementoExiste(ElementosDOM.btnLogin)) {
@@ -569,7 +607,10 @@ toggleElementosAdmin() {
         return `simulated_token_${usuarioId}_${Date.now()}`;
     }
 */
-    // 9. GETTERS ¿que son los getters? ¿para que sirven?
+//-------------------------GETTERS-----------------------------------
+/*
+Son fiunciones que devuelven información del estado actual del usuario.
+*/ 
     getUsuarioActual() {
         return { ...EstadoApp.usuario };
     }
@@ -590,11 +631,13 @@ toggleElementosAdmin() {
 // Instancia global del servicio
 const authService = new AuthService();
 
-/* ====== Logica: CARRITO SERVICE (Gestión del Carrito de Compras) ===================
-   Esta clase maneja toda la lógica del carrito: añadir productos, modificar cantidades,
-   calcular totales y persistir la información en localStorage para que no se pierda al recargar.
-   También actúa como puente hacia la pasarela de pago ('Ges_pagos.html').
-   ====================================================== */
+/* 
+================================ LOGICA DEL CARRITO ============================================
+Esta clase maneja toda la lógica del carrito: añadir productos, modificar cantidades,
+calcular totales y persistir la información en localStorage para que no se pierda al recargar.
+También actúa como puente hacia la pasarela de pago ('Ges_pagos.html').
+================================================================================================
+*/
 
 
 class CarritoService {
@@ -602,10 +645,8 @@ class CarritoService {
         this.cargarCarritoInicial();
     }
 
-        /* —-----------------------------SUB-LÓGICA : PERSISTENCIA (LocalStorage)—-----------*/
-    // Carga o guarda el estado del carrito en el navegador. Esta bien 
-
-    // 1. INICIALIZACIÓN
+// ----------------------------- METODO : INICIALIZACION Y PERSISTENCIA DEL CARRITO------------------- 
+//Este bloque se encarga de que el carrito de compras "sobreviva" a los refrescos de página (F5) o al cierre del navegador.
     cargarCarritoInicial() {
         EstadoApp.carrito = Utilidades.cargarDesdeStorage(CONFIG.CAR_KEY, []);
         console.log(`🛒 Carrito cargado: ${EstadoApp.carrito.length} items`);
@@ -614,10 +655,8 @@ class CarritoService {
     persistirCarrito() {
         Utilidades.guardarEnStorage(CONFIG.CAR_KEY, EstadoApp.carrito);
     }
-    /* —-----------------------------SUB-LÓGICA : GESTIÓN DE ITEMS (CRUD Local)—-----------*/
-    // Lógica para manipular el array de productos en memoria.
-
-    // 2. AGREGAR PRODUCTOS AL CARRITO
+/* —----------------------------- METODO : GESTIÓN DE ITEMS (CRUD Local) -----------*/
+// Este bloque maneja la lógica principal del carrito, meter cosas al carrito, es donde el Frontend decide qué estructura de datos enviar al Backend después.
     async agregarAlCarrito(nombre, precio, imagen, productoId = null) {
         try {
             // Verificar autenticación para clientes
@@ -627,7 +666,7 @@ class CarritoService {
             }
 
             const producto = {
-                id: productoId || this.generarIdTemporal(), // Podemos sacar esto, no ? ya tenemos id reales
+                id: productoId,
                 nombre: nombre,
                 precio: Number(precio) || 0,
                 imagen: imagen || 'Recursos_Esteticos/img/default.jpg',
@@ -663,7 +702,11 @@ class CarritoService {
         }
     }
 
-    // 3. ACTUALIZAR CANTIDADES
+//--------------------------------------ACTUALIZAR CANTIDADES---------------------------------------------------------------------------
+/* 
+Este conjunto de funciones permite al usuario manipular los productos que ya están dentro del carrito (subir cantidad, bajar cantidad o borrarlos)
+y asegura que la vista siempre refleje esos cambios.
+*/
     async actualizarCantidad(productoId, operacion) {
         try {
             const itemIndex = EstadoApp.carrito.findIndex(item => item.id === productoId);
@@ -705,7 +748,10 @@ class CarritoService {
         }
     }
 
-    // 4. ELIMINAR PRODUCTO DEL CARRITO
+//---------------------------------ELIMINAR PRODUCTO DEL CARRITO----------------------------------
+/*
+Esta función es responsable de la eliminación de un ítem del carrito. Se activa cuando el usuario presiona el botón de "Papelera" o "X" al lado de un producto.
+*/
     async eliminarDelCarrito(productoId) {
         try {
             const itemIndex = EstadoApp.carrito.findIndex(item => item.id === productoId);
@@ -729,7 +775,8 @@ class CarritoService {
         }
     }
 
-    // 5. VACIAR CARRITO
+//----------------------------------------VACIAR CARRITO-----------------------------------------------
+// Esta función elimina todos los ítems del carrito de una sola vez.
     async vaciarCarrito() {
         try {
             const cantidadItems = EstadoApp.carrito.length;
@@ -747,11 +794,11 @@ class CarritoService {
         }
     }
 
-        /* —-----------------------------SUB-LÓGICA : RENDERIZADO VISUAL—-----------*/
-    // Actualiza el HTML del Offcanvas (barra lateral) y el contador (badge) del navbar.
-
-
-    // 6. RENDERIZADO DEL CARRITO
+//-----------------------------------------RENDERIZADO DEL CARRITO---------------------------------------
+/*
+Este conjunto de funciones transforma los datos abstractos del array EstadoApp.carrito en elementos HTML visibles para el usuario. 
+Se divide en dos áreas principales: el Badge (globito rojo en el menú) y el Offcanvas (panel lateral con la lista de productos).
+*/
     renderCarrito() {
         this.actualizarBadgeCarrito();
         
@@ -762,7 +809,7 @@ class CarritoService {
 
         this.renderOffcanvasCarrito();
     }
-
+// Actualiza el globito rojo del carrito en el navbar
     actualizarBadgeCarrito() {
         if (!Utilidades.elementoExiste(ElementosDOM.carrCont)) {
             return;
@@ -782,7 +829,7 @@ class CarritoService {
             ElementosDOM.btnCarrito.hidden = !authService.esCliente();
         }
     }
-
+// Esta función es la que construye la lista de productos "desde cero" cada vez que hay un cambio.
     renderOffcanvasCarrito() {
         const { carritoItems, carritoVacio, carritoTotal, btnVaciar } = ElementosDOM;
         const total = this.obtenerTotalPrecio();
@@ -833,7 +880,8 @@ class CarritoService {
         return itemDiv;
     }
 
-    // 7. CÁLCULOS
+// -----------------------------CÁLCULOS------------------------------------------
+// Estas funciones realizan los cálculos necesarios para mostrar totales y resúmenes del carrito.
     obtenerTotalItems() {
         return EstadoApp.carrito.reduce((total, item) => total + (item.cantidad || 0), 0);
     }
@@ -852,11 +900,8 @@ class CarritoService {
         };
     }
 
-        /* —-----------------------------SUB-LÓGICA : PROCESAR PEDIDO (Navegación)—-----------*/
-    // Valida condiciones mínimas y redirige al usuario a la página de pago.
-
-    // 8. MANEJO DE PEDIDOS
-   // En CarritoService (dentro de app.js)
+//---------------------------- PROCESAR PEDIDO ------------------------------------------------
+//Esta función es el puente crítico entre la selección de productos y la finalización de la compra. Se ejecuta cuando el usuario presiona el botón "Hacer Pedido" en el carrito.
 
     async procesarPedido() {
         try {
@@ -885,7 +930,10 @@ class CarritoService {
         }
     }
 
-    // 9. FEEDBACK VISUAL
+//--------------------------------------FEEDBACK VISUAL-----------------------------------------
+/* 
+Este bloque se encarga de dar retroalimentación inmediata al usuario. Confirman acciones exitosas o explican errores de forma amigable y proactiva.
+*/
     mostrarFeedbackAgregado(nombreProducto) {
         // Podríamos implementar un toast o notificación
         console.log(`✅ ${nombreProducto} agregado al carrito`);
@@ -908,13 +956,8 @@ class CarritoService {
             modal.show();
         }
     }
-/*
-    // 10. UTILIDADES Simulacion de ID temporal
-    generarIdTemporal() {
-        return `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    }
-*/
-    // 11. GETTERS
+
+//-----------------------GETTERS------------------------------------------
     estaVacio() {
         return EstadoApp.carrito.length === 0;
     }
@@ -927,92 +970,17 @@ class CarritoService {
 // Instancia global del servicio
 const carritoService = new CarritoService();
 
-// Funciones globales para compatibilidad con HTML existente
-// Error: Uso de 'window' para exponer funciones globales.
-// Aunque necesario para los onclick="" en el HTML antiguo, es una mala práctica moderna ("Polluting Global Scope").
-// Si el HTML se refactoriza para usar solo event listeners (como ya hicimos en AppInicializador), esto se puede borrar. ¿se puede borrar por que ya no se usa?
-// Funciones globales para compatibilidad con HTML existente 
-window.agregarAlCarrito = function(nombre, precio, imagen) {
-    return carritoService.agregarAlCarrito(nombre, precio, imagen);
-};
-
-window.actualizarCantidad = function(productoId, operacion) {
-    return carritoService.actualizarCantidad(productoId, operacion);
-};
-
-window.eliminarDelCarrito = function(productoId) {
-    return carritoService.eliminarDelCarrito(productoId);
-};
-
-window.renderCarrito = function() {
-    return carritoService.renderCarrito();
-};
-
-/* ====== Logica: PRODUCT SERVICE (Gestión del Catálogo) ===================
-   Esta clase administra el inventario de productos: Carga inicial, CRUD (Crear, Leer, Actualizar, Eliminar)
-   conectado al Backend GraphQL, y la renderización dinámica de las tarjetas en el HTML.
-   También gestiona la apertura y cierre de los modales de administración.
-   ====================================================== */
-
-class ProductService {
-   /* constructor() {
-        this.productosSimulados = this.inicializarProductosSimulados();
-        this.cargarProductosIniciales();
-    }
-
-    // 1. DATOS SIMULADOS (temporal - será reemplazado por API)
-    inicializarProductosSimulados() {
-        return [
-            {
-                id: 1,
-                nombre: "Pizza Pepperoni",
-                descripcion: "Deliciosa pizza con pepperoni y queso mozzarella",
-                precio: 7990,
-                imagen: "Recursos_Esteticos/img/hero1.jpg",
-                categoria: "promos",
-                activo: true,
-                stock: 50,
-                creadoEn: new Date().toISOString()
-            },
-            {
-                id: 2,
-                nombre: "Panini Caprese",
-                descripcion: "Mozzarella, tomate, pesto y albahaca fresca",
-                precio: 5990,
-                imagen: "Recursos_Esteticos/img/hero2.jpg", 
-                categoria: "promos",
-                activo: true,
-                stock: 30,
-                creadoEn: new Date().toISOString()
-            },
-            {
-                id: 3,
-                nombre: "Combo Baguette + Bebida",
-                descripcion: "Para llevar y compartir con amigos",
-                precio: 8990,
-                imagen: "Recursos_Esteticos/img/hero3.jpg",
-                categoria: "promos",
-                activo: true,
-                stock: 20,
-                creadoEn: new Date().toISOString()
-            }
-        ];
-    }
-
-    cargarProductosIniciales() {
-        // Agrupar productos por categoría
-        EstadoApp.productos = {
-            promos: this.productosSimulados.filter(p => p.categoria === 'promos'),
-            menu: this.productosSimulados.filter(p => p.categoria === 'menu'),
-            bebidas: this.productosSimulados.filter(p => p.categoria === 'bebidas')
-        };
-        console.log('📦 Productos simulados cargados');
-    }
+/* ============================================= LOGICA DE PRODUCTOS ======================================
+Esta clase administra el inventario de productos: Carga inicial, CRUD (Crear, Leer, Actualizar, Eliminar)
+conectado al Backend GraphQL, y la renderización dinámica de las tarjetas en el HTML.
+También gestiona la apertura y cierre de los modales de administración.
+===========================================================================================================
 */
 
-    /* —-----------------------------SUB-LÓGICA : LECTURA DE DATOS (Backend)—-----------*/
-    // Pide los productos a la API, ya sea todos o filtrados por categoría.
-// 2. OBTENER PRODUCTOS REAL (Conectado al Backend) ¿aqui es donde necesitamos resolver el problema de que acompañamientos no se este viendo?
+class ProductService {
+
+//--------------------------------------- LECTURA DE DATOS DESDE EL BACKEND-------------------------------------------
+// Esta función es la responsable de llenar los estantes. Puede traer todo el catálogo de una sola vez o traer solo una categoría específica.
     async obtenerProductos(categoria = null) {
         try {
             const query = `
@@ -1058,7 +1026,11 @@ class ProductService {
         }
     }
 
-// 2. OBTENER PRODUCTO POR ID REAL (Conectado al Backend)
+//----------------------------OBTENER PRODUCTO POR ID REAL (Conectado al Backend)-------------------------------------------------------
+/* 
+Esta función tiene una misión específica: recuperar los datos frescos de un solo producto desde el servidor. 
+Es fundamental para la función de Editar Producto, ya que necesitamos llenar el formulario con los datos actuales antes de permitir cambios.
+*/ 
     async obtenerProductoPorId(id) {
         try {
             const query = `
@@ -1090,10 +1062,10 @@ class ProductService {
         }
     }
     
-    /* —-----------------------------SUB-LÓGICA : ESCRITURA DE DATOS (Admin)—-----------*/
-    // Funciones protegidas (validación de rol) para modificar el catálogo.
-
-// 3. CREAR PRODUCTO REAL (Conectado al Backend)
+//-------------------------------------------CREAR PRODUCTO-----------------------------------------
+/* 
+Esta función tiene la misión de insertar un nuevo registro en la base de datos. A diferencia de las funciones de lectura, esta implica una escritura, por lo que requiere permisos elevados y un manejo cuidadoso de los tipos de datos antes de enviarlos.
+*/
     async crearProducto(datosProducto) {
         try {
             // Revalidar permisos (doble check, aunque el backend también lo hará)
@@ -1144,7 +1116,11 @@ class ProductService {
         }
     }
 
-// 4. ACTUALIZAR PRODUCTO REAL (Conectado al Backend)
+//-----------------------------------------------ACTUALIZAR PRODUCTO-------------------------------------------------------
+/* 
+Esta función permite modificar las propiedades de un producto existente en la base de datos. Es una operación delicada porque debe respetar los datos que NO queremos 
+cambiar y solo actualizar los que sí.
+*/ 
     async actualizarProducto(id, datosActualizados) {
         try {
             if (!authService.esAdmin()) {
@@ -1195,7 +1171,10 @@ class ProductService {
         }
     }
 
-// 5. ELIMINAR PRODUCTO REAL
+//-------------------------------------------------- ELIMINAR PRODUCTO -----------------------------------------------------
+/*
+Esta función elimina un ítem de la base de datos y, lo más importante, actualiza la interfaz visual inmediatamente para que el producto desaparezca de la lista sin necesidad de presionar F5.
+*/
     async eliminarProducto(id) {
         try {
             if (!authService.esAdmin()) {
@@ -1245,8 +1224,11 @@ class ProductService {
         }
     }
 
-    /* —-----------------------------SUB-LÓGICA : RENDERIZADO DOM—-----------*/
-    // Transforma los datos JSON en HTML y los inyecta en la página.
+//---------------------------------- RENDERIZADO DE PRODUCTOS EN EL HTML -------------------------------------------
+/*
+Esta función se encarga de poblar una sección específica del menú (ej: "Sandwiches" o "Bebidas") con los productos correspondientes traídos desde el Backend.
+*/
+
     async renderProductosCategoria(categoria) {
         // TRUCO INTELIGENTE: 
         // Si la categoría viene de la BD como "acompañamientos", la traducimos al ID "acompanamientos"
@@ -1301,8 +1283,12 @@ class ProductService {
         }
     }
 
-     /* —-----------------------------SUB-LÓGICA : CREACION DE PRODUCTO—-----------*/
-    crearCardProducto(producto) {                // ... (Generación de string HTML para la Card de Bootstrap) Incluye botones de Admin ocultos por defecto (display: none) que AuthService activará luego.
+// —--------------------------------CREACION DE PRODUCTO-------------------------------------
+/*
+Esta función toma un objeto de datos (JSON) y lo convierte en una cadena de texto (String) que contiene código HTML. Este HTML representa una "tarjeta" visual usando clases 
+de Bootstrap.
+*/
+    crearCardProducto(producto) {  
         return `
             <div class="col" data-producto-id="${producto.id}" data-categoria="${producto.categoria}">
                 <div class="card h-100 rounded-4">
@@ -1340,10 +1326,11 @@ class ProductService {
         `;
     }
 
-        /* —-----------------------------SUB-LÓGICA : GESTIÓN DE MODALES (UI Admin)—-----------*/
-    // Controla el formulario emergente para crear/editar.
-
-    // 7. MANEJO DEL MODAL DE PRODUCTOS
+//----------------------------------MANEJO DEL MODAL DE PRODUCTOS-------------------------------------------
+/* 
+Este bloque contiene las funciones que se ejecutan antes de que el administrador vea el formulario. Su trabajo es limpiar los campos (si es agregar) o rellenarlos con datos 
+existentes (si es editar).
+*/
     abrirModalAgregarProducto(categoria) {                                       // ... (Resetear form y abrir modal con Bootstrap) quizas aqui falta una funcion que cierre el modal despues de guardar asi se resuelve el problema da la parlisis
         if (!Utilidades.elementoExiste(ElementosDOM.modalAddProduct)) return;
 
@@ -1382,7 +1369,7 @@ class ProductService {
         });
     }
 
-async manejarSubmitProducto(event) {                   // ... (Referencias a botones y spinners) ¿que es el spinner?
+async manejarSubmitProducto(event) {  
         event.preventDefault();
 
         const btnGuardar = ElementosDOM.btnGuardarProducto;
@@ -1463,19 +1450,7 @@ async manejarSubmitProducto(event) {                   // ... (Referencias a bot
     }
         // Fin de la violencia 
 
-/*
-    // 8. UTILIDADES simulacion de ID temporal
-    generarNuevoId() {
-        const todosProductos = [
-            ...EstadoApp.productos.promos,
-            ...EstadoApp.productos.menu,
-            ...EstadoApp.productos.bebidas
-        ];
-        const maxId = todosProductos.reduce((max, p) => Math.max(max, p.id), 0);
-        return maxId + 1;
-    }
-*/
-    // 9. GETTERS
+//--------------------------------------------------------GETTERS--------------------------------------------------------
     obtenerCategorias() {
         return Object.keys(EstadoApp.productos);
     }
@@ -1502,26 +1477,33 @@ async manejarSubmitProducto(event) {                   // ... (Referencias a bot
 // Instancia global del servicio
 const productService = new ProductService();
 
-/* ====== Logica: CHECKOUT SERVICE (Gestión del Proceso de Pago) ===================
-   Esta clase controla la interfaz de usuario en la página de pago ('Ges_pagos.html').
-   Sus funciones principales son:
-   1. Alternar la visibilidad de formularios (Delivery vs Retiro, Tarjeta vs Efectivo).
-   2. Recopilar todos los datos del formulario y del carrito.
-   3. Enviar la Mutation 'crearPedido' al Backend.
-   4. Redirigir al usuario a la pantalla de validación ('Val_pago.html').
-   ====================================================== */
+/* 
+====================================== LOGICA: GESTION DE PROCESO DE PAGO =============================================
+Esta clase controla la interfaz de usuario en la página de pago ('Ges_pagos.html').
+Sus funciones principales son:
+1. Alternar la visibilidad de formularios (Delivery vs Retiro, Tarjeta vs Efectivo).
+2. Recopilar todos los datos del formulario y del carrito.
+3. Enviar la Mutation 'crearPedido' al Backend.
+4. Redirigir al usuario a la pantalla de validación ('Val_pago.html').
+=======================================================================================================================
+*/
 
+//------------------------- INICIALIZACIÓN DEL SERVICIO DE CHECKOUT ------------------------------
+/* 
+Este bloque es el portero lógico del proceso de pago. Su función principal es asegurarse de que el código del checkout solo se ejecute cuando el usuario está físicamente 
+en la página de pagos, evitando errores en otras páginas.
+*/
 class CheckoutService {
     constructor() {
-        // Solo inicializar si estamos en la página de pagos
         if (document.getElementById('lista-resumen-checkout')) {
             this.inicializarCheckout();
         }
     }
-    /* —-----------------------------SUB-LÓGICA : INTERACTIVIDAD UI—-----------*/
-    // Configura los "Toggles" visuales. Si seleccionas Delivery, muestra el input de dirección.
-    // Si seleccionas Retiro, lo esconde. Lo mismo para el método de pago.
-
+//------------------------------- INICIALIZACIÓN Y REGISTRO DE EVENTOS --------------------------------
+/* 
+Es el orquestador. Llama a las dos funciones vitales para que la página sea útil: mostrar qué estás comprando (renderizarResumen) y permitirte interactuar con el formulario
+(registrarEventos).
+*/
     inicializarCheckout() {
         console.log('💳 Inicializando Checkout...');
         this.renderizarResumen();
@@ -1529,7 +1511,8 @@ class CheckoutService {
     }
 
     registrarEventos() {
-        // 1. Lógica de Tipo de Entrega
+
+        //Tipo de Entrega
         const radiosEntrega = document.querySelectorAll('input[name="tipoEntrega"]');
         radiosEntrega.forEach(radio => {
             radio.addEventListener('change', (e) => {
@@ -1542,7 +1525,7 @@ class CheckoutService {
             });
         });
 
-        // 2. Lógica de Método de Pago
+        //Método de Pago
         const radiosPago = document.querySelectorAll('input[name="metodoPago"]');
         radiosPago.forEach(radio => {
             radio.addEventListener('change', (e) => {
@@ -1552,7 +1535,7 @@ class CheckoutService {
             });
         });
 
-        // 3. Botón Confirmar Compra (INTEGRACIÓN REAL)
+        //Botón Confirmar Compra (INTEGRACIÓN REAL)
         const btnConfirmar = document.getElementById('btn-confirmar-compra');
         if (btnConfirmar) {
             btnConfirmar.addEventListener('click', async (e) => {
@@ -1561,8 +1544,8 @@ class CheckoutService {
             });
         }
     }
-    /* —-----------------------------SUB-LÓGICA : CREACIÓN DEL PEDIDO (Core)—-----------*/
-    // Recolecta datos, valida, formatea para GraphQL y envía al servidor.
+//—-----------------------------CREACIÓN DEL PEDIDO----------------------------------------------
+//Esta función recopila toda la información dispersa (carrito, usuario, formulario de dirección, método de pago), la empaqueta y crea la orden en el sistema.
     async procesarCompra() {
         try {
             // A) Validaciones Previas
@@ -1607,7 +1590,7 @@ class CheckoutService {
                 ultimosDigitos: metodoPago === 'tarjeta' ? '4242' : null, // Simulado por ahora ¿Porque esto esta simulado ?
                 transaccionId: `PEND_${Date.now()}`
             };
-                        /*Simulacion detectada: Datos de tarjeta hardcodeados.
+            /*Simulacion detectada: Datos de tarjeta hardcodeados.
               Aunque estamos en una "Integración Real" con la base de datos, el Frontend NO está enviando
               los datos reales de la tarjeta al backend en este paso, sino que envía un placeholder ('4242').
               Esto es correcto por seguridad (no queremos guardar tarjetas completas en la colección de Pedidos),
@@ -1691,8 +1674,8 @@ class CheckoutService {
         }
     }
 
-        /* —-----------------------------SUB-LÓGICA : RENDERIZADO RESUMEN—-----------*/
-    // Dibuja la lista pequeña de productos en el lado derecho de la pantalla de pago.
+//------------------------------- RENDERIZADO DEL RESUMEN DEL PEDIDO --------------------------------
+// Dibuja la lista pequeña de productos en el lado derecho de la pantalla de pago.
     renderizarResumen() {
         // ... (Mantener el código anterior de renderizarResumen igual) ...
         const contenedor = document.getElementById('lista-resumen-checkout');
@@ -1736,13 +1719,17 @@ const checkoutService = new CheckoutService();
 
 
 
-/* ====== Logica: ORDER SERVICE (Historial y Seguimiento) ===================
-   Esta clase gestiona las dos vistas post-compra:
-   1. 'Est_pedido.html' (Tracking): Muestra el progreso visual (stepper) de un pedido específico.
-   2. 'Ges_boletas.html' (Historial): Lista todos los pedidos anteriores del usuario con filtros y búsqueda.
-   Actúa consultando la API 'obtenerPedido' y 'obtenerPedidos' respectivamente.
-   ====================================================== */
+/* 
+====================================== LOGICA DE ORDER Est_pedido.html SEGUIMIENTO =======================================================
+Este bloque es el punto de partida para toda la lógica post-venta
+==========================================================================================================
+*/
 
+//------------------------- INICIALIZACIÓN DEL SERVICIO DE PEDIDOS ------------------------------
+/* 
+Este bloque es el punto de partida para toda la lógica post-venta. Su función principal es detectar el contexto (la página actual) y activar solo las funciones necesarias, 
+evitando errores por intentar manipular elementos que no existen.
+*/
 class OrderService {
     constructor() {
         // Detectar en qué página estamos para iniciar la lógica correcta
@@ -1756,9 +1743,8 @@ class OrderService {
         }
     }
 
-    /* —-----------------------------SUB-LÓGICA : TRACKING (Visualización de Estado)(Est_pedido.html)—-----------*/
-    // Se ejecuta solo en 'Est_pedido.html'.
-    // Toma el ID de la URL (?id=...), busca el pedido en la BD y actualiza el gráfico de pasos.
+//-----------------------------TRACKING-------------------------------------------------------------
+//Este bloque se encarga de consultar el estado de un pedido específico y actualizar la barra de progreso visual.
     
     async inicializarTracking() {
         console.log('📍 Inicializando Tracking de Pedido...');
@@ -1798,7 +1784,8 @@ class OrderService {
             // Evitamos alert para no bloquear si es un error menor
         }
     }
-
+//------------------------------- RENDERIZADO DEL TRACKING ---------------------------------------------
+// Esta función traduce el estado del backend (texto) a una representación visual (pasos iluminados).
     renderizarTracking(pedido) {
         // Datos básicos
         const elId = document.getElementById('track-id');
@@ -1853,9 +1840,17 @@ class OrderService {
         if (descEl && indiceActual >= 0 && descripciones[indiceActual]) descEl.textContent = descripciones[indiceActual];
     }
 
-    /* —-----------------------------SUB-LÓGICA : HISTORIAL (Lista y Filtros) (Ges_boletas.html)—-----------*/
-    // Se ejecuta en 'Ges_boletas.html'. Obtiene la lista y maneja el buscador/chips en el cliente.
-    
+/* 
+=====================================================LOGICA DE HISTORIAL DE PEDIDOS========================================================
+Este bloque gestiona la visualización de la lista de compras del usuario. Se conecta al backend para traer los datos y luego usa lógica en el cliente (navegador) 
+para filtrar y buscar sin volver a llamar al servidor.
+===========================================================================================================================================
+*/ 
+//------------------------- INICIALIZACIÓN DEL SERVICIO DE PEDIDOS ------------------------------
+/* 
+Este bloque es el punto de partida para toda la lógica del historial de pedidos. Su función principal es detectar si estamos en la página correcta y activar solo las funciones 
+necesarias, evitando errores por intentar manipular elementos que no existen.
+*/
     async inicializarHistorial() {
         console.log('📜 Inicializando Historial de Pedidos Real...');
         
@@ -1873,6 +1868,8 @@ class OrderService {
         this.registrarFiltros();
     }
 
+// ------------------------------- OBTENCIÓN DE PEDIDOS ----------------------------------------------
+// Esta función consulta al backend para traer los pedidos del usuario actual.
     async obtenerMisPedidos(usuarioId) {
         try {
             const query = `
@@ -1901,6 +1898,8 @@ class OrderService {
         }
     }
 
+//------------------------------- RENDERIZADO DEL HISTORIAL ----------------------------------------------
+// Esta función dibuja la lista de pedidos en el HTML, aplicando filtros y búsqueda en el cliente.
     renderizarPedidos(filtro = 'todos', busqueda = '') {
         const contenedor = document.getElementById('lista-pedidos');
         if (!contenedor) return;
@@ -1965,6 +1964,8 @@ class OrderService {
         });
     }
 
+//------------------------------- REGISTRO DE FILTROS Y BÚSQUEDA ----------------------------------------------
+// Esta función configura los listeners para los filtros y la barra de búsqueda.
     registrarFiltros() {
         const inputBusqueda = document.getElementById('input-busqueda-pedido');
         if (inputBusqueda) {
@@ -1985,6 +1986,8 @@ class OrderService {
         });
     }
 
+//------------------------------- MODAL DE BOLETA DETALLADA ----------------------------------------------
+// Esta función llena y muestra el modal con los detalles de la boleta.
     abrirModalBoleta(id) {
         const pedido = this.pedidos.find(p => p.id === id);
         if (!pedido) return;
@@ -2022,14 +2025,17 @@ class OrderService {
 // Instancia global
 const orderService = new OrderService();
 
-/* ====== Logica: DASHBOARD SERVICE (Panel de Control y Reportes) ===================
-   Esta clase administra la vista exclusiva de Administrador ('Ges_reportes.html').
-   Sus responsabilidades son:
-   1. Proteger la ruta (Verificar rol Admin).
-   2. Gestionar los filtros de fecha (Día, Mes, Año).
-   3. Solicitar métricas calculadas al Backend mediante GraphQL.
-   4. Renderizar gráficos interactivos usando la librería Chart.js.
-   ====================================================== */
+/* 
+================================ LOGICA DE LOS REPORTES DEL LOCAL =========================================================
+Esta clase administra la vista exclusiva de Administrador ('Ges_reportes.html').
+Sus responsabilidades son:
+1. Proteger la ruta (Verificar rol Admin).
+2. Gestionar los filtros de fecha (Día, Mes, Año).
+3. Solicitar métricas calculadas al Backend mediante GraphQL.
+4. Renderizar gráficos interactivos usando la librería Chart.js.
+=========================================================================================================================== */
+
+
 
 class DashboardService {
     constructor() {
@@ -2039,9 +2045,8 @@ class DashboardService {
             this.inicializarDashboard();
         }
     }
-
-    /* —-----------------------------SUB-LÓGICA : INICIALIZACIÓN Y SEGURIDAD—-----------*/
-    // Verifica permisos y prepara el terreno para los gráficos.
+// ------------------------------- INICIALIZACIÓN DEL DASHBOARD --------------------------------
+// Este es el orquestador principal que llama a las funciones vitales para que el dashboard funcione.
     async inicializarDashboard() {
         console.log('📊 Inicializando Dashboard Real...');
         
@@ -2068,8 +2073,8 @@ class DashboardService {
         await this.cargarDatos('mes');
     }
 
-        /* —-----------------------------SUB-LÓGICA : CARGA DE DATOS (GraphQL)—-----------*/
-    // Realiza dos consultas en paralelo: una para los gráficos y otra para los números (KPIs).
+// ------------------------------- CARGA DE DATOS DEL DASHBOARD --------------------------------
+// Esta función centraliza la lógica de consulta al backend y renderizado.
 
     async cargarDatos(periodo, fechaInicio = null, fechaFin = null) {
         try {
@@ -2126,8 +2131,8 @@ class DashboardService {
         }
     }
 
-    /* —-----------------------------SUB-LÓGICA : INTERACTIVIDAD DE FILTROS—-----------*/
-    // Maneja los clicks en los botones de "Hoy", "Mes", "Año" y muestra inputs si es necesario.
+//------------------------------- CONFIGURACIÓN DE FILTROS ----------------------------------------------
+// Esta función configura los listeners para los chips de filtro y el botón de exportación.
     configurarFiltros() {
         // Lógica para los chips (Hoy, Mes, Año)
         document.querySelectorAll('.chip[data-mode]').forEach(chip => {
@@ -2153,11 +2158,16 @@ class DashboardService {
         }
     }
 
-    /*Simulacion detectada: Botón de Exportación.
-      Aunque el Backend tiene la mutación `exportarReporteExcel`, el Frontend aquí solo muestra un alert.
-      Para conectar la funcionalidad real, deberíamos llamar a `GQL.request` con esa mutación y manejar
-      la respuesta (que devuelve un string CSV) creando un Blob y forzando la descarga en el navegador.
-    */    mostrarInputFecha(modo) {
+/*
+Simulacion detectada: Botón de Exportación.
+Aunque el Backend tiene la mutación `exportarReporteExcel`, el Frontend aquí solo muestra un alert.
+Para conectar la funcionalidad real, deberíamos llamar a `GQL.request` con esa mutación y manejar
+la respuesta (que devuelve un string CSV) creando un Blob y forzando la descarga en el navegador.
+*/   
+
+//------------------------------- MANEJO DE INPUTS DE FECHA ----------------------------------------------
+// Esta función muestra u oculta los inputs de fecha según el modo seleccionado.
+      mostrarInputFecha(modo) {
         Utilidades.toggleElemento(document.getElementById('box-dia'), modo === 'dia');
         Utilidades.toggleElemento(document.getElementById('box-mes'), modo === 'mes');
         Utilidades.toggleElemento(document.getElementById('box-anio'), modo === 'anio');
@@ -2170,8 +2180,11 @@ class DashboardService {
         });
     }
 
-        /* —-----------------------------SUB-LÓGICA : RENDERIZADO VISUAL (Chart.js)—-----------*/
-    // Dibuja los números en las tarjetas y los gráficos en los canvas.
+//------------------------------- RENDERIZADO DE KPIS Y GRÁFICOS ----------------------------------------------
+/* 
+Este conjunto de funciones se encarga de la capa de presentación del panel de administración. Su objetivo es inyectar los datos calculados en el DOM y 
+dibujar los gráficos interactivos.
+*/
 
     renderizarKPIs(reporte) {
         // Ventas Totales
@@ -2191,6 +2204,10 @@ class DashboardService {
         document.getElementById('kpi-type-sub').textContent = 'más solicitado';
     }
 
+//------------------------------- RENDERIZADO DE GRÁFICOS ----------------------------------------------
+/* 
+Esta función actúa como traductora. Transforma los objetos de datos complejos en arrays simples que Chart.js puede entender (Etiquetas y Valores).
+*/ 
     renderizarGraficos(datos) {
         // 1. Gráfico de Barras: Top Productos
         const labelsProd = datos.topProductos.map(p => p.nombre);
@@ -2211,6 +2228,8 @@ class DashboardService {
         this.crearGrafico('chartType', 'pie', labelsType, dataType, 'Pedidos', ['#0dcaf0', '#198754']);
     }
 
+//------------------------------- FUNCIÓN GENÉRICA DE CREACIÓN DE GRÁFICOS ----------------------------------------------
+// Esta es la función técnica más compleja del bloque. Encapsula la creación de gráficos para no repetir código de configuración.
     crearGrafico(canvasId, tipo, labels, data, labelDatos, colores) {
         // Error: Dependencia Externa.
         // Si la librería Chart.js no se cargó en el HTML (<script src="...chart.umd.min.js">), 
@@ -2256,19 +2275,24 @@ class DashboardService {
 // Instancia global
 const dashboardService = new DashboardService();
 
-/* ====== Logica: APP INICIALIZADOR (Orquestación y Eventos Globales) ===================
-   Esta clase es el punto de entrada (Entry Point). Su función es coordinar el arranque de la aplicación.
-   Asegura que el DOM esté listo, carga la sesión, llena los estantes de productos y
-   conecta todos los cables (Event Listeners) para que los botones funcionen.
-   ====================================================== */
+/* 
+=========================== LOGICA DE INICIALIZADOR =============================================================================
+Esta clase es el punto de entrada (Entry Point). Su función es coordinar el arranque de la aplicación.
+Asegura que el DOM esté listo, carga la sesión, llena los estantes de productos y
+conecta todos los cables (Event Listeners) para que los botones funcionen.
+================================================================================================================================= 
+*/
 
 class AppInicializador {
     constructor() {
         this.eventListenersRegistrados = false;
     }
 
-        /* —-----------------------------SUB-LÓGICA : SECUENCIA DE ARRANQUE—-----------*/
-    // Define el orden estricto de carga: Sesión -> Datos -> Interacción -> Visualización.
+// ------------------------------- INICIALIZACIÓN PRINCIPAL ----------------------------------------------
+/* 
+Esta clase es el Punto de Entrada (Entry Point) de la aplicación. Su responsabilidad es ejecutar una secuencia estricta de pasos para que 
+la página cargue correctamente: primero recuperamos al usuario, luego traemos los datos del servidor y finalmente activamos los botones.
+*/
 
     // 1. INICIALIZACIÓN PRINCIPAL
     async inicializarApp() {
@@ -2295,9 +2319,11 @@ class AppInicializador {
     }
 
     
-    /* —-----------------------------SUB-LÓGICA : CARGA MASIVA DE CATEGORÍAS—-----------*/
-    // Recorre una lista predefinida de categorías y le pide al ProductService que las llene.
-// 2. CARGA DE PRODUCTOS INICIALES
+// --------------------------------CARGA MASIVA DE CATEGORIAS Y PRODUCTOS -------------------------------------
+/* 
+Esta función se ejecuta durante el arranque de la aplicación (inicializarApp). Su objetivo es poblar las diferentes secciones del menú 
+(Menu.html o Web_Principal.html) con los productos correspondientes traídos del servidor.
+*/
     async cargarProductosIniciales() {
         try {
             console.log('🔄 Cargando catálogo completo...');
@@ -2339,9 +2365,13 @@ class AppInicializador {
         }
     }
 
-    /* —-----------------------------SUB-LÓGICA : GESTOR DE EVENTOS (Controlador)—-----------*/
-    // Centraliza la asignación de clicks y submits. Usa el patrón de "Delegación" para eficiencia.
-    // 3. REGISTRO DE EVENT LISTENERS
+//---------------------------------------------REGISTRO DE EVENTOS LISTENERS----------------------------------------------
+/* 
+Esta función centraliza el registro de todos los event listeners de la aplicación.
+Evita registros múltiples y asegura que cada sección tenga sus propios listeners bien organizados.
+Esta función es el Organizador de Conexiones. Su trabajo no es escuchar los clics directamente, 
+sino asegurarse de que todas las funciones que sí lo hacen se activen una sola vez y en orden.
+*/
     registrarEventListeners() {
         if (this.eventListenersRegistrados) {
             console.log('⚠️ Event listeners ya registrados');
@@ -2357,9 +2387,10 @@ class AppInicializador {
         console.log('✅ Todos los event listeners registrados');
     }
 
-    // 4. LISTENERS DE AUTENTICACIÓN
+//----------------------------------LISTENERS DE AUTENTICACIÓN------------------------------------------------------------
+
+//Este bloque conecta los formularios de Login y Registro con la lógica del AuthService.
 registrarListenersAutenticacion() {
-        // 1. FORMULARIO LOGIN
         if (Utilidades.elementoExiste(ElementosDOM.formLogearse)) {
             ElementosDOM.formLogearse.addEventListener('submit', async (e) => {
                 e.preventDefault();
@@ -2369,7 +2400,7 @@ registrarListenersAutenticacion() {
             });
         }
 
-        // 2. BRIDGE: ABRIR MODAL REGISTRO (Botón "Crear Cuenta")
+//BRIDGE: IR A REGISTRO (Botón "Registrarse")
         if (Utilidades.elementoExiste(ElementosDOM.btnRegistrarse)) {
             ElementosDOM.btnRegistrarse.addEventListener('click', () => {
                 // Cerrar login primero
@@ -2382,7 +2413,7 @@ registrarListenersAutenticacion() {
             });
         }
 
-        // 3. BRIDGE: VOLVER AL LOGIN (Botón "Volver")
+//BRIDGE: VOLVER A LOGIN (Botón "Volver al Login")
         const btnVolver = document.getElementById('btn-volver-login');
         if (btnVolver) {
             btnVolver.addEventListener('click', () => {
@@ -2394,7 +2425,7 @@ registrarListenersAutenticacion() {
             });
         }
 
-        // 4. SUBMIT REGISTRO (¡AQUÍ RECOLECTAMOS TODO!)
+//---------------------------------------REGISTRO COMPLETO (Formulario gigante)-------------------------------------------------------------------------------
         const formRegistro = document.getElementById('form-registro-completo'); // Ojo con el ID del form
         if (formRegistro) {
             formRegistro.addEventListener('submit', async (e) => {
@@ -2435,7 +2466,7 @@ registrarListenersAutenticacion() {
         console.log('🔐 Listeners de autenticación registrados (Completo)');
     }
 
-    // 5. LISTENERS DE CARRITO (DELEGACIÓN DE EVENTOS)
+//-------------------------------------LISTENERS DE CARRITO DE COMPRAS--------------------------------------------------
     registrarListenersCarrito() {
         // Delegación para botones "Agregar al carrito" en productos
         // Esto es muy eficiente: un solo listener para todos los botones de la página.
@@ -2449,8 +2480,7 @@ registrarListenersAutenticacion() {
                 await carritoService.agregarAlCarrito(nombre, precio, imagen, productoId);
             }
         });
-
-        // Delegación para botones dentro del carrito(+, -, Eliminar)
+// Listeners dentro del offcanvas del carrito
         if (Utilidades.elementoExiste(ElementosDOM.carritoItems)) {
             ElementosDOM.carritoItems.addEventListener('click', async (e) => {
                 const productoId = e.target.dataset.productoId;
@@ -2467,7 +2497,7 @@ registrarListenersAutenticacion() {
             });
         }
 
-        // Botón vaciar carrito
+// Botón vaciar carrito
         if (Utilidades.elementoExiste(ElementosDOM.btnVaciar)) {
             ElementosDOM.btnVaciar.addEventListener('click', async () => {
                 if (confirm('¿Estás seguro de que quieres vaciar el carrito?')) {
@@ -2476,7 +2506,7 @@ registrarListenersAutenticacion() {
             });
         }
 
-        // Botón hacer pedido
+// Botón hacer pedido
         if (Utilidades.elementoExiste(ElementosDOM.btnHacerPedido)) {
             ElementosDOM.btnHacerPedido.addEventListener('click', async (e) => {
                 e.preventDefault();
@@ -2484,8 +2514,8 @@ registrarListenersAutenticacion() {
             });
         }
 
-        // Re-renderizar carrito cuando se abre el offcanvas
-        // Esto asegura que si agregaste algo y el carrito estaba oculto, al abrirlo se vea actualizado.
+// Re-renderizar carrito cuando se abre el offcanvas
+// Esto asegura que si agregaste algo y el carrito estaba oculto, al abrirlo se vea actualizado.
         if (Utilidades.elementoExiste(ElementosDOM.offcanvasCarrito)) {
             ElementosDOM.offcanvasCarrito.addEventListener('show.bs.offcanvas', () => {
                 carritoService.renderCarrito();
@@ -2495,19 +2525,19 @@ registrarListenersAutenticacion() {
         console.log('🛒 Listeners de carrito registrados');
     }
 
-    // 6. LISTENERS DE PRODUCTOS (ADMIN)
+//-----------------------------LISTENERS DE PRODUCTOS (ADMIN)--------------------------------------------------
 // En AppInicializador (app.js)
 
 registrarListenersProductos() {
-    // 1. Listener para el formulario del modal (Guardar)
+// Listener para el formulario del modal (Guardar)
     if (Utilidades.elementoExiste(ElementosDOM.productForm)) {
         ElementosDOM.productForm.addEventListener('submit', async (e) => {
             await productService.manejarSubmitProducto(e);
         });
     }
 
-    // 2. Listener GLOBAL para botones "Agregar Producto" (Delegación)
-    // Esto arregla el problema de tener múltiples botones en distintas categorías
+// Listener GLOBAL para botones "Agregar Producto" (Delegación)
+// Esto arregla el problema de tener múltiples botones en distintas categorías
     document.addEventListener('click', (e) => {
         // Buscamos si el clic fue en un botón (o en el ícono dentro del botón)
         const btnAgregar = e.target.closest('button');
@@ -2521,7 +2551,7 @@ registrarListenersProductos() {
         }
     });
 
-    // 3. Listener para botones Editar/Eliminar (Ya lo tenías con delegación, lo mantenemos)
+// Listener para botones Editar/Eliminar (Ya lo tenías con delegación, lo mantenemos)
     document.addEventListener('click', async (e) => {
         const productoId = e.target.dataset.productoId;
         if (!productoId) return;
@@ -2538,7 +2568,7 @@ registrarListenersProductos() {
     console.log('📦 Listeners de productos registrados (Modo Delegación)');
 }
 
-    // 7. LISTENERS GLOBALES
+//----------------------------------------LISTENERS GLOBALES---------------------------------------------------
     registrarListenersGlobales() {
         // Prevenir envío de formularios vacíos
         document.addEventListener('submit', (e) => {
@@ -2601,7 +2631,7 @@ registrarListenersProductos() {
         console.log('🌐 Listeners globales registrados');
     }
 
-    // 8. RENDERIZADO DEL ESTADO INICIAL
+//----------------------------RENDERIZADO DEL ESTADO INICIAL----------------------------------------------------------
     renderizarEstadoInicial() {
         // Renderizar carrito (badge y estado)
         carritoService.renderCarrito();
@@ -2613,7 +2643,7 @@ registrarListenersProductos() {
         console.log('🎨 Estado inicial renderizado');
     }
 
-    // 9. DESTRUIR EVENT LISTENERS (para SPA)
+//----------------------------------DESTRUIR EVENT LISTENERS (para SPA)-----------------------------------------------------
     destruirEventListeners() {
         // Limpiar event listeners específicos si es necesario
         this.eventListenersRegistrados = false;
