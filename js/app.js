@@ -1428,11 +1428,11 @@ async manejarSubmitProducto(event) {
             // 2. DESALOJO FORZOSO DEL MODAL
             const modalElement = ElementosDOM.modalAddProduct;
             
-            // Intento diplomático (Bootstrap)
+             /*// Intento diplomático (Bootstrap)
             const modalInstance = bootstrap.Modal.getInstance(modalElement);
             if (modalInstance) modalInstance.hide();
-
-            // Fuerza Bruta (DOM)
+*/
+           // Fuerza Bruta (DOM)
             modalElement.classList.remove('show');
             modalElement.style.display = 'none';
             modalElement.setAttribute('aria-hidden', 'true');
