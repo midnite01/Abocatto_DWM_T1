@@ -373,7 +373,7 @@ y enviarlo al servidor. Si todo sale bien, inicia sesión automáticamente para 
             const modalReg = bootstrap.Modal.getInstance(document.getElementById('registroModal'));
             if (modalReg) modalReg.hide();
 
-            // Limpiar backdrop por si acaso ¿que es un backdrop?
+            // Limpiar backdrop por si acaso
             document.body.classList.remove('modal-open');
             const backdrops = document.querySelectorAll('.modal-backdrop');
             backdrops.forEach(el => el.remove());
