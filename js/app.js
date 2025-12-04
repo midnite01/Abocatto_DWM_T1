@@ -1477,8 +1477,7 @@ async manejarSubmitProducto(event) {
 // Instancia global del servicio
 const productService = new ProductService();
 
-/* 
-====================================== LOGICA: GESTION DE PROCESO DE PAGO =============================================
+/* ====================================== LOGICA: GESTION DE PROCESO DE PAGO =============================================
 Esta clase controla la interfaz de usuario en la página de pago ('Ges_pagos.html').
 Sus funciones principales son:
 1. Alternar la visibilidad de formularios (Delivery vs Retiro, Tarjeta vs Efectivo).
@@ -1489,8 +1488,7 @@ Sus funciones principales son:
 */
 
 //------------------------- INICIALIZACIÓN DEL SERVICIO DE CHECKOUT ------------------------------
-/* 
-Este bloque es el portero lógico del proceso de pago. Su función principal es asegurarse de que el código del checkout solo se ejecute cuando el usuario está físicamente 
+/* Este bloque es el portero lógico del proceso de pago. Su función principal es asegurarse de que el código del checkout solo se ejecute cuando el usuario está físicamente 
 en la página de pagos, evitando errores en otras páginas.
 */
 class CheckoutService {
@@ -1500,8 +1498,7 @@ class CheckoutService {
         }
     }
 //------------------------------- INICIALIZACIÓN Y REGISTRO DE EVENTOS --------------------------------
-/* 
-Es el orquestador. Llama a las dos funciones vitales para que la página sea útil: mostrar qué estás comprando (renderizarResumen) y permitirte interactuar con el formulario
+/* Es el orquestador. Llama a las dos funciones vitales para que la página sea útil: mostrar qué estás comprando (renderizarResumen) y permitirte interactuar con el formulario
 (registrarEventos).
 */
     inicializarCheckout() {
@@ -1570,32 +1567,66 @@ Es el orquestador. Llama a las dos funciones vitales para que la página sea út
             if (tipoEntrega === 'delivery') {
                 const calle = document.getElementById('input-calle').value;
                 const comuna = document.getElementById('input-comuna').value;
+                const ciudad = document.getElementById('input-ciudad').value || 'Santiago'; // Valor por defecto
                 
-                if (!calle) {
-                    alert('Debes ingresar una dirección para el despacho');
+                if (!calle || !comuna) {
+                    alert('Debes ingresar una dirección para el despacho (Calle y Comuna)');
                     return;
                 }
                 
                 direccionEntrega = {
                     calle: calle,
-                    comuna: comuna || 'Santiago',
-                    ciudad: 'Santiago',
+                    comuna: comuna,
+                    ciudad: ciudad,
                     notas: notas
                 };
             }
 
-            // Preparar datos de pago (Dummy o Reales del form)
+            // Preparar datos de pago (Datos REALES ahora)
+            // Solución al Problema 1.2 y 3: Leemos los inputs reales del HTML.
+            let datosTarjetaParaPasarela = null; 
+            let ultimos4Digitos = null;
+
+            if (metodoPago === 'tarjeta') {
+                // Lectura de inputs
+                const numero = document.getElementById('card-numero').value.replace(/\s/g, '');
+                const nombre = document.getElementById('card-nombre').value;
+                const exp = document.getElementById('card-exp').value; // MM/AA
+                const cvv = document.getElementById('card-cvv').value;
+                const guardarTarjeta = document.getElementById('guardar-tarjeta')?.checked || false;
+
+                // 🔥 AGREGA ESTA LÍNEA PARA ESPIAR:
+    console.log('🕵️‍♂️ [APP.JS] Checkbox guardar detectado como:', guardarTarjeta);
+
+                // Validación de campos llenos (Solución Problema 3)
+                if (!numero || numero.length < 13 || !nombre || !exp || !cvv) {
+                    alert('Por favor completa todos los datos de la tarjeta para continuar');
+                    return;
+                }
+
+                const [mes, anio] = exp.split('/');
+
+                // Empaquetamos los datos REALES para pasárselos a la siguiente página (Val_pago.html)
+                datosTarjetaParaPasarela = {
+                    numero,
+                    nombreTitular: nombre,
+                    mesVencimiento: mes,
+                    anioVencimiento: anio,
+                    cvv,
+                    guardarTarjeta // Este flag es importante para el Problema 1.1
+                };
+
+                // Extraemos los últimos 4 para el registro histórico del pedido
+                ultimos4Digitos = numero.slice(-4);
+            }
+
+            // Objeto de pago para la base de datos (Pedido)
+            // Ya no usamos simulaciones fijas, usamos lo que el usuario escribió.
             const datosPago = {
                 metodo: metodoPago,
-                ultimosDigitos: metodoPago === 'tarjeta' ? '4242' : null, // Simulado por ahora ¿Porque esto esta simulado ?
+                ultimosDigitos: ultimos4Digitos, // Ahora es dinámico o null
                 transaccionId: `PEND_${Date.now()}`
             };
-            /*Simulacion detectada: Datos de tarjeta hardcodeados.
-              Aunque estamos en una "Integración Real" con la base de datos, el Frontend NO está enviando
-              los datos reales de la tarjeta al backend en este paso, sino que envía un placeholder ('4242').
-              Esto es correcto por seguridad (no queremos guardar tarjetas completas en la colección de Pedidos),
-              pero implica que la validación real de la tarjeta ocurrirá después, en 'Val_pago.html'.
-            */
 
             // C) Preparar Items del Carrito para GraphQL
             const itemsInput = EstadoApp.carrito.map(item => ({
@@ -1655,9 +1686,13 @@ Es el orquestador. Llama a las dos funciones vitales para que la página sea út
             console.log('✅ Pedido creado:', nuevoPedido);
 
             // Guardar ID del pedido temporalmente para la validación de pago
-            // Esto es crucial: Le pasamos el "testigo" a la siguiente página.
             sessionStorage.setItem('pedido_actual_id', nuevoPedido.id);
             sessionStorage.setItem('metodo_pago_actual', metodoPago);
+
+            // PUENTE CRÍTICO: Guardamos los datos de tarjeta para que Val_pago.html los use
+            if (datosTarjetaParaPasarela) {
+                sessionStorage.setItem('datos_tarjeta_temp', JSON.stringify(datosTarjetaParaPasarela));
+            }
 
             // Vaciar carrito local (ya está en la DB)
             await carritoService.vaciarCarrito();
@@ -1669,15 +1704,16 @@ Es el orquestador. Llama a las dos funciones vitales para que la página sea út
             console.error('❌ Error al crear pedido:', error);
             alert('Hubo un error al procesar tu pedido: ' + error.message);
             const btn = document.getElementById('btn-confirmar-compra');
-            btn.disabled = false;
-            btn.textContent = 'Confirmar Compra';
+            if (btn) {
+                btn.disabled = false;
+                btn.textContent = 'Confirmar Compra';
+            }
         }
     }
 
 //------------------------------- RENDERIZADO DEL RESUMEN DEL PEDIDO --------------------------------
 // Dibuja la lista pequeña de productos en el lado derecho de la pantalla de pago.
     renderizarResumen() {
-        // ... (Mantener el código anterior de renderizarResumen igual) ...
         const contenedor = document.getElementById('lista-resumen-checkout');
         if (!contenedor) return;
 
@@ -1716,9 +1752,6 @@ Es el orquestador. Llama a las dos funciones vitales para que la página sea út
 }
 // Instancia global
 const checkoutService = new CheckoutService();
-
-
-
 /* 
 ====================================== LOGICA DE ORDER Est_pedido.html SEGUIMIENTO =======================================================
 Este bloque es el punto de partida para toda la lógica post-venta
