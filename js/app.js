@@ -2058,6 +2058,156 @@ necesarias, evitando errores por intentar manipular elementos que no existen.
 // Instancia global
 const orderService = new OrderService();
 
+
+/* ====================================== LOGICA: VALIDACION Y PROCESAMIENTO DE PAGOS =============================================
+Esta clase controla la lógica de procesamiento de pagos en Val_pago.html.
+Sus funciones principales son:
+1. Procesar el pago (cobro) mediante la mutation procesarPago
+2. Guardar la tarjeta del usuario si lo desea
+3. Mostrar el estado de validación al usuario
+4. Redirigir al tracking del pedido
+=======================================================================================================================
+*/
+
+class PaymentValidationService {
+    constructor() {
+        // Detectar si estamos en Val_pago.html
+        if (document.getElementById('box-loading')) {
+            this.inicializarValidacionPago();
+        }
+    }
+
+    // Mapeo del DOM de Val_pago.html
+    getUIElements() {
+        return {
+            boxLoading: document.getElementById('box-loading'),
+            boxOk: document.getElementById('box-ok'),
+            boxFail: document.getElementById('box-fail'),
+            msgStatus: document.getElementById('msg-status'),
+            errorDetail: document.getElementById('error-detail'),
+            timerSecs: document.getElementById('secs')
+        };
+    }
+
+    inicializarValidacionPago() {
+        console.log('💳 Inicializando Validación de Pago...');
+        
+        // Timer visual
+        const ui = this.getUIElements();
+        let s = 3;
+        if (ui.timerSecs) ui.timerSecs.textContent = s;
+        const timerInterval = setInterval(() => {
+            if (s > 0) {
+                if (ui.timerSecs) ui.timerSecs.textContent = --s;
+            }
+        }, 1000);
+
+        // Iniciar proceso
+        this.procesarPago().catch(error => {
+            clearInterval(timerInterval);
+            console.error('Error en procesamiento de pago:', error);
+        });
+    }
+
+    async procesarPago() {
+        const ui = this.getUIElements();
+
+        try {
+            // 1. Recuperar datos de SessionStorage
+            const pedidoId = sessionStorage.getItem('pedido_actual_id');
+            const metodoPago = sessionStorage.getItem('metodo_pago_actual');
+            
+            if (!pedidoId) {
+                throw new Error('No se encontró orden activa.');
+            }
+
+            let datosTarjeta = null;
+            let guardarTarjeta = false;
+
+            // 2. Recuperar datos de tarjeta (si aplica)
+            if (metodoPago === 'tarjeta') {
+                const datosRaw = sessionStorage.getItem('datos_tarjeta_temp');
+                if (datosRaw) {
+                    const datosObj = JSON.parse(datosRaw);
+                    guardarTarjeta = datosObj.guardarTarjeta;
+                    // Limpiar el objeto para la API
+                    datosTarjeta = {
+                        numero: datosObj.numero,
+                        mesVencimiento: datosObj.mesVencimiento,
+                        anioVencimiento: datosObj.anioVencimiento,
+                        cvv: datosObj.cvv,
+                        nombreTitular: datosObj.nombreTitular
+                    };
+                }
+            }
+
+            // 3. Procesar Pago (Cobro)
+            if (ui.msgStatus) ui.msgStatus.textContent = "Autorizando transacción...";
+            console.log('💳 Procesando pago para pedido:', pedidoId);
+
+            const mutationPago = `mutation ProcesarPago($pedidoId: ID!, $metodoPago: String!, $datosTarjeta: DatosTarjetaInput) {
+                procesarPago(pedidoId: $pedidoId, metodoPago: $metodoPago, datosTarjeta: $datosTarjeta) {
+                    transaccion { id estado }
+                }
+            }`;
+
+            const respuestaPago = await GQL.request(mutationPago, {
+                pedidoId,
+                metodoPago,
+                datosTarjeta
+            });
+
+            console.log('✅ Pago procesado:', respuestaPago);
+
+            // 4. Guardar Tarjeta (Si usuario quiso)
+            if (metodoPago === 'tarjeta' && guardarTarjeta && datosTarjeta) {
+                if (ui.msgStatus) ui.msgStatus.textContent = "Guardando tarjeta en tu perfil...";
+                console.log('💾 Intentando guardar tarjeta...');
+                
+                const mutationGuardar = `mutation GuardarMetodoPago($datosTarjeta: DatosTarjetaInput!, $alias: String, $usuarioId: ID!) {
+                    guardarMetodoPago(datosTarjeta: $datosTarjeta, alias: $alias, usuarioId: $usuarioId) { metodoPago { id } }
+                }`;
+                console.log({
+                        datosTarjeta: datosTarjeta,
+                        alias: `Tarjeta terminada en ${datosTarjeta.numero.slice(-4)}`,
+                        usuarioId: EstadoApp.usuario.id
+                    });
+                try {
+                    
+                    await GQL.request(mutationGuardar, {
+                        datosTarjeta,
+                        alias: `Tarjeta terminada en ${datosTarjeta.numero.slice(-4)}`,
+                        usuarioId: EstadoApp.usuario.id
+                    });
+                    console.log('✅ Tarjeta guardada con éxito');
+                } catch (e) {
+                    console.warn('⚠️ Error al guardar tarjeta (pero pago exitoso):', e.message);
+                }
+            }
+
+            // 5. Éxito
+            sessionStorage.removeItem('datos_tarjeta_temp');
+            if (ui.boxLoading) ui.boxLoading.classList.add('d-none');
+            if (ui.boxOk) ui.boxOk.classList.remove('d-none');
+
+            // Redirigir al tracking del pedido después de 2.5s
+            setTimeout(() => {
+                window.location.href = `Est_pedido.html?id=${pedidoId}`;
+            }, 25000000);
+
+        } catch (error) {
+            console.error('❌ Error en validación de pago:', error);
+            if (ui.boxLoading) ui.boxLoading.classList.add('d-none');
+            if (ui.boxFail) ui.boxFail.classList.remove('d-none');
+            if (ui.errorDetail) ui.errorDetail.textContent = error.message;
+        }
+    }
+}
+
+// Instancia global
+const paymentValidationService = new PaymentValidationService();
+
+
 /* 
 ================================ LOGICA DE LOS REPORTES DEL LOCAL =========================================================
 Esta clase administra la vista exclusiva de Administrador ('Ges_reportes.html').
@@ -2292,7 +2442,7 @@ Esta función actúa como traductora. Transforma los objetos de datos complejos 
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: false,
+                maintainAspectRatio: true,
                 plugins: {
                     legend: { labels: { color: '#ccc' } }
                 },
