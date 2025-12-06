@@ -107,7 +107,7 @@ const ElementosDOM = {
     btnRespMov: document.getElementById('btn-resp-mov'),
     navbarContent: document.getElementById('navbarContent'),
     btnMenu: document.getElementById('btn-menu'),
-    btnPromos: document.getElementById('btn-promos'),
+    btnPerfil: document.getElementById('btn-perfil'),
     btnConocenos: document.getElementById('btn-conocenos'),
     btnLogin: document.getElementById('btn-login'),
     btnPedidos: document.getElementById('btn-pedidos'),
@@ -493,6 +493,9 @@ Se ejecuta cada vez que cambia el estado de la sesión.
                 if (Utilidades.elementoExiste(ElementosDOM.btnLogin)) {
                     ElementosDOM.btnLogin.hidden = false;
                 }
+                if (Utilidades.elementoExiste(ElementosDOM.btnPerfil)) {
+                    ElementosDOM.btnPerfil.hidden = false; 
+                }
                 break;
 
             case CONFIG.ROLES.CLIENTE:
@@ -505,6 +508,9 @@ Se ejecuta cada vez que cambia el estado de la sesión.
                 if (Utilidades.elementoExiste(ElementosDOM.btnLogout)) {
                     ElementosDOM.btnLogout.hidden = false;
                 }
+                if (Utilidades.elementoExiste(ElementosDOM.btnPerfil)) {
+                    ElementosDOM.btnPerfil.hidden = false;
+                }
                 break;
 
             case CONFIG.ROLES.ADMIN:
@@ -514,7 +520,11 @@ Se ejecuta cada vez que cambia el estado de la sesión.
                 if (Utilidades.elementoExiste(ElementosDOM.btnLogout)) {
                     ElementosDOM.btnLogout.hidden = false;
                 }
+                if (Utilidades.elementoExiste(ElementosDOM.btnPerfil)) {
+                    ElementosDOM.btnPerfil.hidden = false;
+                }
                 break;
+                
         }
 
         console.log(`🔄 Navbar actualizado para rol: ${usuario.rol}`);
@@ -526,7 +536,8 @@ Se ejecuta cada vez que cambia el estado de la sesión.
             ElementosDOM.btnPedidos,
             ElementosDOM.btnCarrito,
             ElementosDOM.btnAdmin,
-            ElementosDOM.btnLogout
+            ElementosDOM.btnLogout,
+            ElementosDOM.btnPerfil
         ];
 
         elementos.forEach(elemento => {
@@ -2785,6 +2796,27 @@ registrarListenersProductos() {
             ElementosDOM.btnPedidos.addEventListener('click', () => {
                 console.log('📂 Yendo a mis pedidos...');
                 window.location.href = 'Ges_boletas.html';
+            });
+        }
+
+      // --- Listener para botón de Mi Perfil ---
+
+        if (Utilidades.elementoExiste(ElementosDOM.btnPerfil)) {
+            ElementosDOM.btnPerfil.addEventListener('click', (e) => {
+                e.preventDefault();
+                
+                // Lógica de protección simple
+                if (!authService.estaAutenticado()) {
+                    alert('¡Vuélvete parte de la familia Bocatto para gestionar tu perfil!');
+                    // Opcional: abrir modal login
+                    const modalLogin = new bootstrap.Modal(document.getElementById('loginModal'));
+                    modalLogin.show();
+                } else {
+                    console.log('👤 Yendo a Mi Perfil...');
+                    // Todavía no creamos el HTML, así que por ahora solo log o alert
+                    // window.location.href = 'Ges_datos_Usuario.html'; // DESCOMENTAR CUANDO EXISTA
+                    alert('Próximamente: Interfaz de Perfil');
+                }
             });
         }
 

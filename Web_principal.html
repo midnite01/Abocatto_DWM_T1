@@ -64,20 +64,20 @@
       <ul class="navbar-nav mb-2 mb-lg-0 gap-3">
 
         <li class="nav-item">
-          <a id="btn-menu" class="nav-link" href="Menu.html"> <!--Link al menu-->
-            <i class="bi bi-pizza"></i> Menú
+          <a id="btn-menu" class="nav-link text-black" href="Menu.html"> 
+            <i class="bi bi-list"></i> Menú
           </a>
         </li>
 
         <li class="nav-item">
-          <a id="btn-promos" class="nav-link" href="#promos">
-            <i class="bi bi-fire"></i> Promos <!-- 🔥 icono de promos -->
+          <a id="btn-perfil" class="nav-link text-black" href="#"> <!-- Dejamos href="#" por ahora hasta crear la página -->
+            <i class="bi bi-person-vcard"></i> Mi Perfil
           </a>
         </li>
 
         <li class="nav-item">
-          <a id="btn-conocenos" class="nav-link" href="#locales">
-            <i class="bi bi-geo-alt"></i> Locales y horarios <!-- 📍 icono de ubicación -->
+          <a id="btn-conocenos" class="nav-link text-black" href="#locales">
+            <i class="bi bi-geo-alt"></i> Local y horarios 
           </a>
         </li>
 
@@ -87,29 +87,29 @@
 <!-- Botones a la derecha -->
   <div class="d-flex gap-3">
 
-    <button class="btn btn-outline-dark" id="btn-login" data-bs-toggle="modal" data-bs-target="#loginModal">
-      <i class="bi bi-box-arrow-in-right"></i> Iniciar sesión
+    <button id="btn-login" class="nav-link text-black fw-medium border-0 bg-transparent" data-bs-toggle="modal" data-bs-target="#loginModal">
+      <i class="bi bi-door-closed"></i> Iniciar sesión
     </button>
 
-    <button class="btn btn-dark" id="btn-pedidos" hidden>
-      <i class="bi bi-bag"></i> Tus pedidos
+    <button class="nav-link text-black fw-medium border-0 bg-transparent" id="btn-pedidos" hidden>
+      <i class="bi bi-bag-check"></i> Mis pedidos
     </button>
 
-    <button class="btn btn-warning position-relative" id="btn-carrito" hidden 
+    <button class="nav-link text-black fw-medium border-0 bg-transparent" id="btn-carrito" hidden 
       data-bs-toggle="offcanvas" data-bs-target="#offcanvasCarrito" aria-controls="offcanvasCarrito">
-      <i class="bi bi-cart"></i>
+      <i class="bi bi-cart3"></i> Carrito
         <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" 
           id="carr-cont" hidden>
           0
         </span>
     </button>
 
-      <button class="btn btn-danger" id="btn-admin" hidden>
+      <button class="nav-link text-black fw-medium border-0 bg-transparent" id="btn-admin" hidden>
         <i class="bi bi-gear-fill"></i> Panel Admin
       </button>
 
-      <button class="btn btn-secondary" id="btn-logout" hidden>
-        <i class="bi bi-box-arrow-right"></i> Cerrar sesión
+      <button class="nav-link text-black fw-medium border-0 bg-transparent" id="btn-logout" hidden>
+        <i class="bi bi-door-closed"></i> Cerrar sesión
       </button>
     </div>
   </div> 
@@ -122,7 +122,7 @@
 3.-id [btn-resp-mov] = Botón para colapsar/expandir el menú en móviles
 4.-id [navbarContent] = Contenedor de los enlaces del navbar/menú/promos/conocenos/botones centrales
 5.-id [btn-menu] = Botón para ir al menú
-6.-id [btn-promos] = Botón para ir a las promociones
+6.-id [btn-perfil] = Botón para ir al perfil del usuario
 7.-id [btn-conocenos] = Botón para ir a locales y horarios
 8.-id [btn-login] = Botón para abrir el modal de login
 9.-id [btn-pedidos] = Botón para ver los pedidos del usuario

@@ -65,45 +65,94 @@
 <body>
 
 <!-- =================== NAVBAR SUPERIOR =================== -->
+
 <nav id="navbarPrincipal" class="navbar navbar-expand-lg navbar-light bg-warning px-3">
   <div class="container-fluid">
+
+<!-- Logo de la paguina -->
     <a id="logoAbocatto" class="navbar-brand d-flex align-items-center" href="Web_principal.html">
       <img src="Recursos_Esteticos/img/logo.png" alt="Bocatto" width="40" height="40" class="me-2">
       <span class="fw-bold">Bocatto</span>
     </a>
+
+<!--Estructura/Boton que vuelve respnsivo al resto de botones del nav-->
     <button id="btn-resp-mov" class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
       <span class="navbar-toggler-icon"></span>
     </button>
+
+<!-- Botones centrales del nav o campos colapsables en movil-->
     <div class="collapse navbar-collapse justify-content-center" id="navbarContent">
       <ul class="navbar-nav mb-2 mb-lg-0 gap-3">
-        <li class="nav-item"><a class="nav-link" href="Menu.html"><i class="bi bi-pizza"></i> Menú</a></li>
-        <li class="nav-item"><a class="nav-link" href="Web_principal.html#promos"><i class="bi bi-fire"></i> Promos</a></li>
-        <li class="nav-item"><a class="nav-link active" href="#locales"><i class="bi bi-geo-alt"></i> Locales</a></li>
+
+        <li class="nav-item">
+          <a id="btn-menu" class="nav-link text-black" href="Menu.html"> 
+            <i class="bi bi-list"></i> Menú
+          </a>
+        </li>
+
+        <li class="nav-item">
+          <a id="btn-perfil" class="nav-link text-black" href="#"> <!-- Dejamos href="#" por ahora hasta crear la página -->
+            <i class="bi bi-person-vcard"></i> Mi Perfil
+          </a>
+        </li>
+
+        <li class="nav-item">
+          <a id="btn-conocenos" class="nav-link text-black" href="#locales">
+            <i class="bi bi-geo-alt"></i> Local y horarios 
+          </a>
+        </li>
+
       </ul>
     </div>
-    <div class="d-flex gap-3">
-      <button class="btn btn-outline-dark" id="btn-login" data-bs-toggle="modal" data-bs-target="#loginModal"><i class="bi bi-box-arrow-in-right"></i> Iniciar sesión</button>
-      <button class="btn btn-dark" id="btn-pedidos" hidden><i class="bi bi-bag"></i> Tus pedidos</button>
-      <button class="btn btn-warning position-relative" id="btn-carrito" hidden data-bs-toggle="offcanvas" data-bs-target="#offcanvasCarrito">
-        <i class="bi bi-cart"></i><span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="carr-cont" hidden>0</span>
+
+<!-- Botones a la derecha -->
+  <div class="d-flex gap-3">
+
+    <button id="btn-login" class="nav-link text-black fw-medium border-0 bg-transparent" data-bs-toggle="modal" data-bs-target="#loginModal">
+      <i class="bi bi-door-closed"></i> Iniciar sesión
+    </button>
+
+    <button class="nav-link text-black fw-medium border-0 bg-transparent" id="btn-pedidos" hidden>
+      <i class="bi bi-bag-check"></i> Mis pedidos
+    </button>
+
+    <button class="nav-link text-black fw-medium border-0 bg-transparent" id="btn-carrito" hidden 
+      data-bs-toggle="offcanvas" data-bs-target="#offcanvasCarrito" aria-controls="offcanvasCarrito">
+      <i class="bi bi-cart3"></i> Carrito
+        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" 
+          id="carr-cont" hidden>
+          0
+        </span>
+    </button>
+
+      <button class="nav-link text-black fw-medium border-0 bg-transparent" id="btn-admin" hidden>
+        <i class="bi bi-gear-fill"></i> Panel Admin
       </button>
-      <button class="btn btn-danger" id="btn-admin" hidden><i class="bi bi-gear-fill"></i> Panel Admin</button>
-      <button class="btn btn-secondary" id="btn-logout" hidden><i class="bi bi-box-arrow-right"></i> Cerrar sesión</button>
+
+      <button class="nav-link text-black fw-medium border-0 bg-transparent" id="btn-logout" hidden>
+        <i class="bi bi-door-closed"></i> Cerrar sesión
+      </button>
     </div>
   </div> 
-</nav>
+  </div> 
+</nav> 
+
 <!--
-1.- id [navbarPrincipal] = Contenedor principal del navbar
-2.- id [logoAbocatto] = Enlace/branding al home
-3.- id [btn-resp-mov] = Botón colapsable (responsive)
-4.- id [navbarContent] = Contenedor de enlaces del menú
-5.- id [btn-login] = Botón para abrir modal de login
-6.- id [btn-pedidos] = Botón para ver pedidos del usuario
-7.- id [btn-carrito] = Botón para abrir el offcanvas del carrito
-8.- id [carr-cont] = Badge/contador del carrito
-9.- id [btn-admin] = Botón para acceder al panel admin
-10.- id [btn-logout] = Botón para cerrar sesión
--->
+1.-id [navbarPrincipal] = Contenedor principal del navbar
+2.-id [logoAbocatto] = Logo y nombre de la página
+3.-id [btn-resp-mov] = Botón para colapsar/expandir el menú en móviles
+4.-id [navbarContent] = Contenedor de los enlaces del navbar/menú/promos/conocenos/botones centrales
+5.-id [btn-menu] = Botón para ir al menú
+6.-id [btn-perfil] = Botón para ir al perfil del usuario
+7.-id [btn-conocenos] = Botón para ir a locales y horarios
+8.-id [btn-login] = Botón para abrir el modal de login
+9.-id [btn-pedidos] = Botón para ver los pedidos del usuario
+10.-id [btn-carrito] = Botón para abrir el carrito de compras
+11.-id [carr-cont] = Contador de items en el carrito
+12.-id [btn-admin] = Botón para abrir el panel de administración
+13.-id [btn-logout] = Botón para cerrar sesión
+--> 
+
 
 <!-- =================== MODAL DE LOGIN =================== -->
 <div class="modal fade" id="loginModal" tabindex="-1" aria-hidden="true">
