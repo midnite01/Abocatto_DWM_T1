@@ -2219,6 +2219,289 @@ class PaymentValidationService {
 const paymentValidationService = new PaymentValidationService();
 
 
+
+/* ====== Logica: PROFILE SERVICE (Gestión de Datos del Usuario) ===================
+   Esta clase maneja la vista 'Mi Perfil'. Se encarga de:
+   1. Traer los datos personales y puntos desde el Backend.
+   2. Gestionar la edición de datos (Nombre, Email, Dirección).
+   3. Visualizar y Eliminar tarjetas guardadas.
+   ====================================================== */
+
+class ProfileService {
+    constructor() {
+        // Solo inicializar si estamos en la página de perfil
+        if (document.getElementById('form-perfil-usuario')) {
+            this.inicializarPerfil();
+        }
+    }
+
+    async inicializarPerfil() {
+        console.log('👤 Inicializando Perfil de Usuario...');
+        
+        if (!authService.estaAutenticado()) {
+            alert('Debes iniciar sesión para ver tu perfil');
+            window.location.href = 'Web_principal.html';
+            return;
+        }
+
+        // 1. Cargar Datos Básicos
+        await this.cargarDatosPerfil();
+        
+        // 2. Cargar Tarjetas Guardadas
+        await this.cargarTarjetasGuardadas();
+        
+        // 3. Activar Botones del formulario
+        this.registrarEventosPerfil();
+    }
+
+    // 1. CARGAR DATOS DEL PERFIL
+    async cargarDatosPerfil() {
+        try {
+            this.mostrarLoading(true);
+
+            const query = `
+                query ObtenerMiPerfil {
+                    obtenerPerfil {
+                        id nombre email telefono puntos
+                        direccion { calle comuna ciudad }
+                    }
+                }
+            `;
+
+            console.log('📡 Solicitando datos de perfil...');
+            const data = await GQL.request(query);
+            const usuario = data.obtenerPerfil;
+
+            // Rellenar el Formulario
+            if (document.getElementById('perfil-nombre')) 
+                document.getElementById('perfil-nombre').value = usuario.nombre;
+
+            if (document.getElementById('perfil-email')) 
+                document.getElementById('perfil-email').value = usuario.email;
+
+            if (document.getElementById('perfil-telefono')) 
+                document.getElementById('perfil-telefono').value = usuario.telefono || '';
+
+            if (usuario.direccion) {
+                if (document.getElementById('perfil-direccion')) 
+                    document.getElementById('perfil-direccion').value = usuario.direccion.calle || '';
+                
+                if (document.getElementById('perfil-comuna')) 
+                    document.getElementById('perfil-comuna').value = usuario.direccion.comuna || '';
+                    
+                if (document.getElementById('perfil-region')) 
+                    document.getElementById('perfil-region').value = 'Metropolitana';
+            }
+
+            if (document.getElementById('puntos-saldo')) {
+                document.getElementById('puntos-saldo').textContent = usuario.puntos || 0;
+            }
+
+            console.log('✅ Datos de perfil cargados');
+
+        } catch (error) {
+            console.error('❌ Error cargando perfil:', error);
+            alert('No se pudieron cargar tus datos: ' + error.message);
+        } finally {
+            this.mostrarLoading(false);
+        }
+    }
+
+    // Utilidad interna
+    mostrarLoading(cargando) {
+        const inputs = document.querySelectorAll('#form-perfil-usuario input');
+        inputs.forEach(input => input.disabled = cargando);
+    }
+
+    // 2. CARGAR TARJETAS GUARDADAS
+    async cargarTarjetasGuardadas() {
+        const contenedor = document.getElementById('lista-tarjetas');
+        if (!contenedor) return;
+
+        try {
+            contenedor.innerHTML = '<div class="text-center text-muted">Cargando tarjetas...</div>';
+
+            const query = `
+                query ObtenerMisTarjetas {
+                    obtenerMetodosPago {
+                        id alias
+                        datosTarjeta { ultimosDigitos tipo }
+                    }
+                }
+            `;
+
+            console.log('📡 Buscando tarjetas guardadas...');
+            const data = await GQL.request(query);
+            const tarjetas = data.obtenerMetodosPago;
+
+            contenedor.innerHTML = '';
+
+            if (!tarjetas || tarjetas.length === 0) {
+                contenedor.innerHTML = `
+                    <div class="alert alert-dark border-secondary text-center small">
+                        <i class="bi bi-credit-card-2-front fs-4 d-block mb-2"></i>
+                        No tienes tarjetas guardadas.
+                    </div>
+                `;
+                return;
+            }
+
+            tarjetas.forEach(tarjeta => {
+                let iconoMarca = 'bi-credit-card';
+                if (tarjeta.datosTarjeta.tipo === 'visa') iconoMarca = 'bi-credit-card-2-back';
+
+                const cardHTML = document.createElement('div');
+                cardHTML.className = 'card bg-dark border-secondary mb-2';
+                cardHTML.innerHTML = `
+                    <div class="card-body d-flex justify-content-between align-items-center py-2 px-3">
+                        <div class="d-flex align-items-center gap-3">
+                            <i class="bi ${iconoMarca} fs-4 text-warning"></i>
+                            <div>
+                                <div class="fw-bold text-light small">${tarjeta.alias}</div>
+                                <div class="text-muted small">Terminada en •••• ${tarjeta.datosTarjeta.ultimosDigitos}</div>
+                            </div>
+                        </div>
+                        <button class="btn btn-sm btn-outline-danger btn-borrar-tarjeta border-0" 
+                                data-id="${tarjeta.id}" title="Eliminar tarjeta">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                `;
+                contenedor.appendChild(cardHTML);
+            });
+
+            contenedor.querySelectorAll('.btn-borrar-tarjeta').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    // Aquí accedemos a la función que está dentro de la MISMA clase
+                    // usando 'e.currentTarget' para asegurar que tomamos el botón y no el ícono
+                    const id = e.currentTarget.dataset.id;
+                    this.eliminarTarjeta(id);
+                });
+            });
+
+        } catch (error) {
+            console.error('❌ Error cargando tarjetas:', error);
+            contenedor.innerHTML = '<div class="text-danger small text-center">Error al cargar tarjetas</div>';
+        }
+    }
+
+    // 3. GUARDAR CAMBIOS
+    async guardarCambiosPerfil(event) {
+        event.preventDefault();
+        
+        const btnGuardar = document.getElementById('btn-guardar-perfil');
+        const spinner = document.getElementById('spinner-guardar-perfil');
+        
+        try {
+            if (btnGuardar) btnGuardar.disabled = true;
+            if (spinner) spinner.style.display = 'inline-block';
+
+            const datosBasicos = {
+                nombre: document.getElementById('perfil-nombre').value,
+                email: document.getElementById('perfil-email').value,
+                telefono: document.getElementById('perfil-telefono').value,
+                direccion: {
+                    calle: document.getElementById('perfil-direccion').value,
+                    comuna: document.getElementById('perfil-comuna').value,
+                    ciudad: 'Santiago'
+                }
+            };
+
+            const mutationUpdate = `
+                mutation ActualizarPerfil($nombre: String, $email: String, $telefono: String, $direccion: DireccionInput) {
+                    actualizarUsuario(nombre: $nombre, email: $email, telefono: $telefono, direccion: $direccion) {
+                        id nombre email
+                    }
+                }
+            `;
+
+            console.log('📡 Guardando datos básicos...');
+            await GQL.request(mutationUpdate, datosBasicos);
+
+            // Cambio de Contraseña (Opcional)
+            const passActual = document.getElementById('perfil-pass-actual')?.value;
+            const passNueva = document.getElementById('perfil-pass-nueva')?.value;
+
+            if (passActual && passNueva) {
+                console.log('🔐 Detectado cambio de contraseña...');
+                const mutationPass = `
+                    mutation CambiarPass($passwordActual: String!, $nuevoPassword: String!) {
+                        cambiarPassword(passwordActual: $passwordActual, nuevoPassword: $nuevoPassword) {
+                            success message
+                        }
+                    }
+                `;
+                const resPass = await GQL.request(mutationPass, { passwordActual: passActual, nuevoPassword: passNueva });
+                if (!resPass.cambiarPassword.success) {
+                    throw new Error(resPass.cambiarPassword.message);
+                }
+            }
+
+            alert('¡Datos actualizados correctamente!');
+            await this.cargarDatosPerfil();
+            
+            if (document.getElementById('perfil-pass-actual')) document.getElementById('perfil-pass-actual').value = '';
+            if (document.getElementById('perfil-pass-nueva')) document.getElementById('perfil-pass-nueva').value = '';
+
+        } catch (error) {
+            console.error('❌ Error guardando perfil:', error);
+            alert('Hubo un problema al guardar: ' + error.message);
+        } finally {
+            if (btnGuardar) btnGuardar.disabled = false;
+            if (spinner) spinner.style.display = 'none';
+        }
+    }
+
+    // 4. ELIMINAR TARJETA
+    async eliminarTarjeta(id) {
+        if (!confirm('¿Estás seguro de que quieres eliminar esta tarjeta?')) return;
+
+        try {
+            const mutation = `
+                mutation EliminarTarjeta($id: ID!) {
+                    eliminarMetodoPago(id: $id) { success message }
+                }
+            `;
+
+            console.log(`🗑️ Eliminando tarjeta ID: ${id}...`);
+            const data = await GQL.request(mutation, { id });
+
+            if (data.eliminarMetodoPago.success) {
+                alert('Tarjeta eliminada correctamente');
+                await this.cargarTarjetasGuardadas();
+            } else {
+                throw new Error(data.eliminarMetodoPago.message);
+            }
+
+        } catch (error) {
+            console.error('❌ Error eliminando tarjeta:', error);
+            alert('No se pudo eliminar la tarjeta: ' + error.message);
+        }
+    }
+
+    // 5. REGISTRAR EVENTOS DEL PERFIL
+    registrarEventosPerfil() {
+        const form = document.getElementById('form-perfil-usuario');
+        if (form) {
+            form.addEventListener('submit', (e) => this.guardarCambiosPerfil(e));
+        }
+        
+        const btnTogglePass = document.getElementById('btn-toggle-pass');
+        if(btnTogglePass) {
+            btnTogglePass.addEventListener('click', (e) => {
+               e.preventDefault();
+               const containerPass = document.getElementById('container-cambio-pass');
+               if(containerPass) {
+                   containerPass.classList.remove('d-none');
+                   btnTogglePass.style.display = 'none';
+               }
+            });
+        }
+    }
+} // <--- ¡AQUÍ CIERRA LA CLASE! Esta es la llave que faltaba en el lugar correcto.
+
+// Instancia global del servicio
+const profileService = new ProfileService();
 /* 
 ================================ LOGICA DE LOS REPORTES DEL LOCAL =========================================================
 Esta clase administra la vista exclusiva de Administrador ('Ges_reportes.html').

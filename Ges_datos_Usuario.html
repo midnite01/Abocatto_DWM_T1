@@ -1,0 +1,482 @@
+<!doctype html>
+<html lang="es">
+<head> <!-- Configuraciones generales, librerías y estilos. La bodega de planos -->
+  <meta charset="utf-8" /> 
+  <meta name="viewport" content="width=device-width, initial-scale=1" /> 
+  <title>Bocatto | Mi Perfil</title> <!-- Título actualizado -->
+
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <!-- Google Font (Oswald) -->
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500&display=swap" rel="stylesheet">
+
+  <style>
+    /* === Estilos Globales === */
+    body {
+      background-color: #111;  /* Negro suave de fondo */
+      color: #f7f7f7;          /* Texto claro */
+      padding-top: 20px;       /* Espacio arriba para que no se pegue al navbar */
+    }
+    
+    /* Navbar (Heredado) */
+    .navbar {
+      font-family: 'Oswald', sans-serif;
+      font-size: 1.1rem;
+    }
+
+    /* === Estilos de Perfil (Basado en tu dibujo) === */
+    
+    /* Títulos de sección (Amarillos) */
+    .section-title {
+      font-family: 'Oswald', sans-serif;
+      color: #ffc107; /* Amarillo Bootstrap */
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 1rem;
+    }
+
+      .hover-warning:hover {
+    color: #ffc107 !important; /* Amarillo al pasar el mouse */
+    transition: color 0.2s;
+  }
+
+  </style>
+</head>
+
+<body>
+
+<!-- =================== NAVBAR SUPERIOR =================== -->
+
+<nav id="navbarPrincipal" class="navbar navbar-expand-lg navbar-light bg-warning px-3">
+  <div class="container-fluid">
+
+<!-- Logo de la paguina -->
+    <a id="logoAbocatto" class="navbar-brand d-flex align-items-center" href="Web_principal.html">
+      <img src="Recursos_Esteticos/img/logo.png" alt="Bocatto" width="40" height="40" class="me-2">
+      <span class="fw-bold">Bocatto</span>
+    </a>
+
+<!--Estructura/Boton que vuelve respnsivo al resto de botones del nav-->
+    <button id="btn-resp-mov" class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+<!-- Botones centrales del nav o campos colapsables en movil-->
+    <div class="collapse navbar-collapse justify-content-center" id="navbarContent">
+      <ul class="navbar-nav mb-2 mb-lg-0 gap-3">
+
+        <li class="nav-item">
+          <a id="btn-menu" class="nav-link text-black" href="Menu.html"> 
+            <i class="bi bi-list"></i> Menú
+          </a>
+        </li>
+
+        <li class="nav-item">
+          <a id="btn-perfil" class="nav-link text-black" href="Ges_datos_Usuario.html"> <!-- Dejamos href="#" por ahora hasta crear la página -->
+            <i class="bi bi-person-vcard"></i> Mi Perfil
+          </a>
+        </li>
+
+        <li class="nav-item">
+          <a id="btn-conocenos" class="nav-link text-black" href="#locales">
+            <i class="bi bi-geo-alt"></i> Local y horarios 
+          </a>
+        </li>
+
+      </ul>
+    </div>
+
+<!-- Botones a la derecha -->
+  <div class="d-flex gap-3">
+
+    <button id="btn-login" class="nav-link text-black fw-medium border-0 bg-transparent" data-bs-toggle="modal" data-bs-target="#loginModal">
+      <i class="bi bi-door-closed"></i> Iniciar sesión
+    </button>
+
+    <button class="nav-link text-black fw-medium border-0 bg-transparent" id="btn-pedidos" hidden>
+      <i class="bi bi-bag-check"></i> Mis pedidos
+    </button>
+
+    <button class="nav-link text-black fw-medium border-0 bg-transparent" id="btn-carrito" hidden 
+      data-bs-toggle="offcanvas" data-bs-target="#offcanvasCarrito" aria-controls="offcanvasCarrito">
+      <i class="bi bi-cart3"></i> Carrito
+        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" 
+          id="carr-cont" hidden>
+          0
+        </span>
+    </button>
+
+      <button class="nav-link text-black fw-medium border-0 bg-transparent" id="btn-admin" hidden>
+        <i class="bi bi-gear-fill"></i> Panel Admin
+      </button>
+
+      <button class="nav-link text-black fw-medium border-0 bg-transparent" id="btn-logout" hidden>
+        <i class="bi bi-door-closed"></i> Cerrar sesión
+      </button>
+    </div>
+  </div> 
+  </div> 
+</nav> 
+
+<!--
+1.-id [navbarPrincipal] = Contenedor principal del navbar
+2.-id [logoAbocatto] = Logo y nombre de la página
+3.-id [btn-resp-mov] = Botón para colapsar/expandir el menú en móviles
+4.-id [navbarContent] = Contenedor de los enlaces del navbar/menú/promos/conocenos/botones centrales
+5.-id [btn-menu] = Botón para ir al menú
+6.-id [btn-perfil] = Botón para ir al perfil del usuario
+7.-id [btn-conocenos] = Botón para ir a locales y horarios
+8.-id [btn-login] = Botón para abrir el modal de login
+9.-id [btn-pedidos] = Botón para ver los pedidos del usuario
+10.-id [btn-carrito] = Botón para abrir el carrito de compras
+11.-id [carr-cont] = Contador de items en el carrito
+12.-id [btn-admin] = Botón para abrir el panel de administración
+13.-id [btn-logout] = Botón para cerrar sesión
+--> 
+
+<!-- =================== CONTENIDO PRINCIPAL =================== -->
+<main class="container my-5">
+
+  <!-- 1. TÍTULO DE SECCIÓN -->
+  <div class="mb-4">
+    <h2 class="text-warning fw-bold" style="font-family:'Oswald', sans-serif;">EDITAR INFORMACIÓN DE LA CUENTA</h2>
+    <p class="text-warning">Mantén tus datos actualizados para una mejor experiencia.</p>
+  </div>
+
+  <!-- FILA 1: FORMULARIO DE DATOS (Ancho Completo) -->
+  <div class="card bg-dark border-secondary rounded-4 shadow-lg mb-5">
+    <div class="card-body p-4">
+      
+      <form id="form-perfil-usuario">
+        <h5 class="text-white mb-4 border-bottom border-secondary pb-2"><i class="bi bi-person-lines-fill text-warning"></i> Mis Datos Personales</h5>
+        
+        <!-- Fila 1: Nombre y Email -->
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <!-- LABEL AMARILLO (Tu petición 1) -->
+            <label class="form-label text-warning fw-bold small">Nombre Completo</label>
+            <!-- INPUT BLANCO (Tu petición 2) -->
+            <input type="text" id="perfil-nombre" class="form-control bg-white text-dark border-0" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label text-warning fw-bold small">Correo Electrónico</label>
+            <input type="email" id="perfil-email" class="form-control bg-white text-dark border-0" required>
+          </div>
+        </div>
+
+<!-- Fila 2: Teléfono y Botón Contraseña -->
+<div class="row g-3 mb-3">
+  <div class="col-md-6">
+    <label class="form-label text-warning fw-bold small">Teléfono</label>
+    <!-- class 'text-secondary': Hace que el texto se vea grisáceo (desvanecido) por defecto -->
+    <input type="tel" id="perfil-telefono" class="form-control bg-white text-secondary border-0 fw-bold" onfocus="this.classList.remove('text-secondary'); this.classList.add('text-dark')">
+  </div>
+  <div class="col-md-6">
+    <label class="form-label text-warning fw-bold small">Seguridad</label>
+    <!-- Botón que abre el Modal -->
+    <button type="button" class="btn btn-outline-light w-100 d-flex justify-content-between align-items-center" data-bs-toggle="modal" data-bs-target="#modalCambiarPass">
+      <span><i class="bi bi-shield-lock me-2"></i> Cambiar contraseña</span>
+      <i class="bi bi-chevron-right"></i>
+    </button>
+  </div>
+</div>
+
+        <h5 class="text-white mb-4 mt-5 border-bottom border-secondary pb-2"><i class="bi bi-geo-alt-fill text-warning"></i> Dirección de Despacho</h5>
+        
+        <!-- Fila 3: Dirección -->
+        <div class="mb-3">
+          <label class="form-label text-warning fw-bold small">Calle y Número</label>
+          <input type="text" id="perfil-direccion" class="form-control bg-white text-dark border-0">
+        </div>
+
+        <!-- Fila 4: Región y Comuna -->
+        <div class="row g-3 mb-4">
+          <div class="col-md-6">
+            <label class="form-label text-warning fw-bold small">Región</label>
+            <input type="text" id="perfil-region" class="form-control bg-secondary text-white border-0" disabled value="Metropolitana">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label text-warning fw-bold small">Comuna</label>
+            <input type="text" id="perfil-comuna" class="form-control bg-white text-dark border-0">
+          </div>
+        </div>
+
+        <!-- Botón Guardar -->
+        <div class="text-end">
+          <button type="submit" id="btn-guardar-perfil" class="btn btn-warning fw-bold px-5 py-2">
+            <span id="spinner-guardar-perfil" class="spinner-border spinner-border-sm me-2" style="display:none"></span>
+            GUARDAR CAMBIOS
+          </button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+<!-- =================== SECCIÓN MIS PUNTOS =================== -->
+  
+  <!-- 1. Título Afuera (Como pediste) -->
+  <h2 class="text-warning fw-bold mt-5 mb-4" style="font-family:'Oswald', sans-serif;">MIS PUNTOS</h2>
+
+  <!-- 2. Card Principal (Puntos Acumulados + Info) -->
+  <div class="card bg-warning border-secondary mb-4 rounded-4 shadow">
+    <div class="card-body p-4">
+      <div class="row align-items-center">
+        <!-- Izquierda: Los Puntos -->
+        <div class="col-md-4 text-center ">
+          <span class="display-2 fw-bold text-black" id="puntos-saldo">0</span>
+          <br>
+          <span class="text-black fw-bold small letter-spacing-1">PUNTOS ACUMULADOS</span>
+        </div>
+        <!-- Derecha: La Info -->
+        <div class="col-md-8 ps-md-5 mt-3 mt-md-0">
+          <ul class="list-unstyled text-black mb-0">
+            <li class="mb-3 d-flex align-items-start fw-bold">
+              <i class="bi bi-star-fill text-black me-3 mt-1 fw-bold"></i>
+              <span>Gana <strong>10 puntos</strong> por cada compra superior a $8.000 pesos.</span>
+            </li>
+            <li class="d-flex align-items-start fw-bold">
+              <i class="bi bi-gift-fill text-black me-3 mt-1 fw-bold "></i>
+              <span>Puedes canjear tus puntos por cualquiera de estas opciones abajo.</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Fila de Canjes (20 y 40) -->
+  <div class="row g-4 mb-4">
+    
+    <!-- Opción 20 Puntos -->
+    <div class="col-md-6">
+      <div class="card bg-warning border-secondary h-100 rounded-4 shadow-sm hover-effect">
+        <div class="card-body d-flex align-items-center p-4">
+          <!-- Puntos (Izq) -->
+          <div class="me-4 text-center" style="min-width: 80px;">
+            <h2 class="text-black fw-bold mb-0">20</h2>
+            <small class="text-dark fw-bold">PUNTOS</small>
+          </div>
+          <!-- Detalle (Der) -->
+          <div class="ps-3 text-black">
+            <div class="fs-5 mb-1 fw-bold">- Un Acompañamiento</div>
+            <div class="fs-5 fw-bold">- Un Bebestible</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Opción 40 Puntos -->
+    <div class="col-md-6">
+      <div class="card bg-warning border-secondary h-100 rounded-4 shadow-sm hover-effect">
+        <div class="card-body d-flex align-items-center p-4">
+          <!-- Puntos (Izq) -->
+          <div class="me-4 text-center" style="min-width: 80px;">
+            <h2 class="text-black fw-bold mb-0">40</h2>
+            <small class="text-dark fw-bold">PUNTOS</small>
+          </div>
+          <!-- Detalle (Der) -->
+          <div class="ps-3 text-black">
+            <div class="fs-5 mb-1 fw-bold">- Un Panini</div>
+            <div class="fs-5 fw-bold">- Un Sandwich</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 4. Fila Canje Final (60 Puntos) - Centrado -->
+  <div class="row justify-content-center mb-5">
+    <div class="col-md-6">
+      <div class="card bg-warning border-secondary rounded-4 shadow-sm hover-effect">
+        <div class="card-body d-flex align-items-center p-4">
+          <!-- Puntos (Izq) -->
+          <div class="me-4 text-center" style="min-width: 80px;">
+            <h2 class="text-black fw-bold mb-0">60</h2>
+            <small class="text-dark fw-bold">PUNTOS</small>
+          </div>
+          <!-- Detalle (Der) -->
+          <div class="ps-3 text-dark w-100">
+            <div class="fs-4 fw-bold text-center">- Una Promo -</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FILA 3: MIS TARJETAS -->
+<div class="card bg-dark border-secondary rounded-4 mt-4">
+  <div class="card-header border-secondary bg-transparent d-flex justify-content-between align-items-center py-3">
+    <span class="text-warning fw-bold" style="font-family:'Oswald', sans-serif;">MIS TARJETAS</span>
+    <button class="btn btn-sm btn-light fw-bold rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#modalAgregarTarjeta">
+    <i class="bi bi-plus-lg"></i> Agregar
+    </button>
+  </div>
+  <div class="card-body p-3">
+    
+    <!-- Contenedor donde JS inyectará las tarjetas reales -->
+    <div id="lista-tarjetas" class="vstack gap-2">
+      
+      <!-- CASCARÓN (Placeholder visual mientras no hay datos o carga) -->
+      <!-- Esto se borrará automáticamente cuando el JS cargue las reales -->
+      <div class="card bg-secondary bg-opacity-10 border-secondary border-dashed mb-2" style="border-style: dashed !important;">
+        <div class="card-body d-flex align-items-center py-2 px-3 opacity-50">
+          <i class="bi bi-credit-card-2-front fs-4 text-muted me-3"></i>
+          <div>
+            <div class="fw-bold text-muted small">Tarjeta Guardada</div>
+            <div class="text-muted small" style="font-size: 0.7rem;">•••• 0000</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- =================== MODAL CAMBIAR CONTRASEÑA =================== -->
+<div class="modal fade" id="modalCambiarPass" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content bg-dark text-light border-secondary rounded-4">
+      <div class="modal-header border-secondary">
+        <h5 class="modal-title fw-bold text-warning" style="font-family:'Oswald', sans-serif;">CAMBIAR CONTRASEÑA</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body p-4">
+        <form id="form-cambio-pass-modal">
+          <div class="mb-3">
+            <label class="form-label text-warning small">Contraseña Actual</label>
+            <input type="password" id="perfil-pass-actual" class="form-control bg-white text-dark border-0">
+          </div>
+          <div class="mb-4">
+            <label class="form-label text-warning small">Nueva Contraseña</label>
+            <input type="password" id="perfil-pass-nueva" class="form-control bg-white text-dark border-0">
+          </div>
+          <div class="d-grid">
+            <button type="button" class="btn btn-warning fw-bold" onclick="alert('Lógica de cambio pendiente de conexión')">
+              ACTUALIZAR
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- =================== MODAL AGREGAR TARJETA =================== -->
+<div class="modal fade" id="modalAgregarTarjeta" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content bg-dark text-light border-secondary rounded-4">
+      
+      <div class="modal-header border-secondary">
+        <h5 class="modal-title fw-bold text-warning" style="font-family:'Oswald', sans-serif;">NUEVA TARJETA</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      
+      <div class="modal-body p-4">
+        <form id="form-agregar-tarjeta-perfil">
+          
+          <div class="mb-3">
+            <label class="form-label text-warning small fw-bold">Número de Tarjeta</label>
+            <input type="text" id="perfil-card-numero" class="form-control bg-white text-dark border-0 fw-bold" placeholder="0000 0000 0000 0000" maxlength="19">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label text-warning small fw-bold">Nombre del Titular</label>
+            <input type="text" id="perfil-card-nombre" class="form-control bg-white text-dark border-0" placeholder="Como aparece en el plástico">
+          </div>
+
+          <div class="row g-3 mb-4">
+            <div class="col-6">
+              <label class="form-label text-warning small fw-bold">Vencimiento (MM/AA)</label>
+              <input type="text" id="perfil-card-exp" class="form-control bg-white text-dark border-0 fw-bold text-center" placeholder="MM/AA" maxlength="5">
+            </div>
+            <div class="col-6">
+              <label class="form-label text-warning small fw-bold">CVV</label>
+              <input type="password" id="perfil-card-cvv" class="form-control bg-white text-dark border-0 fw-bold text-center" placeholder="123" maxlength="4">
+            </div>
+          </div>
+
+          <div class="d-grid">
+            <button type="submit" class="btn btn-warning fw-bold py-2">
+              GUARDAR TARJETA
+            </button>
+          </div>
+
+        </form>
+      </div>
+
+    </div>
+  </div>
+</div>
+</main>
+<!-- =================== FOOTER =================== -->
+<footer class="bg-warning text-black border-top border-secondary mt-5">
+  <div class="container-fluid py-5">
+    <div class="row g-4">
+      
+      <!-- Columna 1: Marca -->
+      <div class="col-lg-4 col-md-6">
+        <a href="Web_principal.html" class="d-flex align-items-center mb-3 text-decoration-none">
+          <!-- Usamos el logo que ya tienes, pero quizás un poco más grande -->
+          <img src="Recursos_Esteticos/img/logo.png" alt="Bocatto" width="40" height="40" class="me-2">
+          <span class="fs-4 fw-bold text-black" style="font-family:'Oswald', sans-serif;">Bocatto</span>
+        </a>
+        <p class="text-black small mb-3 ">
+          La mejor experiencia gastronómica directo a tu paladar. 
+          Ingredientes frescos, recetas únicas y entrega rápida.
+        </p>
+        <!-- Redes Sociales (Iconos) -->
+        <div class="d-flex gap-3">
+          <a href="#" class="text-secondary fs-5 hover-warning"><i class="bi bi-instagram"></i></a>
+          <a href="#" class="text-secondary fs-5 hover-warning"><i class="bi bi-facebook"></i></a>
+          <a href="#" class="text-secondary fs-5 hover-warning"><i class="bi bi-twitter-x"></i></a>
+          <a href="#" class="text-secondary fs-5 hover-warning"><i class="bi bi-whatsapp"></i></a>
+        </div>
+      </div>
+
+      <!-- Columna 2: Enlaces Rápidos -->
+      <div class="col-lg-4 col-md-6">
+        <h5 class="text-black mb-3 fw-bold" style="font-family:'Oswald', sans-serif;">NAVEGACIÓN</h5>
+        <ul class="list-unstyled text-muted small">
+          <li class="mb-2"><a href="Web_principal.html" class="text-decoration-none text-black hover-warning">Inicio</a></li>
+          <li class="mb-2"><a href="Menu.html" class="text-decoration-none text-black hover-warning">Nuestro Menú</a></li>
+          <li class="mb-2"><a href="Locales.html" class="text-decoration-none text-black hover-warning">Locales y Horarios</a></li>
+          <li class="mb-2"><a href="Ges_boletas.html" class="text-decoration-none text-black hover-warning">Seguimiento de Pedido</a></li>
+        </ul>
+      </div>
+
+      <!-- Columna 3: Contacto -->
+      <div class="col-lg-4 col-md-12">
+        <h5 class="text-black mb-3 fw-bold" style="font-family:'Oswald', sans-serif;">CONTACTO</h5>
+        <ul class="list-unstyled text-black small">
+          <li class="mb-2"><i class="bi bi-geo-alt me-2 text-black"></i> Av. Pajaritos 1234, Maipú</li>
+          <li class="mb-2"><i class="bi bi-envelope me-2 text-black"></i> contacto@bocatto.cl</li>
+          <li class="mb-2"><i class="bi bi-telephone me-2 text-black"></i> +56 2 2345 6789</li>
+        </ul>
+      </div>
+
+    </div>
+    
+    <hr class="border-secondary my-4">
+    
+    <!-- Copyright -->
+    <div class="text-center text-black small">
+      &copy; 2025 Bocatto Restaurant. Todos los derechos reservados.
+    </div>
+  </div>
+</footer>
+
+  <!-- Bootstrap JS (para que funcione el carrusel y el navbar en móviles) -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script src="js/app.js?v=4" defer></script>
+
+
+</body>
+
+
+
+</html>
