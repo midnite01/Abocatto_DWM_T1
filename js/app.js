@@ -2498,7 +2498,7 @@ class ProfileService {
             });
         }
     }
-} // <--- ¡AQUÍ CIERRA LA CLASE! Esta es la llave que faltaba en el lugar correcto.
+} 
 
 // Instancia global del servicio
 const profileService = new ProfileService();
