@@ -345,18 +345,22 @@
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
       </div>
       <div class="modal-body p-4">
+        <!-- El JS busca este ID: form-cambio-pass-modal -->
         <form id="form-cambio-pass-modal">
           <div class="mb-3">
-            <label class="form-label text-warning small">Contraseña Actual</label>
-            <input type="password" id="perfil-pass-actual" class="form-control bg-white text-dark border-0">
+            <label class="form-label text-warning small fw-bold">Contraseña Actual</label>
+            <!-- El JS busca este ID: modal-pass-actual -->
+            <input type="password" id="modal-pass-actual" class="form-control bg-white text-dark border-0" required>
           </div>
           <div class="mb-4">
-            <label class="form-label text-warning small">Nueva Contraseña</label>
-            <input type="password" id="perfil-pass-nueva" class="form-control bg-white text-dark border-0">
+            <label class="form-label text-warning small fw-bold">Nueva Contraseña</label>
+            <!-- El JS busca este ID: modal-pass-nueva -->
+            <input type="password" id="modal-pass-nueva" class="form-control bg-white text-dark border-0" required minlength="6">
+            <div class="form-text text-muted small">Mínimo 6 caracteres</div>
           </div>
           <div class="d-grid">
-            <button type="button" class="btn btn-warning fw-bold" onclick="alert('Lógica de cambio pendiente de conexión')">
-              ACTUALIZAR
+            <button type="submit" class="btn btn-warning fw-bold">
+              ACTUALIZAR CONTRASEÑA
             </button>
           </div>
         </form>
@@ -364,7 +368,6 @@
     </div>
   </div>
 </div>
-
 <!-- =================== MODAL AGREGAR TARJETA =================== -->
 <div class="modal fade" id="modalAgregarTarjeta" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">

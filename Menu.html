@@ -243,7 +243,6 @@
     <a href="#paninis" class="btn btn-outline-warning fw-bold">Paninis</a>
     <a href="#acompanamientos" class="btn btn-outline-warning fw-bold">Acompañamientos</a>
     <a href="#bebibles" class="btn btn-outline-warning fw-bold">Bebibles</a>
-    <a href="#experimentos" class="btn btn-outline-warning fw-bold">Experimentos</a>
   </div>
 </div>
 
@@ -371,31 +370,6 @@
               data-bs-target="#modalAddProduct" 
               data-category="bebibles">
         <i class="bi bi-plus-circle"></i> Agregar Bebible
-      </button>
-    </div>
-  </section>
-
-  <!-- 
-    SECCIÓN 6: EXPERIMENTOS
-    (Copiada de la sección Promos, pero con IDs cambiados)
-  -->
-  <section id="experimentos" class="mb-5">
-    <h2 class="text-start fw-bold" style="color:#e6b800; font-family:'Oswald', sans-serif;">
-      EXPERIMENTOS
-    </h2>
-    
-    <!-- ID cambiado para app.js -->
-    <div id="contenedor-experimentos" class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-5 g-4 mt-3">
-      <!-- app.js llenará esto -->
-    </div>
-
-    <!-- Botón Admin (con data-category="experimentos") -->
-    <div class="text-center my-4" data-visible-role="admin" style="display: none;">
-      <button class="btn btn-outline-danger" 
-              data-bs-toggle="modal" 
-              data-bs-target="#modalAddProduct" 
-              data-category="experimentos">
-        <i class="bi bi-plus-circle"></i> Agregar Experimento
       </button>
     </div>
   </section>
@@ -603,6 +577,62 @@
 14.- id [btn-volver-login] = Botón para volver al modal de login
 -->
 
+<!-- =================== FOOTER =================== -->
+<footer class="bg-warning text-black border-top border-secondary mt-5">
+  <div class="container-fluid py-5">
+    <div class="row g-4">
+      
+      <!-- Columna 1: Marca -->
+      <div class="col-lg-4 col-md-6">
+        <a href="Web_principal.html" class="d-flex align-items-center mb-3 text-decoration-none">
+          <!-- Usamos el logo que ya tienes, pero quizás un poco más grande -->
+          <img src="Recursos_Esteticos/img/logo.png" alt="Bocatto" width="40" height="40" class="me-2">
+          <span class="fs-4 fw-bold text-black" style="font-family:'Oswald', sans-serif;">Bocatto</span>
+        </a>
+        <p class="text-black small mb-3 ">
+          La mejor experiencia gastronómica directo a tu paladar. 
+          Ingredientes frescos, recetas únicas y entrega rápida.
+        </p>
+        <!-- Redes Sociales (Iconos) -->
+        <div class="d-flex gap-3">
+          <a href="#" class="text-secondary fs-5 hover-warning"><i class="bi bi-instagram"></i></a>
+          <a href="#" class="text-secondary fs-5 hover-warning"><i class="bi bi-facebook"></i></a>
+          <a href="#" class="text-secondary fs-5 hover-warning"><i class="bi bi-twitter-x"></i></a>
+          <a href="#" class="text-secondary fs-5 hover-warning"><i class="bi bi-whatsapp"></i></a>
+        </div>
+      </div>
+
+      <!-- Columna 2: Enlaces Rápidos -->
+      <div class="col-lg-4 col-md-6">
+        <h5 class="text-black mb-3 fw-bold" style="font-family:'Oswald', sans-serif;">NAVEGACIÓN</h5>
+        <ul class="list-unstyled text-muted small">
+          <li class="mb-2"><a href="Web_principal.html" class="text-decoration-none text-black hover-warning">Inicio</a></li>
+          <li class="mb-2"><a href="Menu.html" class="text-decoration-none text-black hover-warning">Nuestro Menú</a></li>
+          <li class="mb-2"><a href="Locales.html" class="text-decoration-none text-black hover-warning">Locales y Horarios</a></li>
+          <li class="mb-2"><a href="Ges_boletas.html" class="text-decoration-none text-black hover-warning">Seguimiento de Pedido</a></li>
+        </ul>
+      </div>
+
+      <!-- Columna 3: Contacto -->
+      <div class="col-lg-4 col-md-12">
+        <h5 class="text-black mb-3 fw-bold" style="font-family:'Oswald', sans-serif;">CONTACTO</h5>
+        <ul class="list-unstyled text-black small">
+          <li class="mb-2"><i class="bi bi-geo-alt me-2 text-black"></i> Av. Pajaritos 1234, Maipú</li>
+          <li class="mb-2"><i class="bi bi-envelope me-2 text-black"></i> contacto@bocatto.cl</li>
+          <li class="mb-2"><i class="bi bi-telephone me-2 text-black"></i> +56 2 2345 6789</li>
+        </ul>
+      </div>
+
+    </div>
+    
+    <hr class="border-secondary my-4">
+    
+    <!-- Copyright -->
+    <div class="text-center text-black small">
+      &copy; 2025 Bocatto Restaurant. Todos los derechos reservados.
+    </div>
+  </div>
+</footer>
 
   <!-- Bootstrap JS (para que funcione el carrusel y el navbar en móviles) -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
