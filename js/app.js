@@ -2547,13 +2547,14 @@ class DashboardService {
         this.configurarFiltros();
         
         // 3. Cargar datos iniciales (por defecto "mes")
-        await this.cargarDatos('mes');
+        await this.cargarDatos('hoy');
     }
 
 // ------------------------------- CARGA DE DATOS DEL DASHBOARD --------------------------------
 // Esta función centraliza la lógica de consulta al backend y renderizado.
 
     async cargarDatos(periodo, fechaInicio = null, fechaFin = null) {
+        console.log(`📡 Cargando datos del dashboard para periodo: ${periodo}, desde: ${fechaInicio}, hasta: ${fechaFin}`);
         try {
             // Mostrar estado de carga visual en los números
             this.mostrarLoadingKPIs();
@@ -2579,7 +2580,7 @@ class DashboardService {
                             totalVentas
                             cantidadPedidos
                             ticketPromedio
-                            resumenProductos { totalProductosVendidos }
+                            resumenProductos { topProductoNombre topProductoCantidad }
                             resumenMetodosPago { metodoMasUsado }
                             resumenTiposEntrega { tipoMasUsado }
                         }
@@ -2669,8 +2670,8 @@ dibujar los gráficos interactivos.
         document.getElementById('kpi-sales-sub').textContent = `${reporte.cantidadPedidos} pedidos`;
 
         // Producto Top (Unidades totales)
-        document.getElementById('kpi-prod').textContent = reporte.resumenProductos.totalProductosVendidos;
-        document.getElementById('kpi-prod-sub').textContent = 'unidades vendidas';
+        document.getElementById('kpi-prod').textContent = reporte.resumenProductos.topProductoCantidad;
+        document.getElementById('kpi-prod-sub').textContent = reporte.resumenProductos.topProductoNombre ? 'unidades vendidas de ' + reporte.resumenProductos.topProductoNombre: '';
 
         // Pago Favorito
         document.getElementById('kpi-pay').textContent = reporte.resumenMetodosPago.metodoMasUsado.toUpperCase();
@@ -2687,8 +2688,10 @@ Esta función actúa como traductora. Transforma los objetos de datos complejos 
 */ 
     renderizarGraficos(datos) {
         // 1. Gráfico de Barras: Top Productos
+        datos.topProductos.sort((a, b) => b.cantidadVendida - a.cantidadVendida);
         const labelsProd = datos.topProductos.map(p => p.nombre);
         const dataProd = datos.topProductos.map(p => p.cantidadVendida);
+        
 
         this.crearGrafico('chartTop', 'bar', labelsProd, dataProd, 'Unidades', ['#ffc107']);
 
