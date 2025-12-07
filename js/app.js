@@ -1995,7 +1995,8 @@ necesarias, evitando errores por intentar manipular elementos que no existen.
                         <div class="small text-muted">Fecha: ${fechaFmt}</div>
                         <div>
                             <button class="btn btn-sm btn-outline-light me-2 btn-ver-boleta" data-id="${p.id}">Detalle</button>
-                            <a href="Est_pedido.html?id=${p.id}" class="btn btn-sm btn-danger">Seguimiento</a>
+                            <a href="Est_pedido.html?id=${p.id}" class="btn btn-sm btn-info">Seguimiento</a>
+                            ${this.puedeSerCancelado(p) ? `<button class="btn btn-sm btn-cancelar-pedido btn-cancelar" data-id="${p.id}">Cancelar</button>` : ''}
                         </div>
                     </div>
                 </div>
@@ -2063,6 +2064,88 @@ necesarias, evitando errores por intentar manipular elementos que no existen.
         if (modalEl && window.bootstrap) {
             new bootstrap.Modal(modalEl).show();
         }
+    }
+
+        // Método para verificar si un pedido puede ser cancelado
+    puedeSerCancelado(pedido) {
+        // Solo pedidos en estado "confirmado" o "en_preparacion" pueden cancelarse
+        const estadosCancelables = ['confirmado', 'en_preparacion'];
+        return estadosCancelables.includes(pedido.estado);
+    }
+
+    // Método para cancelar un pedido
+    async cancelarPedido(pedidoId) {
+        try {
+            const usuario = authService.getUsuarioActual();
+            if (!usuario || !usuario.id) {
+                alert('Debes iniciar sesión para cancelar un pedido');
+                return { exito: false };
+            }
+
+            // Confirmación antes de cancelar
+            const confirmacion = confirm('¿Estás seguro de que deseas cancelar este pedido? Esta acción no se puede deshacer.');
+            if (!confirmacion) {
+                return { exito: false };
+            }
+
+        const mutation = `
+            mutation CancelarPedido($id: ID!) {
+                cancelarPedido(id: $id) {
+                    success
+                    message
+                    pedido { id estado }
+                }
+            }
+        `;
+
+            console.log('📡 Cancelando pedido ID:', pedidoId);
+            const data = await GQL.request(mutation, { id: pedidoId });
+
+            if (data.cancelarPedido.success) {
+                console.log('✅ Pedido cancelado correctamente');
+                alert('Pedido cancelado exitosamente');
+                
+                // Recargar la lista de pedidos
+                await this.cargarPedidos(usuario.id);
+                
+                return { exito: true, mensaje: data.cancelarPedido.mensaje };
+            } else {
+                throw new Error(data.cancelarPedido.mensaje);
+            }
+
+        } catch (error) {
+            console.error('❌ Error cancelando pedido:', error);
+            alert('No se pudo cancelar el pedido: ' + error.message);
+            return { exito: false, error: error.message };
+        }
+    }
+
+    registrarFiltros() {
+        const inputBusqueda = document.getElementById('input-busqueda-pedido');
+        if (inputBusqueda) {
+            inputBusqueda.addEventListener('input', (e) => {
+                const chipActivo = document.querySelector('.chip.active');
+                const filtro = chipActivo ? chipActivo.dataset.filter : 'todos';
+                this.renderizarPedidos(filtro, e.target.value);
+            });
+        }
+
+        document.querySelectorAll('.chip').forEach(chip => {
+            chip.addEventListener('click', (e) => {
+                document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+                e.target.classList.add('active');
+                const busqueda = document.getElementById('input-busqueda-pedido')?.value || '';
+                this.renderizarPedidos(e.target.dataset.filter, busqueda);
+            });
+        });
+
+        // NUEVO: Agregar listener para botones de cancelar
+        document.querySelectorAll('.btn-cancelar').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const pedidoId = e.target.dataset.id;
+                this.cancelarPedido(pedidoId);
+            });
+        });
     }
 }
 
@@ -2175,8 +2258,8 @@ class PaymentValidationService {
                 if (ui.msgStatus) ui.msgStatus.textContent = "Guardando tarjeta en tu perfil...";
                 console.log('💾 Intentando guardar tarjeta...');
                 
-                const mutationGuardar = `mutation GuardarMetodoPago($datosTarjeta: DatosTarjetaInput!, $alias: String, $usuarioId: ID!) {
-                    guardarMetodoPago(datosTarjeta: $datosTarjeta, alias: $alias, usuarioId: $usuarioId) { metodoPago { id } }
+                const mutationGuardar = `mutation GuardarMetodoPago($datosTarjeta: DatosTarjetaInput!, $alias: String ) {
+                    guardarMetodoPago(datosTarjeta: $datosTarjeta, alias: $alias) { metodoPago { id } }
                 }`;
                 console.log({
                         datosTarjeta: datosTarjeta,
@@ -2187,8 +2270,8 @@ class PaymentValidationService {
                     
                     await GQL.request(mutationGuardar, {
                         datosTarjeta,
-                        alias: `Tarjeta terminada en ${datosTarjeta.numero.slice(-4)}`,
-                        usuarioId: EstadoApp.usuario.id
+                        alias: `Tarjeta terminada en ${datosTarjeta.numero.slice(-4)}`
+                        
                     });
                     console.log('✅ Tarjeta guardada con éxito');
                 } catch (e) {
