@@ -1790,44 +1790,66 @@ class OrderService {
 //-----------------------------TRACKING-------------------------------------------------------------
 //Este bloque se encarga de consultar el estado de un pedido específico y actualizar la barra de progreso visual.
     
-    async inicializarTracking() {
-        console.log('📍 Inicializando Tracking de Pedido...');
-        
-        const params = new URLSearchParams(window.location.search);
-        const pedidoId = params.get('id');
+// En la clase OrderService, dentro de inicializarTracking():
+        async inicializarTracking() {
+            console.log('📍 Inicializando Tracking de Pedido...');
+            
+            const params = new URLSearchParams(window.location.search);
+            const pedidoId = params.get('id');
 
-        if (!pedidoId) {
-            alert('No se especificó un pedido para rastrear.');
-            window.location.href = 'Ges_boletas.html';
-            return;
+            if (!pedidoId) {
+                alert('No se especificó un pedido para rastrear.');
+                window.location.href = 'Ges_boletas.html';
+                return;
+            }
+
+            try {
+                // Cargar una primera vez
+                await this.actualizarEstadoPedido(pedidoId);
+                
+                // NUEVO: Polling cada 3 segundos para actualizar el estado
+                this.intervaloTracking = setInterval(() => {
+                    this.actualizarEstadoPedido(pedidoId);
+                }, 3000); // 3000 ms = 3 segundos
+
+            } catch (error) {
+                console.error('❌ Error cargando tracking:', error);
+            }
         }
 
-        try {
-            const query = `
-                query ObtenerTracking($id: ID!) {
-                    obtenerPedido(id: $id) {
-                        id
-                        numeroBoleta
-                        estado
-                        tiempoEstimado
-                        createdAt
-                        items { nombre cantidad }
+        // NUEVO: Método separado para actualizar el estado
+        async actualizarEstadoPedido(pedidoId) {
+            try {
+                const query = `
+                    query ObtenerTracking($id: ID!) {
+                        obtenerPedido(id: $id) {
+                            id
+                            numeroBoleta
+                            estado
+                            tiempoEstimado
+                            createdAt
+                            items { nombre cantidad }
+                        }
                     }
+                `;
+
+                const data = await GQL.request(query, { id: pedidoId });
+                const pedido = data.obtenerPedido;
+
+                if (!pedido) throw new Error('Pedido no encontrado');
+
+                this.renderizarTracking(pedido);
+                
+                // Detener polling si el pedido está entregado
+                if (pedido.estado === 'entregado' || pedido.estado === 'retirado' || pedido.estado === 'cancelado') {
+                    clearInterval(this.intervaloTracking);
+                    console.log('✅ Pedido finalizado, polling detenido');
                 }
-            `;
 
-            const data = await GQL.request(query, { id: pedidoId });
-            const pedido = data.obtenerPedido;
-
-            if (!pedido) throw new Error('Pedido no encontrado');
-
-            this.renderizarTracking(pedido);
-
-        } catch (error) {
-            console.error('❌ Error cargando tracking:', error);
-            // Evitamos alert para no bloquear si es un error menor
+            } catch (error) {
+                console.error('❌ Error actualizando estado:', error);
+            }
         }
-    }
 //------------------------------- RENDERIZADO DEL TRACKING ---------------------------------------------
 // Esta función traduce el estado del backend (texto) a una representación visual (pasos iluminados).
     renderizarTracking(pedido) {
@@ -1994,9 +2016,9 @@ necesarias, evitando errores por intentar manipular elementos que no existen.
                     <div class="d-flex justify-content-between align-items-end">
                         <div class="small text-muted">Fecha: ${fechaFmt}</div>
                         <div>
-                            <button class="btn btn-sm btn-outline-light me-2 btn-ver-boleta" data-id="${p.id}">Detalle</button>
-                            <a href="Est_pedido.html?id=${p.id}" class="btn btn-sm btn-info">Seguimiento</a>
-                            ${this.puedeSerCancelado(p) ? `<button class="btn btn-sm btn-cancelar-pedido btn-cancelar" data-id="${p.id}">Cancelar</button>` : ''}
+                            <button class="btn btn-sm btn-outline-warning me-2 btn-ver-boleta" data-id="${p.id}">Detalle</button>
+                            <a href="Est_pedido.html?id=${p.id}" class="btn btn-sm btn-outline-warning ">Seguimiento</a>
+                            ${this.puedeSerCancelado(p) ? `<button class="btn btn-sm btn-outline-warning btn-cancelar-pedido btn-cancelar" data-id="${p.id}">Cancelar</button>` : ''}
                         </div>
                     </div>
                 </div>

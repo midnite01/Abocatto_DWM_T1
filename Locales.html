@@ -10,56 +10,34 @@
   <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500&display=swap" rel="stylesheet">
 
   <style>
-    /* Estilos Base */
-    body { background-color: #111; color: #f7f7f7; }
-    .navbar { font-family: 'Oswald', sans-serif; font-size: 1.1rem; }
-    .card { background-color: #212529; border: 1px solid #373b3e; color: #fff; }
-
-    /* Estilos específicos de Locales */
-    .local-info {
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        padding-right: 1.5rem; /* Espacio entre texto e imagen */
+    /* Personalización del navbar */
+    .navbar {
+      font-family: 'Oswald', sans-serif; /* Fuente solo para navbar */
+      font-size: 1.1rem; /* Texto un poquito más grande */
     }
-    .local-image-container {
-        min-height: 250px; /* Altura mínima para la imagen */
-        background-color: #343a40; /* Fondo gris para placeholder */
-        border-radius: 0.75rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #ccc;
-        font-size: 1.5rem;
+    /* Fondo general de la página */
+    body {
+      background-color: #111;  /* negro suave */
+      color: #f7f7f7;          /* texto claro */
     }
-    .status-badge {
-        font-size: 1rem;
-        padding: 0.5rem 1rem;
-        border-radius: 0.5rem;
-        font-weight: bold;
-    }
-    .status-open { background-color: #198754; color: #fff; } /* Verde para abierto */
-    .status-closed { background-color: #dc3545; color: #fff; } /* Rojo para cerrado */
-
-    @media (max-width: 767.98px) { /* Móviles */
-        .local-info { padding-right: 0; padding-bottom: 1.5rem; }
-        .local-image-container { min-height: 200px; }
+    /* ===== Carrusel ===== */
+    #heroCarousel img {
+      height: 450px;         /* altura moderada */
+      object-fit: cover;     /* ajusta la imagen sin deformarla */
     }
 
-        .modal-body .text-muted {
+ 
+       .modal-body .text-muted {
         color: #e0e0e0 !important; /* Gris muy claro, casi blanco */
     }
     
-    /* FIX: Asegurar que lo que escribes dentro de los inputs también sea blanco */
-    .form-control {
-        color: #ffffff !important; 
-    }
-    
-    /* FIX: Color del placeholder (el texto de ayuda dentro del input) */
-    .form-control::placeholder {
-        color: #999999 !important;
-        opacity: 1;
-    }
+    #heroCarousel img {
+  height: 450px;         /* altura moderada */
+  object-fit: contain;   /* muestra la imagen completa sin zoom */
+  background-color: #1a1a1a; /* fondo oscuro para completar el espacio */
+}
+
+
   </style>
 </head>
 <body>
@@ -119,7 +97,7 @@
     <button class="nav-link text-black fw-medium border-0 bg-transparent" id="btn-carrito" hidden 
       data-bs-toggle="offcanvas" data-bs-target="#offcanvasCarrito" aria-controls="offcanvasCarrito">
       <i class="bi bi-cart3"></i> Carrito
-        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" 
+        <span class="position-absolute top-1 start-90 translate-middle badge rounded-pill bg-danger" 
           id="carr-cont" hidden>
           0
         </span>
@@ -253,25 +231,25 @@
 <main class="container my-5">
   <div class="row justify-content-center">
     <div class="col-lg-10 col-xl-8">
-      <div class="card rounded-4 shadow-lg p-4">
+      <div class="card rounded-4 shadow-lg p-4  bg-dark">
         <h2 class="text-warning fw-bold text-center mb-4" style="font-family:'Oswald', sans-serif;">NUESTRO LOCAL</h2>
         
         <div class="row g-4">
           <div class="col-md-7 local-info">
             <div>
-              <h4 class="text-white mb-3"><i class="bi bi-geo-alt-fill text-warning"></i> Dirección</h4>
-              <address class="lead fw-light">
+              <h4 class="text-warning mb-3"><i class="bi bi-geo-alt-fill text-warning"></i> Dirección</h4>
+              <address class="lead fw-light text-white">
                 Calle Inventada 9393<br>
                 Maipú, Región Metropolitana<br>
                 Santiago, 80220102, CL
               </address>
             </div>
             
-            <hr class="border-secondary my-4">
+            <hr class="border-secondary my-4"> 
 
             <div>
-              <h4 class="text-white mb-3"><i class="bi bi-clock-fill text-warning"></i> Horarios de Atención</h4>
-              <ul class="list-unstyled fw-light">
+              <h4 class="text-warning mb-3"><i class="bi bi-clock-fill text-warning"></i> Horarios de Atención</h4>
+              <ul class="list-unstyled fw-light text-white">
                 <li>Lunes a Viernes: <span class="fw-bold">10:00 - 20:00 hrs</span></li>
                 <li>Sábados y Domingos: <span class="fw-bold">10:00 - 22:00 hrs</span></li>
               </ul>
@@ -287,14 +265,14 @@
           </div>
           <div class="col-md-5">
             <div class="local-image-container">
-              <i class="bi bi-image-fill"></i> Imagen del Local
-              </div>
+              <img src="Recursos_Esteticos/img/Local.jpg" alt="Local Bocatto" class="img-fluid rounded" style="max-height: 250px; object-fit: cover; width: 100%;">
+            </div>
           </div>
         </div>
       </div>
     </div>
   </div>
-</main>
+
 <!--
 1.- id [local-status-badge] = Indicador visual de estado del local (abierto/cerrado)
 2.- id [local-status-text] = Texto de estado del local (abierto/cerrado)
@@ -412,7 +390,7 @@
 13.- id [reg-region] = Campo de región
 14.- id [btn-volver-login] = Botón para volver al modal de login
 -->
-
+</main>
 <!-- =================== FOOTER =================== -->
 <footer class="bg-warning text-black border-top border-secondary mt-5">
   <div class="container-fluid py-5">

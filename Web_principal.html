@@ -37,6 +37,13 @@
         color: #e0e0e0 !important; /* Gris muy claro, casi blanco */
     }
     
+    #heroCarousel img {
+  height: 450px;         /* altura moderada */
+  object-fit: contain;   /* muestra la imagen completa sin zoom */
+  background-color: #1a1a1a; /* fondo oscuro para completar el espacio */
+}
+
+
   </style>
 </head>
 
@@ -98,7 +105,7 @@
     <button class="nav-link text-black fw-medium border-0 bg-transparent" id="btn-carrito" hidden 
       data-bs-toggle="offcanvas" data-bs-target="#offcanvasCarrito" aria-controls="offcanvasCarrito">
       <i class="bi bi-cart3"></i> Carrito
-        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" 
+        <span class="position-absolute top-1 start-90 translate-middle badge rounded-pill bg-danger" 
           id="carr-cont" hidden>
           0
         </span>
@@ -362,31 +369,19 @@
 <!-- imagen 1-->
     <div class="carousel-item active">
       <img src="Recursos_Esteticos/img/hero1.jpg" class="d-block w-100" alt="Promo 1">
-      <div class="carousel-caption d-none d-md-block bg-dark bg-opacity-50 rounded p-2">
-        <h5>¡Pepperoni a precio vecino!</h5>
-        <p>Solo por hoy. Pide y retira en tienda.</p>
-        <a href="#promos" class="btn btn-danger">Ver promos</a>
-      </div>
+
     </div>
 
 <!-- imagen 2 -->
     <div class="carousel-item">
       <img src="Recursos_Esteticos/img/hero2.jpg" class="d-block w-100" alt="Promo 2">
-      <div class="carousel-caption d-none d-md-block bg-dark bg-opacity-50 rounded p-2">
-        <h5>Nuevo Panini Caprese</h5>
-        <p>Mozzarella, tomate, pesto y albahaca.</p>
-        <a href="#menu" class="btn btn-danger">Ir al menú</a>
-      </div>
+
     </div>
 
 <!-- imagen 3 -->
     <div class="carousel-item">
       <img src="Recursos_Esteticos/img/hero3.jpg" class="d-block w-100" alt="Promo 3">
-      <div class="carousel-caption d-none d-md-block bg-dark bg-opacity-50 rounded p-2">
-        <h5>Combo Baguette + Bebida</h5>
-        <p>Para llevar y compartir.</p>
-        <a href="#promos" class="btn btn-danger">Aprovechar</a>
-      </div>
+
     </div>
 
   </div>
