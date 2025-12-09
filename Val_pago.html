@@ -23,7 +23,7 @@
 <!-- Logo de la paguina -->
     <a id="logoAbocatto" class="navbar-brand d-flex align-items-center" href="Web_principal.html">
       <img src="Recursos_Esteticos/img/logo.png" alt="Bocatto" width="40" height="40" class="me-2">
-      <span class="fw-bold">Bocatto</span>
+      <span class="fw-bold">Abocatto</span>
     </a>
 
 <!--Estructura/Boton que vuelve respnsivo al resto de botones del nav-->
@@ -42,7 +42,7 @@
         </li>
 
         <li class="nav-item">
-          <a id="btn-perfil" class="nav-link text-black" href="#"> <!-- Dejamos href="#" por ahora hasta crear la página -->
+          <a id="btn-perfil" class="nav-link text-black" href="Ges_datos_Usuario.html"> <!-- Dejamos href="#" por ahora hasta crear la página -->
             <i class="bi bi-person-vcard"></i> Mi Perfil
           </a>
         </li>
@@ -70,7 +70,7 @@
     <button class="nav-link text-black fw-medium border-0 bg-transparent" id="btn-carrito" hidden 
       data-bs-toggle="offcanvas" data-bs-target="#offcanvasCarrito" aria-controls="offcanvasCarrito">
       <i class="bi bi-cart3"></i> Carrito
-        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" 
+        <span class="position-absolute top-1 start-90 translate-middle badge rounded-pill bg-danger" 
           id="carr-cont" hidden>
           0
         </span>
@@ -79,6 +79,10 @@
       <button class="nav-link text-black fw-medium border-0 bg-transparent" id="btn-admin" hidden>
         <i class="bi bi-gear-fill"></i> Panel Admin
       </button>
+
+      <a href="Ges_pedidos_admin.html" class="nav-link text-black fw-medium border-0 bg-transparent" id="btn-ges-pedidos" hidden>
+        <i class="bi bi-box-seam"></i> Gestión Pedidos
+      </a>
 
       <button class="nav-link text-black fw-medium border-0 bg-transparent" id="btn-logout" hidden>
         <i class="bi bi-door-closed"></i> Cerrar sesión
@@ -103,6 +107,7 @@
 12.-id [btn-admin] = Botón para abrir el panel de administración
 13.-id [btn-logout] = Botón para cerrar sesión
 --> 
+
 
 
 <main class="container center-box">

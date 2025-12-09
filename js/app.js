@@ -114,6 +114,7 @@ const ElementosDOM = {
     btnCarrito: document.getElementById('btn-carrito'),
     carrCont: document.getElementById('carr-cont'),
     btnAdmin: document.getElementById('btn-admin'),
+    btnGesPedidos: document.getElementById('btn-ges-pedidos'),
     btnLogout: document.getElementById('btn-logout'),
     
     // MODAL LOGIN (5 elementos)
@@ -513,9 +514,12 @@ Se ejecuta cada vez que cambia el estado de la sesión.
                 }
                 break;
 
-            case CONFIG.ROLES.ADMIN:
+                case CONFIG.ROLES.ADMIN:
                 if (Utilidades.elementoExiste(ElementosDOM.btnAdmin)) {
                     ElementosDOM.btnAdmin.hidden = false;
+                }
+                if (Utilidades.elementoExiste(ElementosDOM.btnGesPedidos)) {
+                    ElementosDOM.btnGesPedidos.hidden = false;
                 }
                 if (Utilidades.elementoExiste(ElementosDOM.btnLogout)) {
                     ElementosDOM.btnLogout.hidden = false;
@@ -1810,7 +1814,7 @@ class OrderService {
                 // NUEVO: Polling cada 3 segundos para actualizar el estado
                 this.intervaloTracking = setInterval(() => {
                     this.actualizarEstadoPedido(pedidoId);
-                }, 3000); // 3000 ms = 3 segundos
+                }, 1000); // 3000 ms = 3 segundos
 
             } catch (error) {
                 console.error('❌ Error cargando tracking:', error);
@@ -2001,7 +2005,7 @@ necesarias, evitando errores por intentar manipular elementos que no existen.
             if (p.estado === 'en_preparacion') { badgeClass = 'bg-warning text-dark'; estadoTexto = 'En Cocina'; }
             if (p.estado === 'en_camino') { badgeClass = 'bg-info text-dark'; estadoTexto = 'En Camino'; }
             if (p.estado === 'entregado') badgeClass = 'bg-success';
-
+            if (p.estado === 'cancelado') badgeClass = 'bg-danger';
             const div = document.createElement('div');
             div.className = 'card rounded-4 mb-3 border-secondary';
             div.innerHTML = `
@@ -2091,7 +2095,7 @@ necesarias, evitando errores por intentar manipular elementos que no existen.
         // Método para verificar si un pedido puede ser cancelado
     puedeSerCancelado(pedido) {
         // Solo pedidos en estado "confirmado" o "en_preparacion" pueden cancelarse
-        const estadosCancelables = ['confirmado', 'en_preparacion'];
+        const estadosCancelables = ['confirmado', 'en_preparacion', 'pendiente'];
         return estadosCancelables.includes(pedido.estado);
     }
 
@@ -2122,7 +2126,7 @@ necesarias, evitando errores por intentar manipular elementos que no existen.
 
             console.log('📡 Cancelando pedido ID:', pedidoId);
             const data = await GQL.request(mutation, { id: pedidoId });
-
+            console.log('✅ Respuesta de cancelación:', data.cancelarPedido);
             if (data.cancelarPedido.success) {
                 console.log('✅ Pedido cancelado correctamente');
                 alert('Pedido cancelado exitosamente');
@@ -2130,15 +2134,39 @@ necesarias, evitando errores por intentar manipular elementos que no existen.
                 // Recargar la lista de pedidos
                 await this.cargarPedidos(usuario.id);
                 
-                return { exito: true, mensaje: data.cancelarPedido.mensaje };
+                return { success: true, mensaje: data.cancelarPedido.message };
             } else {
-                throw new Error(data.cancelarPedido.mensaje);
+                throw new Error(data.cancelarPedido.message);
             }
 
         } catch (error) {
             console.error('❌ Error cancelando pedido:', error);
             alert('No se pudo cancelar el pedido: ' + error.message);
-            return { exito: false, error: error.message };
+            return { success: false, error: error.message };
+        }
+    }
+
+    // ------------------------------- CARGAR PEDIDOS (Actualización en Tiempo Real) -----------
+// Esta función recarga la lista de pedidos desde el backend y actualiza la interfaz sin necesidad de F5
+    async cargarPedidos(usuarioId) {
+        try {
+            console.log('🔄 Recargando lista de pedidos...');
+            
+            // 1. Traer pedidos frescos del backend
+            this.pedidos = await this.obtenerMisPedidos(usuarioId);
+            
+            // 2. Renderizar la lista (esto elimina automáticamente los pedidos cancelados)
+            const chipActivo = document.querySelector('.chip.active');
+            const filtro = chipActivo ? chipActivo.dataset.filter : 'todos';
+            const busqueda = document.getElementById('input-busqueda-pedido')?.value || '';
+            
+            this.renderizarPedidos(filtro, busqueda);
+            
+            console.log('✅ Lista de pedidos actualizada correctamente');
+            
+        } catch (error) {
+            console.error('❌ Error recargando pedidos:', error);
+            alert('Error al actualizar la lista de pedidos');
         }
     }
 
@@ -2844,6 +2872,505 @@ Esta función actúa como traductora. Transforma los objetos de datos complejos 
 // Instancia global
 const dashboardService = new DashboardService();
 
+
+/* 
+====================================== LOGICA: GESTIÓN DE PEDIDOS (ADMIN) =============================================
+Esta clase administra la vista exclusiva de Administrador ('Ges_pedidos_admin.html').
+Sus responsabilidades son:
+1. Proteger la ruta (Verificar rol Admin).
+2. Obtener todos los pedidos del sistema.
+3. Permitir cambiar el estado de un pedido manualmente.
+4. Sincronizar cambios con los clientes en tiempo real.
+5. Renderizar tabla interactiva con filtros y búsqueda.
+=======================================================================================================================
+*/
+
+class AdminOrderService {
+    constructor() {
+        // Detectar si estamos en la página de gestión de pedidos admin
+        if (document.getElementById('tabla-pedidos-admin')) {
+            this.inicializarAdmin();
+        }
+    }
+
+    // ======================== INICIALIZACIÓN ========================
+    async inicializarAdmin() {
+        console.log('👑 Inicializando Gestión de Pedidos (Admin)...');
+
+        // Proteger ruta (solo admin puede acceder)
+        if (!this.verificarAccesoAdmin()) {
+            this.mostrarAlertaRestringida();
+            return;
+        }
+
+        try {
+            // Mostrar alerta de permisos
+            const alertaAdmin = document.getElementById('alert-admin-only');
+            if (alertaAdmin) alertaAdmin.classList.remove('d-none');
+
+            // Cargar pedidos iniciales
+            await this.cargarTodosPedidos();
+
+            // Registrar event listeners
+            this.registrarEventos();
+
+            console.log('✅ Gestión de Pedidos inicializada correctamente');
+        } catch (error) {
+            console.error('❌ Error inicializando gestión de pedidos:', error);
+            this.mostrarError('Error al cargar la interfaz de gestión');
+        }
+    }
+
+    // ======================== VERIFICACIÓN DE ACCESO ========================
+    verificarAccesoAdmin() {
+        const usuario = Utilidades.cargarDesdeStorage(CONFIG.USER_KEY);
+        return usuario && usuario.rol === CONFIG.ROLES.ADMIN;
+    }
+
+    mostrarAlertaRestringida() {
+        const html = `
+            <div class="alert alert-danger m-5" role="alert">
+                <i class="bi bi-shield-exclamation me-2"></i>
+                <strong>Acceso Denegado</strong><br>
+                Solo los administradores pueden acceder a esta sección. 
+                <a href="Web_principal.html" class="alert-link">Volver al inicio</a>
+            </div>
+        `;
+        const main = document.querySelector('main');
+        if (main) main.innerHTML = html;
+    }
+
+    // ======================== CARGAR TODOS LOS PEDIDOS ========================
+async cargarTodosPedidos(filtro = 'todos') {
+    try {
+        this.mostrarCargando(true);
+
+        let query;
+        let variables = {};
+
+        if (filtro === 'todos') {
+            query = `
+                query ObtenerPedidos {
+                    obtenerPedidos {
+                        id
+                        numeroBoleta
+                        estado
+                        total
+                        createdAt
+                        tiempoEstimado
+                        tipoEntrega
+                        metodoPago
+                        cliente: usuarioId {
+                            id
+                            nombre
+                            email
+                            telefono
+                        }
+                        direccionEntrega {
+                            calle
+                            comuna
+                            ciudad
+                        }
+                        items {
+                            nombre
+                            cantidad
+                            precio
+                        }
+                    }
+                }
+            `;
+        } else {
+            query = `
+                query ObtenerPedidosPorEstado($estado: String!) {
+                    obtenerPedidosPorEstado(estado: $estado) {
+                        id
+                        numeroBoleta
+                        estado
+                        total
+                        createdAt
+                        tiempoEstimado
+                        tipoEntrega
+                        metodoPago
+                        cliente: usuarioId {
+                            id
+                            nombre
+                            email
+                            telefono
+                        }
+                        direccionEntrega {
+                            calle
+                            comuna
+                            ciudad
+                        }
+                        items {
+                            nombre
+                            cantidad
+                            precio
+                        }
+                    }
+                }
+            `;
+            variables = { estado: filtro };
+        }
+
+        const data = await GQL.request(query, variables);
+        const pedidos = filtro === 'todos' 
+            ? data.obtenerPedidos 
+            : data.obtenerPedidosPorEstado;
+
+        // Guardar datos en estado local
+        this.pedidosActuales = pedidos;
+        this.totalPedidos = pedidos.length;
+
+        // Renderizar tabla
+        this.renderizarTablaPedidos(pedidos);
+
+        this.mostrarCargando(false);
+
+    } catch (error) {
+        console.error('❌ Error cargando pedidos:', error);
+        this.mostrarError('No se pudieron cargar los pedidos');
+        this.mostrarCargando(false);
+    }
+}
+    // ======================== RENDERIZAR TABLA DE PEDIDOS ========================
+    renderizarTablaPedidos(pedidos) {
+        const tabla = document.getElementById('tabla-pedidos-admin');
+        if (!tabla) return;
+
+        if (pedidos.length === 0) {
+            tabla.innerHTML = `
+                <tr>
+                    <td colspan="8" class="text-center py-5 text-warning">
+                        <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+                        <p class="mt-3">No hay pedidos con este filtro</p>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        tabla.innerHTML = pedidos.map(pedido => `
+            <tr data-pedido-id="${pedido.id}">
+                <td class="fw-bold text-warning">#${pedido.numeroBoleta}</td>
+                <td class="text-warning">${pedido.cliente.nombre}</td>
+                <td class="text-warning">
+                    ${pedido.tipoEnvio === 'delivery' 
+                        ? `📍 ${pedido.direccion?.calle}, ${pedido.direccion?.comuna}` 
+                        : '🏪 Retiro en Local'}
+                </td>
+                <td class="text-end text-warning fw-bold">${Utilidades.formatearPrecio(pedido.total)}</td>
+                <td class="text-warning">${new Date(pedido.createdAt).toLocaleDateString('es-CL')}</td>
+                <td>
+                    <span class="badge badge-estado badge-${pedido.estado}">
+                        ${this.obtenerLabelEstado(pedido.estado)}
+                    </span>
+                </td>
+                <td>
+                    <select class="form-select form-select-sm selector-estado" 
+                            data-pedido-id="${pedido.id}" 
+                            data-estado-actual="${pedido.estado}">
+                        <option value="">-- Cambiar estado --</option>
+                        <option value="pendiente">Pendiente</option>
+                        <option value="confirmado">Confirmado</option>
+                        <option value="en_preparacion">En Cocina</option>
+                        <option value="en_camino">En Camino</option>
+                        <option value="entregado">Entregado</option>
+                        <option value="cancelado">Cancelado</option>
+                    </select>
+                </td>
+                <td>
+                    <button class="btn btn-sm btn-outline-light btn-ver-detalles" 
+                            data-pedido-id="${pedido.id}" 
+                            data-bs-toggle="modal" 
+                            data-bs-target="#modalDetallePedidoAdmin">
+                        <i class="bi bi-eye"></i> Ver
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    // ======================== CAMBIAR ESTADO DEL PEDIDO ========================
+    async cambiarEstadoPedido(pedidoId, nuevoEstado) {
+        if (!nuevoEstado) return;
+
+        try {
+            const mutation = `
+                mutation ActualizarEstadoPedido($id: ID!, $estado: String!) {
+                    actualizarEstadoPedido(id: $id, estado: $estado) {
+                        pedido {
+                            id
+                            estado
+                            numeroBoleta
+                        }
+                        mensaje
+                    }
+                }
+            `;
+
+            const data = await GQL.request(mutation, { 
+                id: pedidoId, 
+                estado: nuevoEstado 
+            });
+
+            const pedidoActualizado = data.actualizarEstadoPedido.pedido;
+
+            // Mostrar confirmación
+            this.mostrarNotificacion(
+                `✅ Pedido #${pedidoActualizado.numeroBoleta} actualizado a ${this.obtenerLabelEstado(nuevoEstado)}`,
+                'success'
+            );
+
+            // Recargar tabla
+            await this.cargarTodosPedidos();
+
+        } catch (error) {
+            console.error('❌ Error actualizando estado:', error);
+            this.mostrarError(`Error al cambiar estado: ${error.message}`);
+        }
+    }
+
+    // ======================== RENDERIZAR MODAL CON DETALLES ========================
+    async mostrarDetallePedido(pedidoId) {
+        try {
+            const query = `
+                query ObtenerPedidoDetalles($id: ID!) {
+                    obtenerPedido(id: $id) {
+                        id
+                        numeroBoleta
+                        estado
+                        total
+                        createdAt
+                        tiempoEstimado
+                        tipoEntrega
+                        usuarioId {
+                            id
+                            nombre
+                            email
+                            telefono
+                        } 
+                        direccionEntrega {
+                            calle
+                            comuna
+                            ciudad
+                        }
+                        items {
+                            nombre
+                            cantidad
+                            precio
+                        }
+                    }
+                }
+            `;
+
+            const data = await GQL.request(query, { id: pedidoId });
+                        console.log('📦 Detalles del pedido:', data);
+            const pedido = data.obtenerPedido;
+
+            const queryUsuario = `
+                query ObtenerUsuario($id: ID!) {
+                    obtenerUsuario(id: $id) {
+                        id
+                        nombre
+                        email
+                        telefono
+                    }
+                }
+            `;
+            const dataUsuario = await GQL.request(queryUsuario, { id: pedido.usuarioId.id });
+
+
+            // Llenar modal
+            document.getElementById('modal-pedido-num').textContent = pedido.numeroBoleta;
+            document.getElementById('modal-cliente-nombre').textContent = dataUsuario.obtenerUsuario.nombre;
+            document.getElementById('modal-cliente-email').textContent = dataUsuario.obtenerUsuario.email;
+            document.getElementById('modal-cliente-telefono').textContent = dataUsuario.obtenerUsuario.telefono;
+            document.getElementById('modal-tipo-envio').textContent = 
+                pedido.tipoEntrega === 'delivery' ? '📍 Delivery' : '🏪 Retiro en Local';
+            document.getElementById('modal-direccion').textContent = 
+                pedido.direccionEntrega ? `${pedido.direccionEntrega.calle}, ${pedido.direccionEntrega.comuna}` : 'N/A';
+            document.getElementById('modal-fecha-pedido').textContent = 
+                new Date(pedido.createdAt).toLocaleDateString('es-CL');
+            document.getElementById('modal-tiempo-estimado').textContent = pedido.tiempoEstimado || '30 min';
+
+            // Renderizar items
+            const tablaItems = document.getElementById('modal-items-pedido');
+            tablaItems.innerHTML = pedido.items.map(item => `
+                <tr>
+                    <td>${item.nombre}</td>
+                    <td class="text-center">${item.cantidad}</td>
+                    <td class="text-end">${Utilidades.formatearPrecio(item.precio)}</td>
+                    <td class="text-end">${Utilidades.formatearPrecio(item.precio*item.cantidad)}</td>
+                </tr>
+            `).join('');
+
+            // Total
+            document.getElementById('modal-total-pedido').textContent = Utilidades.formatearPrecio(pedido.total);
+
+        } catch (error) {
+            console.error('❌ Error cargando detalles:', error);
+            this.mostrarError('No se pudieron cargar los detalles del pedido');
+        }
+    }
+
+    // ======================== RENDERIZAR PAGINACIÓN ========================
+    renderizarPaginacion(paginas, paginaActual, filtroActual) {
+        const nav = document.getElementById('paginacion-pedidos');
+        if (!nav) return;
+
+        if (paginas <= 1) {
+            nav.innerHTML = '';
+            return;
+        }
+
+        let html = '';
+        for (let i = 1; i <= paginas; i++) {
+            html += `
+                <li class="page-item ${i === paginaActual ? 'active' : ''}">
+                    <button class="page-link btn-pagina" data-pagina="${i}" data-filtro="${filtroActual}">
+                        ${i}
+                    </button>
+                </li>
+            `;
+        }
+
+        nav.innerHTML = html;
+    }
+
+    // ======================== REGISTRAR EVENTOS ========================
+    registrarEventos() {
+        // Filtros
+        const filtrosContainer = document.getElementById('filtros-admin-pedidos');
+        if (filtrosContainer) {
+            filtrosContainer.addEventListener('click', (e) => {
+                if (e.target.classList.contains('chip-admin')) {
+                    // Actualizar filtro activo
+                    document.querySelectorAll('.chip-admin').forEach(chip => chip.classList.remove('active'));
+                    e.target.classList.add('active');
+
+                    // Cargar pedidos con nuevo filtro
+                    const filtro = e.target.dataset.filter;
+                    this.cargarTodosPedidos(filtro);
+                }
+            });
+        }
+
+        // Búsqueda
+        const inputBusqueda = document.getElementById('input-busqueda-admin');
+        if (inputBusqueda) {
+            inputBusqueda.addEventListener('input', (e) => {
+                this.filtrarLocal(e.target.value);
+            });
+        }
+
+        // Cambio de estado
+        const tabla = document.getElementById('tabla-pedidos-admin');
+        if (tabla) {
+            tabla.addEventListener('change', async (e) => {
+                if (e.target.classList.contains('selector-estado')) {
+                    const pedidoId = e.target.dataset.pedidoId;
+                    const nuevoEstado = e.target.value;
+                    
+                    if (nuevoEstado) {
+                        if (confirm(`¿Confirmar cambio de estado?`)) {
+                            await this.cambiarEstadoPedido(pedidoId, nuevoEstado);
+                        } else {
+                            // Revertir select
+                            e.target.value = '';
+                        }
+                    }
+                }
+            });
+
+            // Ver detalles
+            tabla.addEventListener('click', (e) => {
+                if (e.target.closest('.btn-ver-detalles')) {
+                    const pedidoId = e.target.closest('.btn-ver-detalles').dataset.pedidoId;
+                    this.mostrarDetallePedido(pedidoId);
+                }
+            });
+        }
+
+        // Paginación
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('btn-pagina')) {
+                const pagina = e.target.dataset.pagina;
+                const filtro = e.target.dataset.filtro;
+                this.cargarTodosPedidos(filtro, parseInt(pagina));
+            }
+        });
+    }
+
+    // ======================== FILTRAR LOCALMENTE (BÚSQUEDA) ========================
+    filtrarLocal(termino) {
+        const filas = document.querySelectorAll('#tabla-pedidos-admin tr');
+        const filtro = termino.toLowerCase();
+
+        filas.forEach(fila => {
+            const texto = fila.textContent.toLowerCase();
+            fila.style.display = texto.includes(filtro) ? '' : 'none';
+        });
+    }
+
+    // ======================== UTILIDADES ========================
+    obtenerLabelEstado(estado) {
+        const labels = {
+            'pendiente': '⏳ Pendiente',
+            'confirmado': '✅ Confirmado',
+            'en_preparacion': '🔥 En Cocina',
+            'en_camino': '🛵 En Camino',
+            'entregado': '🍽️ Entregado',
+            'retirado': '✋ Retirado',
+            'cancelado': '❌ Cancelado'
+        };
+        return labels[estado] || estado;
+    }
+
+    mostrarCargando(mostrar) {
+        const tabla = document.getElementById('tabla-pedidos-admin');
+        if (!tabla) return;
+
+        if (mostrar) {
+            tabla.innerHTML = `
+                <tr>
+                    <td colspan="8" class="text-center py-5">
+                        <div class="spinner-border text-warning mb-3" role="status"></div>
+                        <p class="text-muted">Cargando pedidos...</p>
+                    </td>
+                </tr>
+            `;
+        }
+    }
+
+    mostrarNotificacion(mensaje, tipo = 'info') {
+        // Crear alerta temporal
+        const alertaId = 'alerta-' + Date.now();
+        const alerta = document.createElement('div');
+        alerta.id = alertaId;
+        alerta.className = `alert alert-${tipo} alert-dismissible fade show position-fixed top-0 end-0 m-3`;
+        alerta.style.zIndex = '9999';
+        alerta.innerHTML = `
+            ${mensaje}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        document.body.appendChild(alerta);
+
+        // Remover después de 4 segundos
+        setTimeout(() => {
+            const el = document.getElementById(alertaId);
+            if (el) el.remove();
+        }, 4000);
+    }
+
+    mostrarError(mensaje) {
+        this.mostrarNotificacion(mensaje, 'danger');
+    }
+}
+
+// Instancia global
+const adminOrderService = new AdminOrderService();
+
 /* 
 =========================== LOGICA DE INICIALIZADOR =============================================================================
 Esta clase es el punto de entrada (Entry Point). Su función es coordinar el arranque de la aplicación.
@@ -3197,12 +3724,12 @@ registrarListenersProductos() {
         }
 
         // --- Listener para botón Panel Admin ---
-        if (Utilidades.elementoExiste(ElementosDOM.btnAdmin)) {
-            ElementosDOM.btnAdmin.addEventListener('click', () => {
-                console.log('👑 Yendo al panel de admin...');
-                window.location.href = 'Ges_reportes.html';
-            });
-        }
+            if (Utilidades.elementoExiste(ElementosDOM.btnAdmin)) {
+                ElementosDOM.btnAdmin.addEventListener('click', () => {
+                    console.log('👑 Yendo al panel de admin...');
+                    window.location.href = 'Ges_reportes.html'; // Cambiar de Ges_reportes.html
+                });
+            }
 
         // --- Listener para botón Locales del Navbar ---
         // Lo enlazamos al enlace del navbar principal que tiene el href="#locales"

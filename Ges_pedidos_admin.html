@@ -3,57 +3,82 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Bocatto | Tus Pedidos</title>
+  <title>Bocatto | Gestión de Pedidos Admin</title>
 
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500&display=swap" rel="stylesheet">
 
   <style>
-    /* Estilos base estandarizados */
-    .navbar { font-family: 'Oswald', sans-serif; font-size: 1.1rem; }
+    /* Estilos base */
     body { background-color: #111; color: #f7f7f7; }
-    
-    /* Estilos específicos de Boletas */
+    .navbar { font-family: 'Oswald', sans-serif; font-size: 1.1rem; }
     .card { background-color: #212529; border: 1px solid #373b3e; color: #fff; }
     
-    /* Chips de filtro */
-    .chip { 
-      background-color: #212529; 
-      border: 1px solid #495057; 
-      border-radius: 999px; 
-      padding: 0.35rem 0.8rem; 
-      cursor: pointer; 
+    /* Tabla de pedidos */
+    .table-responsive { background-color: #212529; border-radius: 0.5rem; }
+    .table-admin { --bs-table-bg: #212529; border: 1px solid #373b3e; }
+    .table-admin thead { background-color: #1a1d20; }
+    .table-admin th { color: #ffc107; font-weight: bold; border-color: #373b3e; }
+    .table-admin td { border-color: #373b3e; vertical-align: middle; }
+    
+    /* Estados */
+    .badge-estado { padding: 0.5rem 0.75rem; font-size: 0.85rem; font-weight: bold; }
+    .badge-pendiente { background-color: #6c757d; }
+    .badge-confirmado { background-color: #0dcaf0; }
+    .badge-en_preparacion { background-color: #ffc107; color: #000; }
+    .badge-en_camino { background-color: #0d6efd; }
+    .badge-entregado { background-color: #198754; }
+    .badge-retirado { background-color: #198754; }
+    .badge-cancelado { background-color: #dc3545; }
+    
+    /* Select customizado */
+    .form-select { background-color: #343a40; color: #fff; border-color: #495057; }
+    .form-select option { background-color: #212529; color: #fff; }
+    .form-select:focus { border-color: #ffc107; box-shadow: 0 0 0 0.25rem rgba(255, 193, 7, 0.25); }
+    
+    /* Botones */
+    .btn-actualizar { background-color: #198754; border: none; color: #fff; }
+    .btn-actualizar:hover { background-color: #157347; }
+    .btn-actualizar:disabled { background-color: #6c757d; cursor: not-allowed; }
+    
+    /* Animación de carga */
+    .spinner-mini { width: 1rem; height: 1rem; border-width: 0.2rem; }
+    
+    /* Modal */
+    .modal-content { background-color: #212529; border: 1px solid #373b3e; }
+    .modal-header { border-color: #373b3e; }
+    .modal-footer { border-color: #373b3e; }
+    
+    /* Filtros */
+    .chip-admin {
+      background-color: #343a40;
+      border: 1px solid #495057;
+      border-radius: 999px;
+      padding: 0.35rem 0.8rem;
+      cursor: pointer;
       font-size: 0.9rem;
       transition: all 0.2s;
+      display: inline-block;
+      margin-right: 0.5rem;
+      margin-bottom: 0.5rem;
     }
-    .chip:hover { background-color: #343a40; }
-    .chip.active { 
-      background-color: #ffc107; 
-      color: #000; 
-      border-color: #ffc107; 
+    .chip-admin:hover { background-color: #495057; }
+    .chip-admin.active {
+      background-color: #ffc107;
+      color: #000;
+      border-color: #ffc107;
       font-weight: bold;
     }
-
-    /* Puntos de estado */
-    .dot { height: 10px; width: 10px; border-radius: 50%; display: inline-block; margin-right: 5px; }
-    .dot-prep { background-color: #ffc107; } /* Amarillo */
-    .dot-route { background-color: #0dcaf0; } /* Cyan */
-    .dot-done { background-color: #198754; } /* Verde */
     
-    /* Tabla del modal */
-    .table-dark { --bs-table-bg: #212529; }
-
-    /* ... tus estilos anteriores ... */
-
-    /* FIX: Hacer legible el texto secundario (fechas, boletas, subtítulos) */
-    .text-muted {
-        color: #cccccc !important; /* Gris claro */
-    }
-
-    /* FIX: Asegurar que el texto dentro de las cards sea siempre visible */
-    .card-body {
-        color: #ffffff;
+    /* Alerta de protección */
+    .alert-admin-only {
+      background-color: #111;
+      color: #cc0000;
+      border: 1px solid #c82333;
+      border-radius: 0.5rem;
+      padding: 1rem;
+      margin-bottom: 1rem;
     }
   </style>
 </head>
@@ -124,10 +149,6 @@
         <i class="bi bi-gear-fill"></i> Panel Admin
       </button>
 
-      <a href="Ges_pedidos_admin.html" class="nav-link text-black fw-medium border-0 bg-transparent" id="btn-ges-pedidos" hidden>
-        <i class="bi bi-box-seam"></i> Gestión Pedidos
-      </a>
-
       <button class="nav-link text-black fw-medium border-0 bg-transparent" id="btn-logout" hidden>
         <i class="bi bi-door-closed"></i> Cerrar sesión
       </button>
@@ -152,15 +173,13 @@
 13.-id [btn-logout] = Botón para cerrar sesión
 --> 
 
-
-
 <!-- =================== MODAL DE LOGIN =================== -->
 <div class="modal fade" id="loginModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content bg-dark text-light rounded-4">
       <div class="modal-header border-0">
         <h5 class="modal-title">Acceso a Bocatto</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
         <div class="row">
@@ -171,8 +190,14 @@
           <div class="col-md-6">
             <h6 class="fw-bold mb-3">¿Ya tienes cuenta?</h6>
             <form id="form-logearse">
-              <div class="mb-3"><label class="form-label">Email</label><input type="email" class="form-control" id="login-Email" required></div>
-              <div class="mb-3"><label class="form-label">Contraseña</label><input type="password" class="form-control" id="login-contraseña" required></div>
+              <div class="mb-3">
+                <label class="form-label">Email</label>
+                <input type="email" class="form-control" id="login-Email" required>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Contraseña</label>
+                <input type="password" class="form-control" id="login-contraseña" required>
+              </div>
               <button type="submit" class="btn btn-warning w-100">Iniciar sesión</button>
             </form>
           </div>
@@ -181,97 +206,124 @@
     </div>
   </div>
 </div>
-<!--
-1.- id [loginModal] = Modal de acceso (contenedor principal)
-2.- id [btn-registrarse] = Botón para ir al registro
-3.- id [form-logearse] = Formulario de login
-4.- id [login-Email] = Campo email de login
-5.- id [login-contraseña] = Campo contraseña de login
--->
 
-<!-- =================== OFFCANVAS CARRITO =================== -->
-<div class="offcanvas offcanvas-end bg-dark text-light" tabindex="-1" id="offcanvasCarrito">
-  <div class="offcanvas-header border-bottom">
-    <h5 class="offcanvas-title fw-bold" style="color:#e6b800;">Tu carrito</h5>
-    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
-  </div>
-  <div class="offcanvas-body d-flex flex-column">
-    <div id="carrito-items" class="flex-grow-1"><p class="text-center text-muted mt-5" id="carrito-vacio">Vacío</p></div>
-    <div class="border-top pt-3">
-      <div class="d-flex justify-content-between mb-3"><h5 class="fw-bold">Subtotal</h5><h5 id="carrito-total">$0</h5></div>
-      <div class="d-grid gap-2">
-        <button class="btn btn-outline-light" id="btn-vaciar">Vaciar</button>
-        <a id="btn-hacer-pedido" class="btn btn-danger fw-bold">Hacer pedido</a>
-      </div>
-    </div>
-  </div>
-</div>
-<!--
-1.- id [offcanvasCarrito] = Offcanvas del carrito (contenedor principal)
-2.- id [carrito-items] = Contenedor de ítems del carrito
-3.- id [carrito-vacio] = Mensaje de carrito vacío
-4.- id [carrito-total] = Monto subtotal del carrito
-5.- id [btn-vaciar] = Botón para vaciar el carrito
-6.- id [btn-hacer-pedido] = Botón para iniciar el proceso de pedido
--->
-
-<!-- =================== SECCIÓN MIS PEDIDOS =================== -->
-<main class="container my-5">
+<!-- =================== SECCIÓN GESTIÓN DE PEDIDOS (ADMIN) =================== -->
+<main class="container-fluid my-5 px-4">
   
-  <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
-    <div>
-      <h2 class="text-warning fw-bold mb-0" style="font-family:'Oswald', sans-serif;">MIS PEDIDOS</h2>
-      <p class="text-muted mb-0">Revisa el estado y detalle de tus compras.</p>
-    </div>
-    
-    <div class="d-flex gap-2 overflow-auto pb-2" id="filtros-pedidos">
-      <span class="chip active" data-filter="todos">Todos</span>
-      <span class="chip" data-filter="en_preparacion"><span class="dot dot-prep"></span>En cocina</span>
-      <span class="chip" data-filter="en_camino"><span class="dot dot-route"></span>En camino</span>
-      <span class="chip" data-filter="entregado"><span class="dot dot-done"></span>Entregado</span>
+  <!-- Alerta de protección -->
+  <div class="alert-admin-only d-none" id="alert-admin-only">
+    <i class="bi bi-shield-lock me-2"></i>
+    <strong>Solo Administrador:</strong> Cambios en esta página afectan directamente a los clientes en tiempo real.
+  </div>
+
+  <div class="row mb-4">
+    <div class="col">
+      <h2 class="text-warning fw-bold" style="font-family:'Oswald', sans-serif;">
+        <i class="bi bi-box-seam me-2"></i>GESTIÓN DE PEDIDOS
+      </h2>
+      <p class="text-warning">Administra el estado de todos los pedidos generados</p>
     </div>
   </div>
 
+  <!-- Filtros -->
+  <div class="card rounded-3 p-4 mb-4">
+    <h6 class="fw-bold text-warning mb-3">Filtrar por estado</h6>
+    <div id="filtros-admin-pedidos">
+      <span class="chip-admin active" data-filter="todos">Todos</span>
+      <span class="chip-admin" data-filter="pendiente">Pendiente</span>
+      <span class="chip-admin" data-filter="confirmado">Confirmado</span>
+      <span class="chip-admin" data-filter="en_preparacion">En Cocina</span>
+      <span class="chip-admin" data-filter="en_camino">En Camino</span>
+      <span class="chip-admin" data-filter="entregado">Entregado</span>
+      <span class="chip-admin" data-filter="cancelado">Cancelado</span>
+    </div>
+  </div>
+
+  <!-- Búsqueda -->
   <div class="input-group mb-4">
-    <span class="input-group-text bg-dark text-light border-secondary"><i class="bi bi-search"></i></span>
-    <input type="text" id="input-busqueda-pedido" class="form-control bg-dark text-light border-secondary" placeholder="Buscar por número de pedido, producto o dirección...">
+    <span class="input-group-text bg-dark text-light border-secondary">
+      <i class="bi bi-search"></i>
+    </span>
+    <input type="text" id="input-busqueda-admin" class="form-control bg-dark text-light border-secondary" 
+           placeholder="Buscar por número de boleta, cliente o dirección...">
   </div>
 
-  <div id="lista-pedidos" class="vstack gap-3">
-    <div class="text-center py-5 text-muted">
-      <div class="spinner-border text-warning mb-3" role="status"></div>
-      <p>Cargando tus pedidos...</p>
-    </div>
+  <!-- Tabla de pedidos -->
+  <div class="table-responsive">
+    <table class="table table-admin table-hover mb-0">
+      <thead>
+        <tr>
+          <th>#Boleta</th>
+          <th>Cliente</th>
+          <th>Dirección/Retiro</th>
+          <th>Total</th>
+          <th>Fecha</th>
+          <th>Estado Actual</th>
+          <th>Nuevo Estado</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="tabla-pedidos-admin">
+        <tr>
+          <td colspan="8" class="text-center py-5 text-warning">
+            <div class="spinner-border text-warning mb-1" role="status"></div>
+            <p>Cargando pedidos...</p>
+          </td>
+        </tr>
+      </tbody>
+    </table>
   </div>
+
+  <!-- Paginación (opcional) -->
+  <nav class="mt-4" aria-label="Paginación de pedidos">
+    <ul class="pagination justify-content-center" id="paginacion-pedidos">
+      <!-- Se llena dinámicamente -->
+    </ul>
+  </nav>
 
 </main>
-<!--
-1.- id [filtros-pedidos] = Contenedor de chips/filtros de estado de pedido
-2.- id [input-busqueda-pedido] = Campo de búsqueda de pedidos
-3.- id [lista-pedidos] = Contenedor de la lista de pedidos
--->
 
-<!-- =================== MODAL DETALLE DE BOLETA =================== -->
-<div class="modal fade" id="modalBoleta" tabindex="-1" aria-hidden="true">
+<!-- =================== MODAL DETALLE DE PEDIDO =================== -->
+<div class="modal fade" id="modalDetallePedidoAdmin" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content bg-dark text-light rounded-4 border-secondary">
       <div class="modal-header border-bottom border-secondary">
-        <h5 class="modal-title">Detalle de Boleta <span id="modal-boleta-num" class="text-warning"></span></h5>
+        <h5 class="modal-title">
+          Detalle del Pedido <span id="modal-pedido-num" class="text-warning"></span>
+        </h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
-        <div class="row mb-3">
-          <div class="col-6">
-            <small class="text-muted">Fecha</small>
-            <div id="modal-boleta-fecha" class="fw-bold"></div>
-          </div>
-          <div class="col-6 text-end">
+        <!-- Información del cliente -->
+        <div class="row mb-4">
+          <div class="col-md-6">
             <small class="text-muted">Cliente</small>
-            <div id="modal-boleta-cliente">Usuario Bocatto</div>
+            <div id="modal-cliente-nombre" class="fw-bold"></div>
+            <small id="modal-cliente-email" class="text-muted"></small>
+          </div>
+          <div class="col-md-6">
+            <small class="text-muted">Teléfono</small>
+            <div id="modal-cliente-telefono" class="fw-bold"></div>
           </div>
         </div>
-        
-        <table class="table table-dark table-striped">
+
+        <!-- Información de entrega -->
+        <div class="row mb-4">
+          <div class="col-md-6">
+            <small class="text-muted">Tipo de Envío</small>
+            <div id="modal-tipo-envio" class="fw-bold"></div>
+          </div>
+          <div class="col-md-6">
+            <small class="text-muted">Dirección</small>
+            <div id="modal-direccion" class="fw-bold"></div>
+          </div>
+        </div>
+
+        <hr class="border-secondary">
+
+        <!-- Ítems del pedido -->
+        <h6 class="fw-bold text-warning mb-3">Productos</h6>
+        <table class="table table-dark table-striped table-sm">
           <thead>
             <tr>
               <th>Producto</th>
@@ -280,31 +332,36 @@
               <th class="text-end">Total</th>
             </tr>
           </thead>
-          <tbody id="modal-boleta-items">
-            </tbody>
+          <tbody id="modal-items-pedido">
+          </tbody>
           <tfoot>
             <tr>
               <td colspan="3" class="text-end fw-bold">Total</td>
-              <td class="text-end fw-bold text-warning" id="modal-boleta-total">$0</td>
+              <td class="text-end fw-bold text-warning" id="modal-total-pedido">$0</td>
             </tr>
           </tfoot>
         </table>
+
+        <hr class="border-secondary">
+
+        <!-- Estado y tiempo estimado -->
+        <div class="row">
+          <div class="col-md-6">
+            <small class="text-muted">Fecha de Pedido</small>
+            <div id="modal-fecha-pedido" class="fw-bold"></div>
+          </div>
+          <div class="col-md-6">
+            <small class="text-muted">Tiempo Estimado</small>
+            <div id="modal-tiempo-estimado" class="fw-bold"></div>
+          </div>
+        </div>
       </div>
       <div class="modal-footer border-top border-secondary">
-        <button class="btn btn-outline-light" data-bs-dismiss="modal">Cerrar</button>
-        <button class="btn btn-warning" onclick="alert('Descargando PDF simulado...')"><i class="bi bi-download"></i> Descargar</button>
+        <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cerrar</button>
       </div>
     </div>
   </div>
 </div>
-<!--
-1.- id [modalBoleta] = Modal de boleta (contenedor principal)
-2.- id [modal-boleta-num] = Número/ID de boleta mostrado en el título
-3.- id [modal-boleta-fecha] = Fecha de emisión de la boleta
-4.- id [modal-boleta-cliente] = Nombre del cliente
-5.- id [modal-boleta-items] = Cuerpo de la tabla con ítems
-6.- id [modal-boleta-total] = Total de la boleta
--->
 
 <!-- =================== FOOTER =================== -->
 <footer class="bg-warning text-black border-top border-secondary mt-5">
@@ -362,6 +419,7 @@
     </div>
   </div>
 </footer>
+
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="js/app.js?v=4" defer></script>
