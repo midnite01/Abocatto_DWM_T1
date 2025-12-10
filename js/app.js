@@ -1537,15 +1537,33 @@ class CheckoutService {
             });
         });
 
-        //Método de Pago
+        //Método de Pago - MEJORADO CON TARJETAS GUARDADAS
         const radiosPago = document.querySelectorAll('input[name="metodoPago"]');
         radiosPago.forEach(radio => {
-            radio.addEventListener('change', (e) => {
+            radio.addEventListener('change', async (e) => {
                 const esTarjeta = e.target.value === 'tarjeta';
                 Utilidades.toggleElemento(document.getElementById('seccion-tarjeta'), esTarjeta);
                 Utilidades.toggleElemento(document.getElementById('seccion-info-contraentrega'), !esTarjeta);
+                
+                // Si selecciona tarjeta, cargar tarjetas guardadas
+                if (esTarjeta) {
+                    const seccionTarjetasGuardadas = document.getElementById('seccion-tarjetas-guardadas');
+                    if (seccionTarjetasGuardadas) {
+                        seccionTarjetasGuardadas.style.display = 'block';
+                        await this.cargarTarjetasEnCheckout();
+                    }
+                }
             });
         });
+
+        // Botón "Usar otra tarjeta"
+        const btnUsarOtraTarjeta = document.getElementById('btn-usar-otra-tarjeta');
+        if (btnUsarOtraTarjeta) {
+            btnUsarOtraTarjeta.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.mostrarFormularioTarjetaNueva();
+            });
+        }
 
         //Botón Confirmar Compra (INTEGRACIÓN REAL)
         const btnConfirmar = document.getElementById('btn-confirmar-compra');
@@ -1556,6 +1574,126 @@ class CheckoutService {
             });
         }
     }
+
+        // ============= MÉTODO PARA CARGAR TARJETAS GUARDADAS =============
+    async cargarTarjetasEnCheckout() {
+        if (!authService.estaAutenticado()) {
+            console.log('❌ Usuario no autenticado, no se cargan tarjetas');
+            return;
+        }
+
+        const contenedor = document.getElementById('lista-tarjetas-checkout');
+        if (!contenedor) return;
+
+        try {
+            contenedor.innerHTML = '<div class="text-center text-muted small py-3">Cargando tarjetas...</div>';
+            
+            const query = `
+                query {
+                    obtenerMetodosPago {
+                        id
+                        alias
+                        datosTarjeta { ultimosDigitos tipo mesVencimiento anioVencimiento nombreTitular cvv }
+                    }
+                }
+            `;
+
+            const data = await GQL.request(query);
+            const tarjetas = data.obtenerMetodosPago;
+            EstadoApp.tarjetas = tarjetas; // Guardar en estado global
+            console.log('💳 Tarjetas cargadas:', tarjetas);
+
+            contenedor.innerHTML = '';
+            
+            if (!tarjetas || tarjetas.length === 0) {
+                contenedor.innerHTML = `
+                    <div class="alert alert-dark border-secondary text-center small">
+                        <i class="bi bi-credit-card-2-front fs-5 d-block mb-2"></i>
+                        No tienes tarjetas guardadas
+                    </div>`;
+                return;
+            }
+
+            // Renderizar tarjetas guardadas como opciones seleccionables
+            tarjetas.forEach(tarjeta => {
+                const icono = tarjeta.datosTarjeta.tipo === 'visa' ? 'bi-credit-card-2-back' : 'bi-credit-card';
+                const html = `
+                    <div class="card bg-dark border-secondary cursor-pointer tarjeta-opcion" data-tarjeta-id="${tarjeta.id}" data-tarjeta-data="${JSON.stringify(tarjeta).replace(/"/g, '&quot;')}">
+                        <div class="card-body d-flex justify-content-between align-items-center py-3 px-3">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="form-check mb-0">
+                                    <input class="form-check-input checkbox-tarjeta" type="radio" name="tarjeta-guardada" id="tarjeta-${tarjeta.id}" value="${tarjeta.id}">
+                                </div>
+                                <div>
+                                    <label for="tarjeta-${tarjeta.id}" class="fw-bold text-light small mb-0 cursor-pointer">
+                                        ${tarjeta.alias}
+                                    </label>
+                                    <div class="text-muted small">Terminada en •••• ${tarjeta.datosTarjeta.ultimosDigitos}</div>
+                                </div>
+                            </div>
+                            <i class="bi ${icono} fs-4 text-warning"></i>
+                        </div>
+                    </div>`;
+                contenedor.innerHTML += html;
+            });
+
+            // Event listeners para seleccionar tarjeta
+            contenedor.querySelectorAll('.tarjeta-opcion').forEach(elem => {
+                elem.addEventListener('click', (e) => {
+                    if (!e.target.closest('.form-check-input')) {
+                        const radio = elem.querySelector('.form-check-input');
+                        radio.checked = true;
+                        this.manejarSeleccionTarjeta();
+                    }
+                });
+
+                elem.querySelector('.form-check-input').addEventListener('change', (e) => {
+                    if (e.target.checked) {
+                        this.manejarSeleccionTarjeta();
+                    }
+                });
+            });
+
+        } catch (error) {
+            console.error('❌ Error al cargar tarjetas:', error);
+            contenedor.innerHTML = '<div class="text-danger small text-center">Error al cargar tarjetas</div>';
+        }
+    }
+
+    // ============= MANEJAR SELECCIÓN DE TARJETA GUARDADA =============
+    manejarSeleccionTarjeta() {
+        const tarjetaSeleccionada = document.querySelector('input[name="tarjeta-guardada"]:checked');
+
+        if (tarjetaSeleccionada) {
+            // Guardar el ID de la tarjeta para usar en el pago
+            this.tarjetaGuardadaSeleccionada = tarjetaSeleccionada.value;
+            console.log('✅ Tarjeta guardada seleccionada:', this.tarjetaGuardadaSeleccionada);
+        }
+    }
+
+    // ============= MOSTRAR FORMULARIO DE TARJETA NUEVA =============
+    mostrarFormularioTarjetaNueva() {
+        const formulario = document.getElementById('seccion-formulario-tarjeta');
+        if (formulario) {
+            formulario.style.display = 'block';
+        }
+
+        // Limpiar selección de tarjeta guardada
+        const radios = document.querySelectorAll('input[name="tarjeta-guardada"]');
+        radios.forEach(r => r.checked = false);
+        
+        this.tarjetaGuardadaSeleccionada = null;
+        
+        // Limpiar campos del formulario
+        document.getElementById('card-numero').value = '';
+        document.getElementById('card-nombre').value = '';
+        document.getElementById('card-exp').value = '';
+        document.getElementById('card-cvv').value = '';
+        document.getElementById('guardar-tarjeta').checked = false;
+        
+        console.log('✅ Formulario de tarjeta nueva visible');
+    }
+
 //—-----------------------------CREACIÓN DEL PEDIDO----------------------------------------------
 //Esta función recopila toda la información dispersa (carrito, usuario, formulario de dirección, método de pago), la empaqueta y crea la orden en el sistema.
     async procesarCompra() {
@@ -1601,7 +1739,7 @@ class CheckoutService {
             // Solución al Problema 1.2 y 3: Leemos los inputs reales del HTML.
             let datosTarjetaParaPasarela = null; 
             let ultimos4Digitos = null;
-
+/* 
             if (metodoPago === 'tarjeta') {
                 // Lectura de inputs
                 const numero = document.getElementById('card-numero').value.replace(/\s/g, '');
@@ -1609,30 +1747,66 @@ class CheckoutService {
                 const exp = document.getElementById('card-exp').value; // MM/AA
                 const cvv = document.getElementById('card-cvv').value;
                 const guardarTarjeta = document.getElementById('guardar-tarjeta')?.checked || false;
+                console.log(guardarTarjeta)
+*/
+            if (metodoPago === 'tarjeta') {
+                let datosTarjeta = null;
 
-                // 🔥 AGREGA ESTA LÍNEA PARA ESPIAR:
-    console.log('🕵️‍♂️ [APP.JS] Checkbox guardar detectado como:', guardarTarjeta);
+                // VERIFICAR SI USÓ TARJETA GUARDADA O NUEVA
+                if (this.tarjetaGuardadaSeleccionada) {
+                    // Usar tarjeta guardada
+                    
+                    let tarTempo = EstadoApp.tarjetas.find(t => t.id === this.tarjetaGuardadaSeleccionada).datosTarjeta;
+                    datosTarjeta = {
+                        numero: tarTempo.ultimosDigitos,
+                        nombreTitular: tarTempo.nombreTitular,
+                        mesVencimiento: tarTempo.mesVencimiento,
+                        anioVencimiento: tarTempo.anioVencimiento,
+                        cvv: tarTempo.cvv,
+                        metodoPagoId: this.tarjetaGuardadaSeleccionada,
+                        guardarTarjeta: false,
+                        esGuardada: true
+                    };
+                    ultimos4Digitos = tarTempo.ultimosDigitos.slice(-4);
+                    console.log('💳 Usando tarjeta guardada:', datosTarjeta);
+                } else {
+                    // Tarjeta nueva - leer del formulario
+                    const numero = document.getElementById('card-numero').value.replace(/\s/g, '');
+                    const nombre = document.getElementById('card-nombre').value;
+                    const exp = document.getElementById('card-exp').value; // MM/AA
+                    const cvv = document.getElementById('card-cvv').value;
+                    const guardarTarjeta = document.getElementById('guardar-tarjeta')?.checked || false;
 
-                // Validación de campos llenos (Solución Problema 3)
-                if (!numero || numero.length < 13 || !nombre || !exp || !cvv) {
-                    alert('Por favor completa todos los datos de la tarjeta para continuar');
-                    return;
+                    // Validación de campos llenos
+                    if (!numero || numero.length < 13 || !nombre || !exp || !cvv) {
+                        alert('Por favor completa todos los datos de la tarjeta para continuar');
+                        return;
+                    }
+
+                    const [mes, anio] = exp.split('/');
+
+                    // Empaquetamos los datos REALES para pasárselos a la siguiente página (Val_pago.html)
+                    datosTarjeta = {
+                        numero,
+                        nombreTitular: nombre,
+                        mesVencimiento: mes,
+                        anioVencimiento: anio,
+                        cvv,
+                        guardarTarjeta,
+                        esGuardada: false
+                    };
+
+                    // Extraemos los últimos 4 para el registro histórico del pedido
+                    ultimos4Digitos = numero.slice(-4);
+                    console.log('💳 Usando tarjeta nueva');
                 }
 
-                const [mes, anio] = exp.split('/');
+                // Objeto de pago para la base de datos (Pedido)
+                datosTarjetaParaPasarela = datosTarjeta;
 
-                // Empaquetamos los datos REALES para pasárselos a la siguiente página (Val_pago.html)
-                datosTarjetaParaPasarela = {
-                    numero,
-                    nombreTitular: nombre,
-                    mesVencimiento: mes,
-                    anioVencimiento: anio,
-                    cvv,
-                    guardarTarjeta // Este flag es importante para el Problema 1.1
-                };
+                // 🔥 AGREGA ESTA LÍNEA PARA ESPIAR:
+    // console.log('🕵️‍♂️ [APP.JS] Checkbox guardar detectado como:', guardarTarjeta);
 
-                // Extraemos los últimos 4 para el registro histórico del pedido
-                ultimos4Digitos = numero.slice(-4);
             }
 
             // Objeto de pago para la base de datos (Pedido)
@@ -1716,7 +1890,7 @@ class CheckoutService {
             window.location.href = 'Val_pago.html';
 
         } catch (error) {
-            console.error('❌ Error al crear pedido:', error);
+            console.error('❌ Error al crear pedido:', error.message);
             alert('Hubo un error al procesar tu pedido: ' + error.message);
             const btn = document.getElementById('btn-confirmar-compra');
             if (btn) {
@@ -2331,6 +2505,7 @@ class PaymentValidationService {
 
             // 5. Éxito
             sessionStorage.removeItem('datos_tarjeta_temp');
+            EstadoApp.tarjetas = null; // 
             if (ui.boxLoading) ui.boxLoading.classList.add('d-none');
             if (ui.boxOk) ui.boxOk.classList.remove('d-none');
 
@@ -2431,7 +2606,7 @@ class ProfileService {
 
         try {
             contenedor.innerHTML = '<div class="text-center text-muted">Cargando tarjetas...</div>';
-            const query = `query { obtenerMetodosPago { id alias datosTarjeta { ultimosDigitos tipo } } }`;
+            const query = `query { obtenerMetodosPago { id alias datosTarjeta { ultimosDigitos tipo mesVencimiento anioVencimiento nombreTitular cvv } } }`;
             const data = await GQL.request(query);
             const tarjetas = data.obtenerMetodosPago;
 
@@ -2450,7 +2625,7 @@ class ProfileService {
                                 <i class="bi ${icono} fs-4 text-warning"></i>
                                 <div>
                                     <div class="fw-bold text-light small">${tarjeta.alias}</div>
-                                    <div class="text-muted small">Terminada en •••• ${tarjeta.datosTarjeta.ultimosDigitos}</div>
+                                    <div class="text-muted small">Terminada en •••• ${tarjeta.datosTarjeta.ultimosDigitos.slice(-4)}</div>
                                 </div>
                             </div>
                             <button class="btn btn-sm btn-outline-danger btn-borrar-tarjeta border-0" data-id="${tarjeta.id}"><i class="bi bi-trash"></i></button>
