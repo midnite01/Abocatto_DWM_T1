@@ -3234,8 +3234,8 @@ async cargarTodosPedidos(filtro = 'todos') {
                         ? `📍 ${pedido.direccion?.calle}, ${pedido.direccion?.comuna}` 
                         : '🏪 Retiro en Local'}
                 </td>
-                <td class="text-end text-warning fw-bold">${Utilidades.formatearPrecio(pedido.total)}</td>
-                <td class="text-warning">${new Date(pedido.createdAt).toLocaleDateString('es-CL')}</td>
+                <td class="text-warning fw-bold">${Utilidades.formatearPrecio(pedido.total)}</td>
+                <td class="text-warning">${new Date(parseInt(pedido.createdAt)).toLocaleDateString('es-CL')}, ${new Date(parseInt(pedido.createdAt)).toLocaleTimeString('es-CL')}</td>
                 <td>
                     <span class="badge badge-estado badge-${pedido.estado}">
                         ${this.obtenerLabelEstado(pedido.estado)}
